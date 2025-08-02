@@ -1,0 +1,14 @@
+# Node.js
+node_modules/
+
+# Frontend build files
+/client/dist/
+
+# Backend build files (if any)
+/server/dist/
+
+# Environment variables
+.env
+.idea
+
+.vscode/
