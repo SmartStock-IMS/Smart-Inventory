@@ -12,7 +12,7 @@ class User extends BaseModel {
         limit,
         offset,
         filters.role || null,
-        filters.is_active !== undefined ? filters.is_active : null
+        filters.status || null  // Changed from is_active to status
       ]);
     } catch (error) {
       throw error;
@@ -66,6 +66,8 @@ class User extends BaseModel {
 
   /**
    * Create new user with contacts and addresses
+   * Note: Since your schema doesn't have user_contacts/user_addresses tables,
+   * this simplified version only creates the user
    */
   async create(userData, contacts = [], addresses = []) {
     try {
@@ -73,6 +75,11 @@ class User extends BaseModel {
       const saltRounds = 12;
       userData.password_hash = await bcrypt.hash(userData.password, saltRounds);
       delete userData.password; // Remove plain password
+
+      // Generate email if not provided (since email is required in schema)
+      if (!userData.email) {
+        userData.email = `${userData.username}@temp.com`;
+      }
 
       const result = await this.callProcedure('sp_create_user', [
         userData.username,
@@ -137,7 +144,7 @@ class User extends BaseModel {
   }
 
   /**
-   * Get user with full details (contacts and addresses)
+   * Get user with full details
    */
   async getUserWithDetails(id) {
     try {
@@ -245,7 +252,7 @@ class User extends BaseModel {
     try {
       return await this.callScalarFunction('fn_count_users', [
         filters.role || null,
-        filters.is_active !== undefined ? filters.is_active : null
+        filters.status || null  // Changed from is_active to status
       ]);
     } catch (error) {
       throw error;
@@ -276,36 +283,6 @@ class User extends BaseModel {
         limit,
         offset
       ]);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Update user contacts
-   */
-  async updateContacts(userId, contacts) {
-    try {
-      const result = await this.callProcedure('sp_update_user_contacts', [
-        userId,
-        JSON.stringify(contacts)
-      ]);
-      return result[0];
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Update user addresses
-   */
-  async updateAddresses(userId, addresses) {
-    try {
-      const result = await this.callProcedure('sp_update_user_addresses', [
-        userId,
-        JSON.stringify(addresses)
-      ]);
-      return result[0];
     } catch (error) {
       throw error;
     }
