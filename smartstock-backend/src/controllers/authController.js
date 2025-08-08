@@ -12,14 +12,31 @@ class AuthController {
         return ApiResponse.validationError(res, errors.array());
       }
 
-      const { username, password, first_name, last_name, role, contacts, addresses } = req.body;
+      const { username, email, password, first_name, last_name, role, contacts, addresses } = req.body;
 
+      // Check if username already exists
       const existingUser = await User.findByUsername(username);
       if (existingUser) {
         return ApiResponse.error(res, 'Username already exists', 400);
       }
 
-      const userData = { username, password, first_name, last_name, role };
+      // Check if email already exists (if provided)
+      if (email) {
+        const existingEmail = await User.findByEmail(email);
+        if (existingEmail) {
+          return ApiResponse.error(res, 'Email already exists', 400);
+        }
+      }
+
+      const userData = { 
+        username, 
+        email: email || `${username}@temp.com`, 
+        password, 
+        first_name, 
+        last_name, 
+        role: role || 'sales_staff' 
+      };
+      
       const user = await User.createWithContacts(userData, contacts, addresses);
 
       Logger.info('User registered successfully', { userId: user.id, username });
@@ -28,9 +45,11 @@ class AuthController {
         user: {
           id: user.id,
           username: user.username,
+          email: user.email,
           first_name: user.first_name,
           last_name: user.last_name,
           role: user.role,
+          status: user.status
         },
       }, 'User registered successfully', 201);
     } catch (error) {
