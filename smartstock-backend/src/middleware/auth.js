@@ -14,7 +14,7 @@ const auth = async (req, res, next) => {
     const decoded = jwt.verify(token, config.jwt.secret);
     const user = await User.findById(decoded.id);
 
-    if (!user || !user.is_active) {
+    if (!user || user.status !== 'active') {
       return ApiResponse.error(res, 'Invalid token or user not found', 401);
     }
 

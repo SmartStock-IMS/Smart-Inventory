@@ -28,7 +28,7 @@ class AuthService {
         throw new Error('Invalid credentials');
       }
 
-      if (!user.is_active) {
+      if (user.status !== 'active') {
         throw new Error('Account is deactivated');
       }
 
@@ -52,8 +52,8 @@ class AuthService {
       const decoded = jwt.verify(refreshToken, config.jwt.refreshSecret);
       const user = await User.findById(decoded.id);
 
-      if (!user || !user.is_active) {
-        throw new Error('Invalid refresh token');
+      if (!user || user.status !== 'active') {
+        throw new Error('User not found or inactive');
       }
 
       const tokens = this.generateTokens(user);

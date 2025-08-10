@@ -1,6 +1,6 @@
 module.exports = {
   USER_ROLES: {
-    ADMINISTRATOR: 'administrator',
+    ADMINISTRATOR: 'admin',
     INVENTORY_MANAGER: 'inventory_manager',
     SALES_STAFF: 'sales_staff',
     RESOURCE_MANAGER: 'resource_manager',

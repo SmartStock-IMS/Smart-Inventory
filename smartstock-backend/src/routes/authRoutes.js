@@ -9,7 +9,7 @@ const router = express.Router();
 // Public routes
 router.post('/register', authLimiter, validationRules.register, authController.register);
 router.post('/login', authLimiter, validationRules.login, authController.login);
-router.post('/refresh-token', authController.refreshToken);
+router.post('/refresh-token', authController.refreshToken);  // check again
 
 // Protected routes
 router.get('/profile', auth, authController.getProfile);
