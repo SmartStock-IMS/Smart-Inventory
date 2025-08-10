@@ -94,8 +94,8 @@ class AuthController {
 
   async getProfile(req, res) {
     try {
-      const user = await User.getUserWithDetails(req.user.id);
-      
+      const user = await User.findById(req.user.id);
+
       if (!user) {
         return ApiResponse.error(res, 'User not found', 404);
       }
