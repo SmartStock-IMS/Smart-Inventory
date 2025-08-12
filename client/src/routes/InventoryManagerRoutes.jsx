@@ -15,6 +15,7 @@ import CustomerDetails from "../pages/InventoryManager/customer/CustomerDetails.
 import AddCustomer from "../pages/InventoryManager/customer/Addcustomer.jsx";
 import RepsList from "../pages/InventoryManager/sales-rep/SalesRepList.jsx";
 import RepDetails from "../pages/InventoryManager/sales-rep/RepDetails.jsx";
+import EditRep from "../pages/InventoryManager/sales-rep/EditRep.jsx";
 import AddRep from "../pages/InventoryManager/sales-rep/AddRep.jsx";
 import Product from "../pages/InventoryManager/products/Product.jsx";
 import EditUser from "../pages/InventoryManager/user/EditUser.jsx";
@@ -57,10 +58,9 @@ function InventoryManagerRoutes() {
                     <Route path="/customer/edit/:user_code" element={<EditCustomer />} />
                     {/* item: sales-reps */}
                     <Route path="/addrep" element={<AddRep />} />
-                    <Route path="/repslist" element={<RepsList />} />
-                    <Route path="/sales-reps">
-                      <Route path=":id" element={<RepDetails />} />
-                    </Route>
+                    <Route path="/sales-rep" element={<RepsList />} />
+                    <Route path="/sales-rep/:repCode" element={<RepDetails />} />
+                    <Route path="/sales-rep/edit/:repCode" element={<EditRep />} />
                     {/* item: users */}
                     <Route path="/adduser" element={<AddUser />} />
                     <Route path="/userdetails" element={<UserDetails />} />

@@ -95,7 +95,7 @@ const Sidebar = () => {
       hasSubmenu: true,
       submenu: [
         { label: "Add Rep", path: "/inventorymanager/addrep" },
-        { label: "Sales-Rep List", path: "/inventorymanager/repslist" }
+        { label: "Sales-Rep List", path: "/inventorymanager/sales-rep" }
       ]
     },
     {

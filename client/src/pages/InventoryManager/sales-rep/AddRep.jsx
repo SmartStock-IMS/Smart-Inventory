@@ -154,7 +154,7 @@ const AddSalesRep = () => {
           toast.success(result.data.message);
           setTimeout(() => {
             setIsLoading(false);
-            navigate.push('/dashboard/repslist');
+            navigate.push('/inventorymanager/sales-rep');
           }, 3000);
         } else {
           console.error('Failed to create sales rep:', result.message);
