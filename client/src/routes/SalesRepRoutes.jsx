@@ -6,7 +6,7 @@ import AddItems from "../components/order/AddItems";
 import ViewQuotation from "../components/order/ViewQuotation";
 import OrderList from "../components/order/OrderList";
 import BillingDetails from "../components/order/BillingDetails";
-import ConfirmationForm from "../components/order/OrderConfirmation";
+import OrderConfirmation from "../components/order/OrderConfirmation";
 import Product from "../pages/main/product/Product";
 import History from "../pages/main/history/History.jsx";
 import AddCustomer from "../pages/main/customer/AddCustomer";
@@ -24,7 +24,7 @@ function MainRoutes() {
           <Route path="/order" element={<Order />}>
             <Route path="add-items" element={<AddItems />} />
             <Route path="billing-details" element={<BillingDetails />} />
-            <Route path="confirmation" element={<ConfirmationForm />} />
+            <Route path="confirmation" element={<OrderConfirmation />} />
           </Route>
           <Route path="/order-listing" element={<OrderList />} />
           <Route path="/view-quotation" element={<ViewQuotation />} />

@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Menu } from "lucide-react";
+import { Menu, ShoppingCart, Trash2, Plus, Minus, Package, Receipt, Percent, CheckCircle2, Circle } from "lucide-react";
 import { useCart } from "../../context/cart/CartContext";
 import { cn } from "@lib/utils";
 import { ToastContainer, toast } from "react-toastify";
@@ -8,368 +8,522 @@ import { getAllProducts } from "../../services/product-services.js";
 
 const AddItems = () => {
   const navigate = useNavigate();
-  const { cart, removeFromCart, setCartState } = useCart(); // get cart data from context
-  // local-variables
+  const { cart, removeFromCart, setCartState, updateQuantity: updateCartQuantity } = useCart();
+  
+  // Local state - optimized
   const [items, setItems] = useState(cart);
-  const [cartSelectedItems, setCartSelectedItems] = useState(cart);
   const [discount, setDiscount] = useState("");
   const [selectedItems, setSelectedItems] = useState(new Set());
-  const [isAllSelected, setIsAllSelected] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
+  // Memoized calculations for performance
+  const isAllSelected = useMemo(() => 
+    items.length > 0 && selectedItems.size === items.length, 
+    [items.length, selectedItems.size]
+  );
+
+  const cartSelectedItems = useMemo(() => 
+    items.filter(item => selectedItems.has(item.code)), 
+    [items, selectedItems]
+  );
+
+  const subtotal = useMemo(() => 
+    cartSelectedItems.reduce((total, item) => total + item.price * item.quantity, 0),
+    [cartSelectedItems]
+  );
+
+  const discountAmount = useMemo(() => {
+    const discountPercent = parseFloat(discount) || 0;
+    return Math.round((subtotal * discountPercent) / 100);
+  }, [subtotal, discount]);
+
+  const total = useMemo(() => subtotal - discountAmount, [subtotal, discountAmount]);
+
+  // Sync local items with cart context
   useEffect(() => {
-    const _selectedItems = items.filter((item) => selectedItems.has(item.code));
-    setCartSelectedItems(_selectedItems);
-  }, [items, selectedItems]);
+    setItems(cart);
+    setSelectedItems(prevSelected => {
+      const newSelected = new Set();
+      cart.forEach(item => {
+        if (prevSelected.has(item.code)) {
+          newSelected.add(item.code);
+        }
+      });
+      return newSelected;
+    });
+  }, [cart]);
 
-  // getAllProducts
-  // useEffect(() => {
-  //   //TODO: add pagination
-  //   const handleGetAllProducts = async () => {
-  //     const response = await getAllProducts();
-  //     if (response.success) {
-  //       console.log("getAllProducts: ", response.data);
-  //       // setItems(response.data);
-  //
-  //       console.log("productsVarientList loop: ");
-  //       const productsVarientList = [];
-  //       for (const product of response.data) {
-  //         for (const variant of product.variants) {
-  //           productsVarientList.push({
-  //             ...product,
-  //             ...variant,
-  //           });
-  //         }
-  //       }
-  //       console.log(productsVarientList);
-  //       setItems(productsVarientList);
-  //     } else {
-  //       // toast.error("Error loading products");
-  //     }
-  //   };
-  //   console.log("==== getAllProducts ==");
-  //   handleGetAllProducts();
-  // }, []);
+  // Optimized handlers with useCallback
+  const toggleItemSelection = useCallback((id) => {
+    setSelectedItems(prev => {
+      const newSelected = new Set(prev);
+      if (newSelected.has(id)) {
+        newSelected.delete(id);
+      } else {
+        newSelected.add(id);
+      }
+      return newSelected;
+    });
+  }, []);
 
-  const toggleItemSelection = (id) => {
-    const newSelected = new Set(selectedItems);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedItems(newSelected);
-    setIsAllSelected(newSelected.size === items.length);
-  };
-
-  const toggleSelectAll = () => {
+  const toggleSelectAll = useCallback(() => {
     if (isAllSelected) {
       setSelectedItems(new Set());
     } else {
-      setSelectedItems(new Set(items.map((item) => item.code)));
+      setSelectedItems(new Set(items.map(item => item.code)));
     }
-    setIsAllSelected(!isAllSelected);
-  };
+  }, [isAllSelected, items]);
 
-  const deleteSelected = () => {
-    const selectedItem = items.find((item) => selectedItems.has(item.code));
-    removeFromCart(selectedItem.code);
-    const newItems = items.filter((item) => !selectedItems.has(item.code));
-    setItems(newItems);
-    setSelectedItems(new Set());
-    setIsAllSelected(false);
+  const deleteSelected = useCallback(async () => {
+    if (selectedItems.size === 0) return;
+    
+    setIsDeleting(true);
+    try {
+      const selectedCodes = Array.from(selectedItems);
+      selectedCodes.forEach(code => removeFromCart(code));
+      
+      setSelectedItems(new Set());
+      toast.success(`${selectedCodes.length} item${selectedCodes.length !== 1 ? 's' : ''} removed from order`);
+    } catch (error) {
+      toast.error("Failed to remove items");
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [selectedItems, removeFromCart]);
 
-    // const newItems = items.filter(item => !selectedItems.has(item.product_code));
-    // setItems(newItems);
-    // setSelectedItems(new Set());
-    // setIsAllSelected(false);
-    // localStorage.setItem('selectedCartItems', JSON.stringify([]));
-  };
+  const updateQuantity = useCallback((id, increment) => {
+    const item = items.find(item => item.code === id);
+    if (item) {
+      const newQuantity = Math.max(1, item.quantity + increment);
+      updateCartQuantity(id, newQuantity);
+    }
+  }, [items, updateCartQuantity]);
 
-  const updateQuantity = (id, increment) => {
-    setItems(
-      items.map((item) =>
-        item.code === id
-          ? {
-              ...item,
-              quantity: Math.max(1, item.quantity + increment),
-            }
-          : item,
-      ),
-    );
-  };
+  const handleDiscountChange = useCallback((value) => {
+    const numValue = parseFloat(value);
+    if (value === "" || (!isNaN(numValue) && numValue >= 0 && numValue <= 100)) {
+      setDiscount(value);
+    }
+  }, []);
 
-  const calculateSubtotal = () => {
-    return cartSelectedItems.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0,
-    );
-  };
-
-  const calculateDiscount = () => {
-    const subtotal = calculateSubtotal();
-    const discountPercent = parseFloat(discount) || 0;
-    return Math.round((subtotal * discountPercent) / 100);
-  };
-
-  const calculateTotal = () => {
-    return calculateSubtotal() - calculateDiscount();
-  };
-
-  const handleApplyDiscount = () => {
-    const discountValue = parseFloat(discount);
-    if (isNaN(discountValue) || discountValue < 0 || discountValue > 100) {
-      alert("Please enter a valid discount percentage between 0 and 100");
-      setDiscount("");
+  const handleCheckout = useCallback(() => {
+    if (selectedItems.size === 0) {
+      toast.warning("Please select items to proceed");
       return;
     }
-    localStorage.setItem("cartDiscount", discount);
-  };
 
-  const handleCheckout = () => {
     const cartState = {
       items: items,
       selectedItems: cartSelectedItems,
       discount: discount,
-      subtotal: calculateSubtotal(),
-      total: calculateTotal(),
+      subtotal: subtotal,
+      total: total,
     };
+    
     console.log("cart state: ", cartState);
     setCartState(cartState);
-    // localStorage.setItem("cartState", JSON.stringify(cartState));
     navigate("/order/billing-details");
-  };
+  }, [selectedItems.size, items, cartSelectedItems, discount, subtotal, total, setCartState, navigate]);
 
-  // Mobile Summary Toggle Button
+  const formatCurrency = useCallback((amount) => 
+    `Rs. ${amount.toLocaleString('en-LK', { minimumFractionDigits: 2 })}`, 
+    []
+  );
+
+  // Mobile Summary Toggle
   const SummaryToggle = () => (
     <button
       onClick={() => setShowSummary(!showSummary)}
-      className="fixed bottom-4 right-4 lg:hidden z-50 bg-black text-white p-4 rounded-full shadow-lg"
+      className="fixed bottom-6 right-6 lg:hidden z-50 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 touch-manipulation"
     >
-      <Menu className="w-6 h-6" />
+      <Receipt className="w-6 h-6" />
+      {cartSelectedItems.length > 0 && (
+        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">
+          {cartSelectedItems.length}
+        </span>
+      )}
     </button>
   );
 
-  return (
-    <div className="w-full mx-auto p-4 flex flex-col lg:flex-row gap-6">
-      {/* Cart Items Section */}
-      <div className="flex-grow">
-        {/* section: select-all */}
-        <div className="flex items-center justify-between mb-4 p-3 bg-gray-100 rounded-lg shadow-sm">
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isAllSelected}
-              onChange={toggleSelectAll}
-              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="font-medium">SELECT ALL</span>
-          </label>
+  if (items.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
+        <div className="text-center bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+          <div className="w-20 h-20 mx-auto mb-6 bg-slate-100 rounded-full flex items-center justify-center">
+            <ShoppingCart className="w-10 h-10 text-slate-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-4">Your order is empty</h2>
+          <p className="text-slate-600 mb-6">Start adding products to create an order for your customer</p>
           <button
-            onClick={deleteSelected}
-            disabled={selectedItems.size === 0}
-            className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors
-              ${
-                selectedItems.size === 0
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-red-500 text-white hover:bg-red-600"
-              }`}
+            onClick={() => navigate(-1)}
+            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all duration-200 font-medium"
           >
-            <span>🗑️</span>
-            <span className="hidden sm:inline">DELETE</span>
+            Browse Products
           </button>
-        </div>
-
-        {/* Mobile/Tablet Cart Items */}
-        <div className="lg:hidden space-y-4">
-          {items.map((item, index) => (
-            <div key={index} className="bg-white rounded-lg shadow-md p-4">
-              <div className="flex items-start space-x-4">
-                <input
-                  type="checkbox"
-                  checked={selectedItems.has(item.code)}
-                  onChange={() => toggleItemSelection(item.code)}
-                  className="w-4 h-4 mt-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <img
-                  src={item.url}
-                  alt={item.name}
-                  className="w-20 h-20 object-cover rounded-lg border-2 border-gray-200"
-                />
-                <div className="flex-grow">
-                  <h3 className="font-medium">{item.name}</h3>
-                  <div className="mt-2 space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <div
-                        className={`w-4 h-4 rounded-full border-2 border-gray-200`}
-                        style={{ backgroundColor: item.color }}
-                      ></div>
-                      <span className="text-sm text-gray-500">
-                        {item.color}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600"># {item.code}</p>
-                    <p className="font-medium">Rs.{item.price}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 flex justify-end">
-                <div className="flex items-center space-x-3">
-                  <button
-                    onClick={() => updateQuantity(item.code, -1)}
-                    className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-full hover:bg-gray-100"
-                  >
-                    -
-                  </button>
-                  <span className="w-8 text-center font-medium">
-                    {item.quantity}
-                  </span>
-                  <button
-                    onClick={() => updateQuantity(item.code, 1)}
-                    className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-full hover:bg-gray-100"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Desktop Cart Items */}
-        <div className="hidden lg:block bg-white rounded-lg shadow-md overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr className="text-left text-gray-600">
-                <th className="p-4">SELECT</th>
-                <th className="p-4">PRODUCT</th>
-                <th className="p-4">COLOUR</th>
-                <th className="p-4">ITEM CODE</th>
-                <th className="p-4">PRICE</th>
-                <th className="p-4">QUANTITY</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item, index) => (
-                <tr key={index} className="border-t hover:bg-gray-50">
-                  <td className="p-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedItems.has(item.code)}
-                      onChange={() => toggleItemSelection(item.code)}
-                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center space-x-3">
-                      <img
-                        src={item.url}
-                        alt={item.name}
-                        className="w-16 h-16 object-cover rounded-lg border-2 border-gray-200"
-                      />
-                      <span className="font-medium">{item.name}</span>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="space-y-1">
-                      <div
-                        className={`w-6 h-6 rounded-full border-2 border-gray-200`}
-                        style={{ backgroundColor: item.color }}
-                      ></div>
-                    </div>
-                  </td>
-                  <td className="p-4 text-gray-600">{item.code}</td>
-                  <td className="p-4 font-medium">Rs.{item.price}</td>
-                  <td className="p-4">
-                    <div className="flex items-center space-x-3">
-                      <button
-                        onClick={() => updateQuantity(item.code, -1)}
-                        className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-full hover:bg-gray-100"
-                      >
-                        -
-                      </button>
-                      <span className="w-8 text-center font-medium">
-                        {item.quantity}
-                      </span>
-                      <button
-                        onClick={() => updateQuantity(item.code, 1)}
-                        className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-full hover:bg-gray-100"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
+    );
+  }
 
-      {/* Order Summary Section */}
-      <div
-        className={`
-        fixed inset-x-0 bottom-0 lg:static
-        ${showSummary ? "translate-y-0" : "translate-y-full"} 
-        lg:translate-y-0 transform transition-transform duration-300 ease-in-out
-        bg-white lg:w-80 shadow-lg lg:shadow-md p-6 rounded-t-2xl lg:rounded-lg
-      `}
-      >
-        <h2 className="text-xl font-bold mb-6">Order Summary</h2>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 pt-20 sm:pt-32">
+        
+        {/* Header */}
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-4 sm:p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-xl">
+                <Package className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Order Management</h1>
+                <p className="text-sm text-slate-600">Review and finalize customer order</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-xl">
+              <span className="text-sm font-medium text-slate-700">{items.length} items</span>
+            </div>
+          </div>
+        </div>
 
-        <div className="space-y-6">
-          <div className="flex justify-between text-gray-600">
-            <span>Subtotal</span>
-            <span className="font-medium">
-              Rs.{calculateSubtotal().toLocaleString()}
-            </span>
+        <div className="flex flex-col lg:flex-row gap-6">
+          
+          {/* Cart Items Section */}
+          <div className="flex-1 space-y-6">
+            
+            {/* Selection Controls */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={toggleSelectAll}
+                  className="flex items-center gap-3 text-slate-700 hover:text-slate-900 transition-colors touch-manipulation"
+                >
+                  {isAllSelected ? (
+                    <CheckCircle2 className="w-5 h-5 text-blue-600" />
+                  ) : (
+                    <Circle className="w-5 h-5 text-slate-400" />
+                  )}
+                  <span className="font-medium">
+                    {isAllSelected ? "Deselect All" : "Select All"}
+                  </span>
+                  <span className="text-sm text-slate-500">
+                    ({selectedItems.size} of {items.length} selected)
+                  </span>
+                </button>
+                
+                <button
+                  onClick={deleteSelected}
+                  disabled={selectedItems.size === 0 || isDeleting}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 touch-manipulation",
+                    selectedItems.size === 0 || isDeleting
+                      ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                      : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 active:bg-red-200"
+                  )}
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                      Removing...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      Remove Selected
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Mobile Cart Items */}
+            <div className="lg:hidden space-y-4">
+              {items.map((item, index) => (
+                <div key={index} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                  <div className="p-4">
+                    <div className="flex items-start gap-4">
+                      <button
+                        onClick={() => toggleItemSelection(item.code)}
+                        className="mt-1 touch-manipulation"
+                      >
+                        {selectedItems.has(item.code) ? (
+                          <CheckCircle2 className="w-5 h-5 text-blue-600" />
+                        ) : (
+                          <Circle className="w-5 h-5 text-slate-400" />
+                        )}
+                      </button>
+                      
+                      <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+                        <img
+                          src={item.url}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-slate-800 mb-2">{item.name}</h3>
+                        
+                        <div className="space-y-2">
+                          {item.weight ? (
+                            <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                              {item.weight}
+                            </span>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-4 h-4 rounded-full border-2 border-slate-200"
+                                style={{ backgroundColor: item.color }}
+                              />
+                              <span className="text-sm text-slate-600">{item.color}</span>
+                            </div>
+                          )}
+                          
+                          <div className="text-sm text-slate-600">
+                            Code: <span className="font-mono">{item.code}</span>
+                          </div>
+                          
+                          <div className="text-lg font-bold text-green-600">
+                            {formatCurrency(item.price)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Quantity Controls */}
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="text-sm text-slate-600">
+                        Total: <span className="font-bold text-slate-800">{formatCurrency(item.price * item.quantity)}</span>
+                      </div>
+                      
+                      <div className="flex items-center bg-slate-100 rounded-lg">
+                        <button
+                          onClick={() => updateQuantity(item.code, -1)}
+                          disabled={item.quantity <= 1}
+                          className="p-2 text-slate-600 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                        <span className="px-4 py-2 font-semibold text-slate-800 min-w-[3rem] text-center">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(item.code, 1)}
+                          className="p-2 text-slate-600 hover:text-slate-800 transition-colors touch-manipulation"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Cart Items */}
+            <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr className="text-left text-slate-700">
+                      <th className="p-4 font-semibold">SELECT</th>
+                      <th className="p-4 font-semibold">PRODUCT</th>
+                      <th className="p-4 font-semibold">VARIANT</th>
+                      <th className="p-4 font-semibold">CODE</th>
+                      <th className="p-4 font-semibold">PRICE</th>
+                      <th className="p-4 font-semibold">QUANTITY</th>
+                      <th className="p-4 font-semibold">TOTAL</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((item, index) => (
+                      <tr key={index} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                        <td className="p-4">
+                          <button
+                            onClick={() => toggleItemSelection(item.code)}
+                            className="touch-manipulation"
+                          >
+                            {selectedItems.has(item.code) ? (
+                              <CheckCircle2 className="w-5 h-5 text-blue-600" />
+                            ) : (
+                              <Circle className="w-5 h-5 text-slate-400" />
+                            )}
+                          </button>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-100">
+                              <img
+                                src={item.url}
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <span className="font-semibold text-slate-800">{item.name}</span>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          {item.weight ? (
+                            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                              {item.weight}
+                            </span>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-6 h-6 rounded-full border-2 border-slate-200"
+                                style={{ backgroundColor: item.color }}
+                              />
+                              <span className="text-sm text-slate-600">{item.color}</span>
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          <span className="font-mono text-slate-600">{item.code}</span>
+                        </td>
+                        <td className="p-4">
+                          <span className="font-semibold text-green-600">{formatCurrency(item.price)}</span>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center bg-slate-100 rounded-lg w-fit">
+                            <button
+                              onClick={() => updateQuantity(item.code, -1)}
+                              disabled={item.quantity <= 1}
+                              className="p-2 text-slate-600 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              <Minus className="w-4 h-4" />
+                            </button>
+                            <span className="px-4 py-2 font-semibold text-slate-800 min-w-[3rem] text-center">
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() => updateQuantity(item.code, 1)}
+                              className="p-2 text-slate-600 hover:text-slate-800 transition-colors"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <span className="font-bold text-slate-800">{formatCurrency(item.price * item.quantity)}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <input
-              type="text"
-              placeholder="Enter Discount %"
-              value={discount}
-              onChange={(e) => setDiscount(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:outline-none focus:ring-yellow-400 focus:border-yellow-400"
-            />
-            {/*<button*/}
-            {/*  onClick={handleApplyDiscount}*/}
-            {/*  className="w-full bg-yellow-400 text-white py-3 rounded-lg hover:bg-yellow-500 transition-colors"*/}
-            {/*>*/}
-            {/*  Apply Discount*/}
-            {/*</button>*/}
-          </div>
-
-          <div className="flex justify-between text-gray-600">
-            <span>Discount</span>
-            <span className="font-medium">
-              Rs.{calculateDiscount().toLocaleString()}
-            </span>
-          </div>
-
-          <div className="flex justify-between text-lg font-bold">
-            <span>Total</span>
-            <span>Rs.{calculateTotal().toLocaleString()}</span>
-          </div>
-
-          <button
+          {/* Order Summary Section */}
+          <div
             className={cn(
-              "w-full py-3 rounded-lg transition-colors font-medium",
-              selectedItems.size === 0
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-black text-white hover:bg-gray-800",
+              "fixed inset-x-0 bottom-0 lg:static lg:w-96",
+              "transform transition-transform duration-300 ease-in-out",
+              showSummary ? "translate-y-0" : "translate-y-full lg:translate-y-0",
+              "bg-white shadow-2xl lg:shadow-lg rounded-t-2xl lg:rounded-xl",
+              "border-t border-slate-200 lg:border lg:border-slate-200",
+              "z-40"
             )}
-            onClick={handleCheckout}
-            disabled={selectedItems.size === 0}
           >
-            PROCEED TO CHECKOUT
-          </button>
+            <div className="p-6">
+              {/* Summary Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <Receipt className="w-5 h-5 text-blue-600" />
+                  Order Summary
+                </h2>
+                <button
+                  onClick={() => setShowSummary(false)}
+                  className="lg:hidden p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Selected Items Count */}
+                <div className="bg-blue-50 rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-blue-800 font-medium">Selected Items</span>
+                    <span className="text-blue-800 font-bold">{selectedItems.size} of {items.length}</span>
+                  </div>
+                </div>
+
+                {/* Subtotal */}
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-600">Subtotal</span>
+                  <span className="font-semibold text-slate-800">{formatCurrency(subtotal)}</span>
+                </div>
+
+                {/* Discount Section */}
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Percent className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input
+                      type="number"
+                      placeholder="Discount %"
+                      value={discount}
+                      onChange={(e) => handleDiscountChange(e.target.value)}
+                      min="0"
+                      max="100"
+                      className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    />
+                  </div>
+                  
+                  {discount && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-600">Discount ({discount}%)</span>
+                      <span className="font-semibold text-orange-600">-{formatCurrency(discountAmount)}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Total */}
+                <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-xl p-4">
+                  <div className="flex justify-between items-center text-white">
+                    <span className="text-lg font-semibold">Total Amount</span>
+                    <span className="text-2xl font-bold">{formatCurrency(total)}</span>
+                  </div>
+                </div>
+
+                {/* Checkout Button */}
+                <button
+                  onClick={handleCheckout}
+                  disabled={selectedItems.size === 0}
+                  className={cn(
+                    "w-full py-4 rounded-xl font-semibold text-lg transition-all duration-200 touch-manipulation",
+                    selectedItems.size === 0
+                      ? "bg-slate-200 text-slate-500 cursor-not-allowed"
+                      : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-lg active:shadow-md"
+                  )}
+                >
+                  {selectedItems.size === 0 
+                    ? "Select items to proceed" 
+                    : `Proceed to Checkout (${selectedItems.size} items)`
+                  }
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       <SummaryToggle />
-      <ToastContainer autoClose={3000} />
+      
+      <ToastContainer 
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 };

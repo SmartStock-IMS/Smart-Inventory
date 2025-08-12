@@ -6,7 +6,7 @@ import AddUser from "../pages/dashboard/user/AddUser.jsx";
 import UserDetails from "../pages/dashboard/user/UserDetails.jsx";
 import ProductList from "../pages/dashboard/products/ProductList.jsx";
 import AddProduct from "../pages/dashboard/products/AddProduct.jsx";
-import AddBulk from "../pages/dashboard/products/AddBulk";
+import AddBulk from "../pages/dashboard/products/AddBulk.jsx";
 import CustomerList from "../pages/dashboard/customer/CustomerList.jsx";
 import EditCustomer from "../pages/dashboard/customer/EditCustomer.jsx";
 import CustomerDetails from "../pages/dashboard/customer/CustomerDetails.jsx";
@@ -19,7 +19,7 @@ import EditUser from "../pages/dashboard/user/EditUser.jsx";
 import OrderSummary from "../pages/dashboard/orders/OrderSummary.jsx";
 import DailySummary from "../pages/dashboard/reports/DailySummary.jsx";
 import QBExport from "../pages/dashboard/reports/QBExport.jsx";
-import BulkList from "../pages/dashboard/products/BulkList";
+import BulkList from "../pages/dashboard/products/BulkList.jsx";
 
 function DashboardRoutes() {
   return (
