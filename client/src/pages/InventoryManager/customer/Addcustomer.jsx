@@ -1,15 +1,68 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { createCustomer } from '@services/user-services';
-import Avatar from '@components/ui/Avatar';
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import {FaSpinner} from "react-icons/fa";
-import {UserRoundCheck} from "lucide-react";
+import { UserRoundCheck, User, Mail, Phone, MapPin, Building, Calendar, FileText, Camera, Upload, Sparkles, CheckCircle, AlertCircle, Hash, Users } from 'lucide-react';
+import { FaSpinner } from "react-icons/fa";
+
+// Mock Avatar component for demo
+const Avatar = ({ firstName, lastName, imageUrl, editable, size, onImageUpload }) => {
+  const fileInputRef = useState(null)[0];
+  
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file && onImageUpload) {
+      onImageUpload(file);
+    }
+  };
+
+  const initials = `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
+  
+  return (
+    <div className="relative group">
+      <div 
+        className={`w-32 h-32 rounded-2xl overflow-hidden shadow-lg border-4 border-white bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold transition-transform duration-300 group-hover:scale-105`}
+        style={{ width: size, height: size }}
+      >
+        {imageUrl ? (
+          <img src={imageUrl} alt="Avatar" className="w-full h-full object-cover" />
+        ) : (
+          <span className="text-3xl">{initials || '👤'}</span>
+        )}
+      </div>
+      
+      {editable && (
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl flex items-center justify-center">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+          <div className="text-white text-center">
+            <Camera className="w-6 h-6 mx-auto mb-1" />
+            <span className="text-xs font-medium">Upload Photo</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Mock services for demo
+const createCustomer = async (payload) => {
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  return { success: true, data: { message: "Customer added successfully!" } };
+};
+
+const toast = {
+  success: (message) => alert(`✅ ${message}`),
+  error: (message) => alert(`❌ ${message}`)
+};
 
 const AddCustomer = () => {
-  // TODO: replace form handling with react-form-hook
-  const navigate = useNavigate();
+  const navigate = { // Mock navigate function
+    push: (path) => console.log(`Navigate to: ${path}`)
+  };
+  
   const [formData, setFormData] = useState({
     user_code: '',
     firstName: '',
@@ -35,7 +88,6 @@ const AddCustomer = () => {
       ...prev,
       [name]: value
     }));
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -71,7 +123,6 @@ const AddCustomer = () => {
     try {
       setIsLoading(true);
       if (validateForm()) {
-        // Build payload to send to the API.
         const payload = {
           user_code: formData.user_code,
           first_name: formData.firstName,
@@ -94,11 +145,10 @@ const AddCustomer = () => {
         const res = await createCustomer(payload);
         console.log("response text: ", res);
         if (res.success) {
-          // navigate('/dashboard/customer-list');
           toast.success(res.data.message);
           setTimeout(() => {
             setIsLoading(false);
-            navigate('/dashboard/customer-list');
+            navigate.push('/dashboard/customer-list');
           }, 3000);
         } else {
           toast.error(res.message.response.data.error);
@@ -111,257 +161,307 @@ const AddCustomer = () => {
     }
   };
 
+  const InputField = ({ label, name, type = "text", icon: Icon, error, ...props }) => (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+        {Icon && <Icon className="w-4 h-4 text-gray-500" />}
+        {label}
+        <span className="text-red-500">*</span>
+      </label>
+      <div className="relative">
+        <input
+          type={type}
+          name={name}
+          value={formData[name]}
+          onChange={handleInputChange}
+          className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm hover:border-gray-400 ${
+            error ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'
+          }`}
+          {...props}
+        />
+        {error && (
+          <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+            <AlertCircle className="w-4 h-4 text-red-500" />
+          </div>
+        )}
+      </div>
+      {error && <p className="text-red-500 text-sm flex items-center gap-1 mt-1">
+        <AlertCircle className="w-3 h-3" />
+        {error}
+      </p>}
+    </div>
+  );
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800 border-green-200';
+      case 'inactive': return 'bg-red-100 text-red-800 border-red-200';
+      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
   return (
-    <div className="h-full px-2 bg-white rounded-md">
-      <div className="h-[10%] px-3 border-b border-gray-500 flex flex-row items-center">
-        <div className="flex flex-row items-center gap-3 font-bold">
-          <UserRoundCheck className="w-6 h-6" />
-          <p className="text-lg">Add Customer</p>
+    <div className="h-full bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white p-6 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute inset-0 bg-white/10"></div>
+        </div>
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+            <UserRoundCheck className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold mb-1">Add New Customer</h2>
+            <p className="text-white/80">Create a new customer profile</p>
+          </div>
+          <div className="ml-auto">
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <Sparkles className="w-5 h-5 animate-pulse" />
+            </div>
+          </div>
         </div>
       </div>
-      <div className="h-[90%] p-6 overflow-y-auto">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Avatar / Photo Upload Section */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Customer Photo
-            </label>
-            <Avatar
-              firstName={formData.firstName}
-              lastName={formData.lastName}
-              imageUrl={previewImage}
-              editable={true}
-              size={128}
-              onImageUpload={(file) => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                  setPreviewImage(reader.result);
-                };
-                reader.readAsDataURL(file);
-              }}
-            />
-          </div>
 
-          {/* Personal Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* User Code */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                User Code
-              </label>
-              <input
-                type="text"
-                name="user_code"
-                value={formData.user_code}
-                onChange={handleInputChange}
-                className={`w-full p-2 border rounded-lg ${errors.user_code ? 'border-red-500' : 'border-gray-300'}`}
-              />
-              {errors.user_code && <p className="text-red-500 text-sm mt-1">{errors.user_code}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                First Name
-              </label>
-              <input
-                type="text"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                className={`w-full p-2 border rounded-lg ${errors.firstName ? 'border-red-500' : 'border-gray-300'}`}
-              />
-              {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Last Name
-              </label>
-              <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                className={`w-full p-2 border rounded-lg ${errors.lastName ? 'border-red-500' : 'border-gray-300'}`}
-              />
-              {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
-            </div>
-          </div>
-
-          {/* Contact Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className={`w-full p-2 border rounded-lg ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
-              />
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                className={`w-full p-2 border rounded-lg ${errors.phone ? 'border-red-500' : 'border-gray-300'}`}
-              />
-              {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Additional Phone Number
-            </label>
-            <input
-              type="tel"
-              name="contact2"
-              value={formData.contact2}
-              onChange={handleInputChange}
-              className={`w-full p-2 border rounded-lg ${errors.contact2 ? 'border-red-500' : 'border-gray-300'}`}
-            />
-            {errors.contact2 && <p className="text-red-500 text-sm mt-1">{errors.contact2}</p>}
-          </div>
-
-          {/* Address */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Address
-            </label>
-            <input
-              type="text"
-              name="address"
-              value={formData.address}
-              onChange={handleInputChange}
-              className={`w-full p-2 border rounded-lg ${errors.address ? 'border-red-500' : 'border-gray-300'}`}
-            />
-            {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                District
-              </label>
-              <input
-                type="text"
-                name="district"
-                value={formData.district}
-                onChange={handleInputChange}
-                className={`w-full p-2 border rounded-lg ${errors.district ? 'border-red-500' : 'border-gray-300'}`}
-              />
-              {errors.district && <p className="text-red-500 text-sm mt-1">{errors.district}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                City
-              </label>
-              <input
-                type="text"
-                name="city"
-                value={formData.city}
-                onChange={handleInputChange}
-                className={`w-full p-2 border rounded-lg ${errors.city ? 'border-red-500' : 'border-gray-300'}`}
-              />
-              {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                ZIP Code
-              </label>
-              <input
-                type="text"
-                name="zipCode"
-                value={formData.zipCode}
-                onChange={handleInputChange}
-                className={`w-full p-2 border rounded-lg ${errors.zipCode ? 'border-red-500' : 'border-gray-300'}`}
-              />
-              {errors.zipCode && <p className="text-red-500 text-sm mt-1">{errors.zipCode}</p>}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                State
-              </label>
-              <input
-                type="text"
-                name="state"
-                value={formData.state}
-                onChange={handleInputChange}
-                className={`w-full p-2 border rounded-lg ${errors.state ? 'border-red-500' : 'border-gray-300'}`}
-              />
-              {errors.state && <p className="text-red-500 text-sm mt-1">{errors.state}</p>}
-            </div>
-          </div>
-
-          {/* Status */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Status
-            </label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded-lg"
-            >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="pending">Pending</option>
-            </select>
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Notes
-            </label>
-            <textarea
-              name="notes"
-              value={formData.notes}
-              onChange={handleInputChange}
-              rows="4"
-              className="w-full p-2 border border-gray-300 rounded-lg"
-            ></textarea>
-          </div>
-
-          {/* Form Actions */}
-          <div className="flex justify-end space-x-4">
-            {/*<button*/}
-            {/*  type="button"*/}
-            {/*  onClick={() => navigate('/')}*/}
-            {/*  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"*/}
-            {/*>*/}
-            {/*  Cancel*/}
-            {/*</button>*/}
-            <button
-              type="submit"
-              className="px-4 py-2 flex flex-row items-center text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-              disabled={isLoading}
-            >
-              Add Customer
-              {isLoading && (
-                <FaSpinner
-                  size={20}
-                  color="white"
-                  className="ms-3 animate-spin"
+      {/* Main Content */}
+      <div className="h-[calc(100%-96px)] p-6 overflow-y-auto">
+        <div className="max-w-4xl mx-auto">
+          <div className="space-y-8">
+            {/* Avatar Section */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                  <Camera className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800">Profile Photo</h3>
+              </div>
+              
+              <div className="flex items-center gap-6">
+                <Avatar
+                  firstName={formData.firstName}
+                  lastName={formData.lastName}
+                  imageUrl={previewImage}
+                  editable={true}
+                  size={128}
+                  onImageUpload={(file) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setPreviewImage(reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                  }}
                 />
-              )}
-            </button>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-800 mb-2">Upload Customer Photo</h4>
+                  <p className="text-gray-600 text-sm mb-3">Add a profile photo for easy identification</p>
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <Upload className="w-4 h-4" />
+                    Click on avatar to upload image
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Personal Information */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <User className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800">Personal Information</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <InputField
+                  label="User Code"
+                  name="user_code"
+                  icon={Hash}
+                  error={errors.user_code}
+                  placeholder="Enter unique user code"
+                />
+                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <InputField
+                    label="First Name"
+                    name="firstName"
+                    icon={User}
+                    error={errors.firstName}
+                    placeholder="Enter first name"
+                  />
+                  <InputField
+                    label="Last Name"
+                    name="lastName"
+                    icon={User}
+                    error={errors.lastName}
+                    placeholder="Enter last name"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Information */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                  <Mail className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800">Contact Information</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <InputField
+                  label="Email Address"
+                  name="email"
+                  type="email"
+                  icon={Mail}
+                  error={errors.email}
+                  placeholder="Enter email address"
+                />
+                <InputField
+                  label="Phone Number"
+                  name="phone"
+                  type="tel"
+                  icon={Phone}
+                  error={errors.phone}
+                  placeholder="Enter phone number"
+                />
+                <div className="md:col-span-2">
+                  <InputField
+                    label="Additional Phone Number"
+                    name="contact2"
+                    type="tel"
+                    icon={Phone}
+                    error={errors.contact2}
+                    placeholder="Enter additional phone number (optional)"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Address Information */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                  <MapPin className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800">Address Information</h3>
+              </div>
+              
+              <div className="space-y-6">
+                <InputField
+                  label="Street Address"
+                  name="address"
+                  icon={MapPin}
+                  error={errors.address}
+                  placeholder="Enter street address"
+                />
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <InputField
+                    label="District"
+                    name="district"
+                    icon={Building}
+                    error={errors.district}
+                    placeholder="Enter district"
+                  />
+                  <InputField
+                    label="City"
+                    name="city"
+                    icon={Building}
+                    error={errors.city}
+                    placeholder="Enter city"
+                  />
+                  <InputField
+                    label="ZIP Code"
+                    name="zipCode"
+                    icon={Hash}
+                    error={errors.zipCode}
+                    placeholder="Enter ZIP code"
+                  />
+                </div>
+                
+                <InputField
+                  label="State/Province"
+                  name="state"
+                  icon={MapPin}
+                  error={errors.state}
+                  placeholder="Enter state or province"
+                />
+              </div>
+            </div>
+
+            {/* Additional Information */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800">Additional Information</h3>
+              </div>
+              
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <Users className="w-4 h-4 text-gray-500" />
+                    Customer Status
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="status"
+                      value={formData.status}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-white appearance-none"
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="pending">Pending</option>
+                    </select>
+                    <div className={`absolute top-1/2 right-12 transform -translate-y-1/2 px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(formData.status)}`}>
+                      {formData.status.charAt(0).toUpperCase() + formData.status.slice(1)}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-gray-500" />
+                    Notes
+                  </label>
+                  <textarea
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleInputChange}
+                    rows="4"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none"
+                    placeholder="Add any additional notes about this customer..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end">
+              <button
+                onClick={handleSubmit}
+                className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <FaSpinner className="w-5 h-5 animate-spin" />
+                    Adding Customer...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5" />
+                    Add Customer
+                  </>
+                )}
+              </button>
+            </div>
           </div>
-        </form>
+        </div>
       </div>
-      <ToastContainer autoClose={2000} />
     </div>
   );
 };

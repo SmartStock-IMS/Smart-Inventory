@@ -45,9 +45,8 @@ function InventoryManagerRoutes() {
                     {/* item: products */}
                     <Route path="/addproduct" element={<AddProduct />} />
                     <Route path="/productlist" element={<ProductList />} />
-                    <Route path="/bulk" element={<AddBulk />}>
-                      <Route path="add" element={<BulkList />} />
-                    </Route>
+                    <Route path="/bulk" element={<AddBulk />} />
+                    <Route path="/bulklist" element={<BulkList />} />
                     <Route path="/product">
                       <Route path=":id" element={<Product />} />
                     </Route>
