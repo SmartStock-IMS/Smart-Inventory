@@ -43,8 +43,8 @@ const DateRangeSelector = ({
   );
 
   return (
-    <div className="flex flex-row items-center gap-2">
-      <div className="relative">
+    <div className="flex flex-col sm:flex-row items-center gap-2">
+      <div className="relative w-full sm:w-auto">
         <div className="flex items-center space-x-2 bg-gray-50 rounded-md cursor-pointer hover:bg-gray-100 transition duration-200 px-3 py-2">
           <Calendar className="w-5 h-5 text-blue-500" />
           <DatePicker
@@ -65,7 +65,7 @@ const DateRangeSelector = ({
             startDate={fromDate}
             endDate={toDate}
             dateFormat="dd/MM/yyyy"
-            className="bg-transparent cursor-pointer text-sm font-medium text-gray-700 focus:outline-none w-36"
+            className="bg-transparent cursor-pointer text-sm font-medium text-gray-700 focus:outline-none w-24 sm:w-36"
             wrapperClassName="w-full"
             popperClassName="z-50"
             customInput={
@@ -77,9 +77,9 @@ const DateRangeSelector = ({
         </div>
       </div>
 
-      <span className="text-gray-400">→</span>
+      <span className="text-gray-400 hidden sm:inline">→</span>
 
-      <div className="relative">
+      <div className="relative w-full sm:w-auto">
         <div className="flex items-center space-x-2 bg-gray-50 rounded-md cursor-pointer hover:bg-gray-100 transition duration-200 px-3 py-2">
           <Calendar className="w-5 h-5 text-blue-500" />
           <DatePicker
@@ -91,7 +91,7 @@ const DateRangeSelector = ({
             minDate={fromDate}
             maxDate={maxSelectableDate}
             dateFormat="dd/MM/yyyy"
-            className="bg-transparent cursor-pointer text-sm font-medium text-gray-700 focus:outline-none w-36"
+            className="bg-transparent cursor-pointer text-sm font-medium text-gray-700 focus:outline-none w-24 sm:w-36"
             wrapperClassName="w-full"
             popperClassName="z-50"
             customInput={
@@ -124,12 +124,15 @@ const DashboardIncome = () => {
       try {
         const result = await getDashboardIncomeData(fromDate, toDate);
         if (result.success) {
-          setData(result.data);
+          // Ensure we always set an array
+          setData(Array.isArray(result.data) ? result.data : []);
         } else {
+          setData([]); // Set empty array on failure
           throw new Error(result.message);
         }
       } catch (err) {
         console.error("Failed to fetch dashboard data:", err);
+        setData([]); // Ensure data is always an array
         setError(err.message);
       } finally {
         setLoading(false);
@@ -143,11 +146,15 @@ const DashboardIncome = () => {
   const chartData = useMemo(() => {
     // Map fetched data by year-month key.
     const monthMap = {};
-    data.forEach((item) => {
-      const date = new Date(item.month);
-      const key = `${date.getFullYear()}-${date.getMonth()}`;
-      monthMap[key] = Number(item.totalIncome); // Ensure numeric value.
-    });
+    
+    // Ensure data is an array before calling forEach
+    if (Array.isArray(data)) {
+      data.forEach((item) => {
+        const date = new Date(item.month);
+        const key = `${date.getFullYear()}-${date.getMonth()}`;
+        monthMap[key] = Number(item.totalIncome); // Ensure numeric value.
+      });
+    }
 
     const start = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
     const end = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
@@ -176,12 +183,12 @@ const DashboardIncome = () => {
         <div className="text-center text-red-500">Error: {error}</div>
       ) : (
         <div className="h-full flex flex-col gap-2">
-          <div className="flex flex-row items-start justify-between">
-            <div className="w-1/2 flex flex-row items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+            <div className="w-full sm:w-1/2 flex flex-row items-center gap-2">
               <CircleDollarSign className="w-6 h-6" />
               <p className="text-lg font-semibold text-gray-800">Total Income</p>
             </div>
-            <div className="w-1/2 flex flex-row items-center justify-end">
+            <div className="w-full sm:w-1/2 flex flex-row items-center justify-start sm:justify-end">
               <DateRangeSelector
                 className=""
                 fromDate={fromDate}

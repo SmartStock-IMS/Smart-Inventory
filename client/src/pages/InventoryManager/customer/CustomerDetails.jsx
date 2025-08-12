@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@components/ui/Dialog.jsx";
-import OrderDetails from "@components/dashboard/orders/OrderDetails.jsx";
+import OrderDetails from "@components/InventoryManager/orders/OrderDetails.jsx";
 import { ChevronLeft } from "lucide-react";
 
 const CustomerDetails = () => {

@@ -218,13 +218,13 @@ const BillingDetails = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-6 sm:py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-16 2xl:px-24">
         
         {/* Customer Search Section */}
         {showCustomerSearch && (
           <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden mb-6">
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 sm:px-8 py-6">
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 sm:px-8 lg:px-12 py-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-white/20 rounded-xl">
                   <FaSearch className="w-5 h-5 text-white" />
@@ -236,7 +236,7 @@ const BillingDetails = () => {
               </div>
             </div>
 
-            <div className="p-6 sm:p-8">
+            <div className="p-6 sm:p-8 lg:p-12">
               {/* Search Input */}
               <div className="relative mb-6">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -294,7 +294,7 @@ const BillingDetails = () => {
         {!showCustomerSearch && (
           <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
             {/* Header */}
-            <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-6 sm:px-8 py-6">
+            <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-6 sm:px-8 lg:px-12 py-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-white/20 rounded-xl">
@@ -325,10 +325,12 @@ const BillingDetails = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit(customerSubmit)} className="p-6 sm:p-8 space-y-8">
+            <form onSubmit={handleSubmit(customerSubmit)} className="p-6 sm:p-8 lg:p-12">
               
-              {/* Customer Information Section */}
-              <div className="space-y-6">
+              <div className="space-y-8">
+                
+                {/* Customer Information Section */}
+                <div className="space-y-6">
                 <div className="flex items-center gap-3 pb-4 border-b border-slate-200">
                   <div className="p-2 bg-blue-100 rounded-lg">
                     <FaUser className="w-5 h-5 text-blue-600" />
@@ -336,7 +338,7 @@ const BillingDetails = () => {
                   <h3 className="text-xl font-bold text-slate-800">Customer Information</h3>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                   {/* First Name */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">First Name *</label>
@@ -428,7 +430,7 @@ const BillingDetails = () => {
                   </div>
 
                   {/* WhatsApp Number */}
-                  <div className="sm:col-span-2 space-y-2">
+                  <div className="sm:col-span-2 lg:col-span-3 xl:col-span-4 space-y-2">
                     <label className="text-sm font-medium text-slate-700">WhatsApp Number (Optional)</label>
                     <input
                       type="tel"
@@ -449,9 +451,9 @@ const BillingDetails = () => {
                   <h3 className="text-xl font-bold text-slate-800">Address Information</h3>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-6">
                   {/* Address Line 1 */}
-                  <div className="space-y-2">
+                  <div className="sm:col-span-2 lg:col-span-3 xl:col-span-3 space-y-2">
                     <label className="text-sm font-medium text-slate-700">Address Line 1</label>
                     <input
                       type="text"
@@ -473,7 +475,7 @@ const BillingDetails = () => {
                   </div>
 
                   {/* Address Line 2 */}
-                  <div className="space-y-2">
+                  <div className="sm:col-span-2 lg:col-span-3 xl:col-span-3 space-y-2">
                     <label className="text-sm font-medium text-slate-700">Address Line 2 (Optional)</label>
                     <input
                       type="text"
@@ -635,6 +637,8 @@ const BillingDetails = () => {
                     </>
                   )}
                 </button>
+              </div>
+              
               </div>
             </form>
           </div>

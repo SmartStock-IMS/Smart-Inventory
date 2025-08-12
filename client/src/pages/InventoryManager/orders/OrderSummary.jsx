@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getQuotations } from "@services/quotation-service.js";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@components/ui/Dialog.jsx";
-import OrderDetails from "@components/dashboard/orders/OrderDetails.jsx";
+import OrderDetails from "@components/InventoryManager/orders/OrderDetails.jsx";
 import { BookOpenCheck } from "lucide-react";
 
 const OrderSummary = () => {

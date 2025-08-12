@@ -1,15 +1,15 @@
 import { Routes, Route } from "react-router-dom";
 import Header from "../components/general/Header";
-import Home from "../pages/main/home/Home";
-import Order from "../pages/main/order/Order";
+import Home from "../pages/SalesRep/home/Home";
+import Order from "../pages/SalesRep/order/Order";
 import AddItems from "../components/order/AddItems";
 import ViewQuotation from "../components/order/ViewQuotation";
 import OrderList from "../components/order/OrderList";
 import BillingDetails from "../components/order/BillingDetails";
 import OrderConfirmation from "../components/order/OrderConfirmation";
-import Product from "../pages/main/product/Product";
-import History from "../pages/main/history/History.jsx";
-import AddCustomer from "../pages/main/customer/AddCustomer";
+import Product from "../pages/SalesRep/product/Product";
+import History from "../pages/SalesRep/history/History.jsx";
+import AddCustomer from "../pages/SalesRep/customer/AddCustomer";
 import { CartProvider } from "../context/cart/CartContext";
 
 function MainRoutes() {

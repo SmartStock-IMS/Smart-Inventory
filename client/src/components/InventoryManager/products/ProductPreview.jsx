@@ -1,4 +1,4 @@
-import point_icon from "../../../assets/images/dashboard/products/point.png";
+import point_icon from "../../../assets/images/InventoryManager/products/point.png";
 import ImageGallery from "./ImageGallery";
 
 const ProductPreview = ({ productDetails, image, isEditing }) => {

@@ -12,13 +12,21 @@ const Overview = () => {
   const fetchOverview = async (period) => {
     setLoading(true);
     setError(null);
-    const result = await getOverviewData(period);
-    if (result.success) {
-      setOverviewData(result.data);
-    } else {
-      setError(result.message);
+    try {
+      const result = await getOverviewData(period);
+      if (result.success) {
+        setOverviewData(result.data);
+      } else {
+        setOverviewData(null);
+        setError(result.message);
+      }
+    } catch (err) {
+      console.error("Failed to fetch overview data:", err);
+      setOverviewData(null);
+      setError(err.message || "Failed to fetch overview data");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // Fetch data when component mounts or timePeriod changes
@@ -59,28 +67,28 @@ const Overview = () => {
           </div>
 
           {/* Stats grid */}
-          <div className="w-full flex flex-row items-center gap-3">
+          <div className="w-full flex flex-col sm:flex-row items-center gap-3">
             {/* Customers stat */}
-            <div className="w-1/2 py-4 px-6 flex flex-row items-center gap-3 bg-gray-100 rounded-md">
-              <Users className="w-12 h-12 p-4 bg-gray-200 rounded-full shadow text-gray-600" />
+            <div className="w-full sm:w-1/2 py-4 px-4 sm:px-6 flex flex-row items-center gap-3 bg-gray-100 rounded-md">
+              <Users className="w-10 h-10 sm:w-12 sm:h-12 p-3 sm:p-4 bg-gray-200 rounded-full shadow text-gray-600 flex-shrink-0" />
               <div>
                 <p className="text-gray-600 text-sm font-light tracking-wide">
                   Customers
                 </p>
                 <p className="text-lg font-bold tracking-wider">
-                  {overviewData.totalCustomers}
+                  {overviewData?.totalCustomers || 0}
                 </p>
               </div>
             </div>
             {/* Income stat */}
-            <div className="w-1/2 py-4 px-6 flex flex-row items-center gap-3 bg-gray-100 rounded-md">
-              <HandCoins className="w-12 h-12 p-4 bg-gray-200 rounded-full shadow text-gray-600" />
+            <div className="w-full sm:w-1/2 py-4 px-4 sm:px-6 flex flex-row items-center gap-3 bg-gray-100 rounded-md">
+              <HandCoins className="w-10 h-10 sm:w-12 sm:h-12 p-3 sm:p-4 bg-gray-200 rounded-full shadow text-gray-600 flex-shrink-0" />
               <div>
                 <p className="text-gray-600 text-sm font-light tracking-wide">
                   Income
                 </p>
                 <p className="text-lg font-bold tracking-wide">
-                  Rs. {Number(overviewData.totalIncome).toLocaleString('en-LK', {
+                  Rs. {Number(overviewData?.totalIncome || 0).toLocaleString('en-LK', {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2
                 })}
@@ -94,22 +102,22 @@ const Overview = () => {
             <p className="text-sm font-light">
               Monthly best sales representatives :{" "}
             </p>
-            <div className="grid grid-cols-5 gap-3">
-              {overviewData.bestSalesReps &&
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              {overviewData?.bestSalesReps &&
               overviewData.bestSalesReps.length > 0 ? (
                 overviewData.bestSalesReps.map((rep) => (
                   <div
                     key={rep.sales_rep_id}
                     className="py-4 flex flex-col items-center gap-2 bg-white rounded-md"
                   >
-                    <User className="w-12 h-12 p-4 bg-gray-100 rounded-full shadow text-gray-600" />
+                    <User className="w-10 h-10 sm:w-12 sm:h-12 p-3 sm:p-4 bg-gray-100 rounded-full shadow text-gray-600" />
                     <p className="text-xs text-gray-600 text-center">
                       {rep.name}
                     </p>
                   </div>
                 ))
               ) : (
-                <div>No sales representative data available.</div>
+                <div className="col-span-full text-center text-gray-500">No sales representative data available.</div>
               )}
             </div>
           </div>

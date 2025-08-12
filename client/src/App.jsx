@@ -2,8 +2,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthContextProvider } from "./context/auth/AuthContext.jsx";
 import Login from "./pages/auth/Login.jsx";
 import Unauthorized from "./pages/auth/Unauthorized.jsx";
-import MainRoutes from "./routes/SalesRepRoutes.jsx";
-import DashboardRoutes from "./routes/InventoryManagerRoutes.jsx";
+import SalesRepRoutes from "./routes/SalesRepRoutes.jsx";
+import InventoryManagerRoutes from "./routes/InventoryManagerRoutes.jsx";
 
 function App() {
   return (
@@ -15,8 +15,8 @@ function App() {
           <Route path="/unauthorized" element={<Unauthorized />} />
 
           {/* Main Routes - No protection for development */}
-          <Route path="/*" element={<MainRoutes />} />
-          <Route path="/dashboard/*" element={<DashboardRoutes />} />
+          <Route path="/*" element={<SalesRepRoutes />} />
+          <Route path="/inventorymanager/*" element={<InventoryManagerRoutes />} />
         </Routes>
       </Router>
     </AuthContextProvider>

@@ -17,12 +17,15 @@ export default function PopularProducts() {
         const result = await getPopularProductsData();
         if (result.success) {
           console.log("result: ", result.data);
-          setProducts(result.data);
+          // Ensure we always set an array
+          setProducts(Array.isArray(result.data) ? result.data : []);
         } else {
+          setProducts([]); // Set empty array on failure
           throw new Error(result.message || "Failed to fetch data");
         }
       } catch (err) {
         console.error("Failed to fetch popular products data:", err);
+        setProducts([]); // Ensure products is always an array
         setError(err.message);
       } finally {
         setLoading(false);
@@ -58,22 +61,28 @@ export default function PopularProducts() {
             <span>Total Sold</span>
           </div>
           <div className="divide-y overflow-y-auto">
-            {products.map((product, index) => (
-              <div key={index} className="p-2 flex flex-row justify-between items-center text-sm">
-                <div className="w-5/6 flex flex-row items-center gap-3">
-                  <div className="w-1/4 rounded-md shadow">
-                    <img src={product.main_image} alt="product-image" className="object-contain aspect-square"/>
+            {Array.isArray(products) && products.length > 0 ? (
+              products.map((product, index) => (
+                <div key={index} className="p-2 flex flex-row justify-between items-center text-sm">
+                  <div className="w-5/6 flex flex-row items-center gap-3">
+                    <div className="w-1/4 rounded-md shadow">
+                      <img src={product.main_image} alt="product-image" className="object-contain aspect-square"/>
+                    </div>
+                    <div className="w-3/4">
+                      <p className="font-medium uppercase">{product.name}</p>
+                      <p className="text-gray-500">{product.category}</p>
+                    </div>
                   </div>
-                  <div className="w-3/4">
-                    <p className="font-medium uppercase">{product.name}</p>
-                    <p className="text-gray-500">{product.category}</p>
+                  <div className="w-1/6 flex flex-row items-center justify-end">
+                    <span className="font-medium">{product.totalSold}</span>
                   </div>
                 </div>
-                <div className="w-1/6 flex flex-row items-center justify-end">
-                  <span className="font-medium">{product.totalSold}</span>
-                </div>
+              ))
+            ) : (
+              <div className="p-4 text-center text-gray-500">
+                No popular products data available
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

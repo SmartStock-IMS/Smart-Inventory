@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@components/ui/Dialog.jsx";
-import OrderDetails from "@components/dashboard/orders/OrderDetails.jsx";
+import OrderDetails from "@components/InventoryManager/orders/OrderDetails.jsx";
 
 const History = () => {
   const { user } = useAuth();
