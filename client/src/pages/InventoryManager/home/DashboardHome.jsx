@@ -4,16 +4,16 @@ import Popular from "../../../components/InventoryManager/home/Popularproducts.j
 
 export const DashboardHome = () => {
   return (
-    <div className="h-full w-full flex flex-col lg:flex-row gap-2 lg:gap-4">
-      <div className="w-full lg:w-2/3 h-full flex flex-col gap-2 lg:gap-4">
-        <div className="h-fit">
+    <div className="w-full min-h-full flex flex-col lg:flex-row gap-4 overflow-y-auto">
+      <div className="w-full lg:w-2/3 flex flex-col gap-4">
+        <div className="min-h-[300px]">
           <Overview />
         </div>
-        <div className="flex flex-grow min-h-0">
+        <div className="min-h-[400px] lg:min-h-[500px]">
           <Income />
         </div>
       </div>
-      <div className="w-full lg:w-1/3 h-96 lg:h-full">
+      <div className="w-full lg:w-1/3 min-h-[500px] lg:min-h-[600px]">
         <Popular />
       </div>
     </div>

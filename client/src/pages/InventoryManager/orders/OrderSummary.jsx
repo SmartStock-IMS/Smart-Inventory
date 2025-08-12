@@ -12,7 +12,11 @@ const OrderSummary = () => {
   const [selectedItem, setSelectedItem] = useState(null);
 
   useEffect(() => {
-    fetchQuotations().then((data) => setQuotations(data));
+    fetchQuotations().then((data) => {
+      if (data && Array.isArray(data)) {
+        setQuotations(data);
+      }
+    });
   }, []);
 
   const fetchQuotations = async () => {
@@ -20,14 +24,14 @@ const OrderSummary = () => {
       const response = await getQuotations();
       if (response.success) {
         console.log("qt: ", response.data.data);
-        // setQuotations(response.data.data);
-        return response.data.data;
+        return response.data.data || []; // Return empty array if data is null/undefined
       } else {
         console.error("Error fetching quotations");
-        return null;
+        return [];
       }
     } catch (error) {
       console.error(error);
+      return []; // Return empty array on error
     }
   }
 
@@ -37,9 +41,9 @@ const OrderSummary = () => {
     setSelectedItem(orderItem);
   };
 
-  const statusOptions = ["All", ...new Set(quotations.map((item) => item.status))];
+  const statusOptions = ["All", ...new Set((quotations || []).map((item) => item.status))];
 
-  const filteredQuotations = quotations.filter((item) => {
+  const filteredQuotations = (quotations || []).filter((item) => {
     const matchesSearch = searchQuery
       ? item.quotation_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.customer_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -55,7 +59,11 @@ const OrderSummary = () => {
 
   const handleRefresh = () => {
     setIsOpen(false);
-    fetchQuotations().then((data) => setQuotations(data));
+    fetchQuotations().then((data) => {
+      if (data && Array.isArray(data)) {
+        setQuotations(data);
+      }
+    });
   }
 
   return (

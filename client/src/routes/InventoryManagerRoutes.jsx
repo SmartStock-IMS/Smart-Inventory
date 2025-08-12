@@ -35,40 +35,42 @@ function InventoryManagerRoutes() {
             <div className="flex-shrink-0 hidden md:block">
               <Sidebar />
             </div>
-            <div className="flex-1">
-              <main className="w-full h-full p-2 lg:p-4 overflow-y-auto bg-slate-100">
-                <Routes>
-                  {/* item: dashboard */}
-                  <Route path="/" element={<DashboardHome />} />
-                  <Route path="/orders" element={<OrderSummary />} />
-                  {/* item: products */}
-                  <Route path="/addproduct" element={<AddProduct />} />
-                  <Route path="/productlist" element={<ProductList />} />
-                  <Route path="/bulk" element={<AddBulk />}>
-                    <Route path="add" element={<BulkList />} />
-                  </Route>
-                  <Route path="/product">
-                    <Route path=":id" element={<Product />} />
-                  </Route>
-                  {/* item: customers */}
-                  <Route path="/addcustomer" element={<AddCustomer />} />
-                  <Route path="/customer-list" element={<CustomerList />} />
-                  <Route path="/customer/:user_code" element={<CustomerDetails />} />
-                  <Route path="/customer/edit/:user_code" element={<EditCustomer />} />
-                  {/* item: sales-reps */}
-                  <Route path="/addrep" element={<AddRep />} />
-                  <Route path="/repslist" element={<RepsList />} />
-                  <Route path="/sales-reps">
-                    <Route path=":id" element={<RepDetails />} />
-                  </Route>
-                  {/* item: users */}
-                  <Route path="/adduser" element={<AddUser />} />
-                  <Route path="/userdetails" element={<UserDetails />} />
-                  <Route path="/edituser" element={<EditUser />} />
-                  {/* item: reports */}
-                  <Route path="/daily-summary" element={<DailySummary />} />
-                  <Route path="/qb-export" element={<QBExport />} />
-                </Routes>
+            <div className="flex-1 overflow-hidden">
+              <main className="w-full h-full overflow-y-auto overflow-x-hidden bg-slate-100">
+                <div className="min-h-full p-2 lg:p-4">
+                  <Routes>
+                    {/* item: dashboard */}
+                    <Route path="/" element={<DashboardHome />} />
+                    <Route path="/orders" element={<OrderSummary />} />
+                    {/* item: products */}
+                    <Route path="/addproduct" element={<AddProduct />} />
+                    <Route path="/productlist" element={<ProductList />} />
+                    <Route path="/bulk" element={<AddBulk />}>
+                      <Route path="add" element={<BulkList />} />
+                    </Route>
+                    <Route path="/product">
+                      <Route path=":id" element={<Product />} />
+                    </Route>
+                    {/* item: customers */}
+                    <Route path="/addcustomer" element={<AddCustomer />} />
+                    <Route path="/customer-list" element={<CustomerList />} />
+                    <Route path="/customer/:user_code" element={<CustomerDetails />} />
+                    <Route path="/customer/edit/:user_code" element={<EditCustomer />} />
+                    {/* item: sales-reps */}
+                    <Route path="/addrep" element={<AddRep />} />
+                    <Route path="/repslist" element={<RepsList />} />
+                    <Route path="/sales-reps">
+                      <Route path=":id" element={<RepDetails />} />
+                    </Route>
+                    {/* item: users */}
+                    <Route path="/adduser" element={<AddUser />} />
+                    <Route path="/userdetails" element={<UserDetails />} />
+                    <Route path="/edituser" element={<EditUser />} />
+                    {/* item: reports */}
+                    <Route path="/daily-summary" element={<DailySummary />} />
+                    <Route path="/qb-export" element={<QBExport />} />
+                  </Routes>
+                </div>
               </main>
             </div>
           </div>

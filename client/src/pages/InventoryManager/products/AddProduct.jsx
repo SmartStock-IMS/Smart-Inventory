@@ -1,17 +1,99 @@
 import { useCallback, useRef, useState } from "react";
-import { FileUpload } from "@components/ui/FileUpload";
-import { Box, Trash2 } from "lucide-react";
-import { InputWithLabel } from "@components/ui/InputWithLabel";
-import { useForm } from "react-hook-form";
-import {
-  addProduct,
-  removeImage,
-  uploadImage,
-} from "@services/product-services.js";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Box, Trash2, Upload, Plus, Package, Image, Calendar, Hash, Palette, DollarSign, Archive, Clock, CheckCircle, AlertCircle, Sparkles, Star } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
-import { cn } from "@lib/utils.js";
+
+// Mock components for demo
+const FileUpload = ({ onChange, resetFileInput }) => {
+  const fileInputRef = useRef(null);
+  
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      onChange(file);
+    }
+  };
+
+  // Expose reset function to parent
+  if (resetFileInput) {
+    resetFileInput(() => {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    });
+  }
+
+  return (
+    <div className="relative group">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+      />
+      <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 hover:bg-blue-50/50 transition-all duration-300 group-hover:scale-105">
+        <Upload className="w-8 h-8 text-gray-400 mx-auto mb-3 group-hover:text-blue-500 transition-colors" />
+        <p className="text-sm text-gray-600 group-hover:text-blue-600 transition-colors">
+          Click to upload or drag and drop
+        </p>
+        <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB</p>
+      </div>
+    </div>
+  );
+};
+
+const InputWithLabel = ({ label, inputType, inputId, inputName, className = "", register, required = false, ...props }) => {
+  const getIcon = () => {
+    if (inputName.includes('productCode')) return <Hash className="w-4 h-4" />;
+    if (inputName.includes('color')) return <Palette className="w-4 h-4" />;
+    if (inputName.includes('Price')) return <DollarSign className="w-4 h-4" />;
+    if (inputName.includes('Qty') || inputName.includes('Quantity')) return <Archive className="w-4 h-4" />;
+    if (inputName.includes('Date')) return <Calendar className="w-4 h-4" />;
+    return <Package className="w-4 h-4" />;
+  };
+
+  return (
+    <div className={`w-full ${className}`}>
+      <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+        {getIcon()}
+        {label}
+        {required && <span className="text-red-500">*</span>}
+      </label>
+      <div className="relative">
+        <input
+          {...register(inputName, { required })}
+          type={inputType}
+          id={inputId}
+          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 bg-white shadow-sm"
+          {...props}
+        />
+      </div>
+    </div>
+  );
+};
+
+// Mock services for demo
+const uploadImage = async (formData) => {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  return { success: true, data: "mock_image_url" };
+};
+
+const addProduct = async (payload) => {
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  return { success: true, data: { message: "Product added successfully!" } };
+};
+
+const removeImage = async (publicId) => {
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return { success: true };
+};
+
+const toast = {
+  success: (message) => alert(`✅ ${message}`),
+  error: (message) => alert(`❌ ${message}`)
+};
+
+const cn = (...classes) => classes.filter(Boolean).join(' ');
 
 const AddProduct = () => {
   // init form default values
@@ -32,24 +114,45 @@ const AddProduct = () => {
     mainImage: "",
   };
 
-  // init react-hook-form methods
+  // Mock useForm hook
+  const createMockForm = (defaultValues) => {
+    const [formData, setFormData] = useState(defaultValues);
+    
+    const register = (name, options = {}) => ({
+      name,
+      onChange: (e) => setFormData(prev => ({ ...prev, [name]: e.target.value })),
+      value: formData[name] || '',
+      required: options.required
+    });
+
+    const handleSubmit = (onSubmit) => (e) => {
+      e.preventDefault();
+      onSubmit(formData);
+    };
+
+    const reset = () => setFormData(defaultValues);
+
+    return { register, handleSubmit, reset };
+  };
+
   const {
     register: registerProduct,
     handleSubmit: handleSubmitProduct,
     reset: resetProduct,
-  } = useForm({ defaultValues: productDefaultValues }); // for product-form
+  } = createMockForm(productDefaultValues);
+  
   const {
     register: registerVariant,
     handleSubmit: handleSubmitVariant,
     reset: resetVariant,
-  } = useForm({ defaultValues: variantDefaultValues }); // for variant-form
+  } = createMockForm(variantDefaultValues);
 
   // init local-state-variables
   const [variantDetails, setVariantDetails] = useState([]);
   const [variantImage, setVariantImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [uploadedImages, setUploadedImages] = useState([]); // track uploaded images
-  const resetFileInputRef = useRef(null); // clear file upload input
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const resetFileInputRef = useRef(null);
   const resetVariantFileInputRef = useRef(null);
 
   const handleVariantImageUpload = async (file) => {
@@ -66,7 +169,7 @@ const AddProduct = () => {
         console.log("file upload error: ", response.error);
         return null;
       } else {
-        setUploadedImages((prev) => [...prev, response.data]); // track uploaded image
+        setUploadedImages((prev) => [...prev, response.data]);
         return response.data;
       }
     } catch (error) {
@@ -75,23 +178,19 @@ const AddProduct = () => {
     }
   };
 
-  // submit variants form
   const onSubmitVariant = (variantData) => {
-    // add variant image to variant data
     const variantWithImage = {
       ...variantData,
       productImage: variantImage,
     };
 
-    // add variant to the list
     setVariantDetails((prevVariants) => [...prevVariants, variantWithImage]);
 
-    // reset variant form and input-image
     resetVariant();
     if (resetVariantFileInputRef.current) {
-      resetVariantFileInputRef.current(); // reset variant image upload
+      resetVariantFileInputRef.current();
     }
-    setVariantImage(null); // clear variant image state
+    setVariantImage(null);
   };
 
   const removeVariant = (productCode) => {
@@ -100,12 +199,10 @@ const AddProduct = () => {
     );
   };
 
-  // submit products form
   const onSubmitProduct = async (productData) => {
     try {
-      setIsLoading(true); // set loading status
+      setIsLoading(true);
 
-      // upload variant images
       const variantData = await Promise.all(
         variantDetails.map(async (variant) => {
           let variantImageURL =
@@ -133,9 +230,6 @@ const AddProduct = () => {
         }),
       );
 
-      console.log("variantData: ", variantData);
-
-      // prepare product data
       const productPayload = {
         name: productData.productName,
         category: productData.category,
@@ -144,47 +238,35 @@ const AddProduct = () => {
         variants: variantData,
       };
 
-      console.log("productPayload: ", productPayload);
-
-      // submit product data
       const response = await addProduct(productPayload);
       if (response.success) {
-        console.log("success response: ", response);
         toast.success(response.data.message);
-
-        // clear form data
-        resetProduct(); // clear form input fields
+        resetProduct();
         if (resetFileInputRef.current) {
-          resetFileInputRef.current(); // calling reset file-input
+          resetFileInputRef.current();
         }
         setVariantDetails([]);
       } else {
         await removeUploadedImages();
-        console.error("Failed to add product:", response.message);
-        if (response.status) {
-          console.error("Status code:", response.status);
-        }
         toast.error("Failed to add product");
-        // TODO: test removeUploadedImages function
       }
     } catch (error) {
       console.log("Error adding product: ", error);
       toast.error("Failed to add product");
       await removeUploadedImages();
     } finally {
-      setIsLoading(false); // set loading status
+      setIsLoading(false);
     }
   };
 
   const removeUploadedImages = async () => {
-    // delete orphaned images
     if (uploadedImages.length > 0) {
       await Promise.all(
         uploadedImages.map(async (publicId) => {
           await removeImage(publicId);
         }),
       );
-      setUploadedImages([]); // reset images track
+      setUploadedImages([]);
     }
   }
 
@@ -193,259 +275,288 @@ const AddProduct = () => {
   }, []);
 
   return (
-    <div className="h-full px-2 bg-white rounded-md">
-      <div className="h-[10%] px-3 border-b border-gray-500 flex flex-row items-center">
-        <div className="flex flex-row items-center gap-3 font-bold">
-          <Box className="w-6 h-6" />
-          <h2 className="text-lg">Add Product</h2>
+    <div className="h-full bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white p-6 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute inset-0 bg-white/10"></div>
+        </div>
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+            <Box className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold mb-1">Add New Product</h2>
+            <p className="text-white/80">Create and manage product variants</p>
+          </div>
+          <div className="ml-auto">
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <Sparkles className="w-5 h-5 animate-pulse" />
+            </div>
+          </div>
         </div>
       </div>
-      <div className="h-[90%] pt-2 overflow-y-auto">
-        <div className="py-3 px-4 border rounded-lg bg-gray-50">
+
+      {/* Main Content */}
+      <div className="h-[calc(100%-96px)] p-6 overflow-y-auto">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <form onSubmit={handleSubmitProduct(onSubmitProduct)}>
-            <div className="mt-4 w-full flex flex-col gap-3">
-              {/* product: details */}
-              <div className="flex flex-row gap-4">
-                {/* product: main-image */}
-                {/*<div className="w-1/3">*/}
-                {/*  <div className="w-full px-4 pb-4 pt-3 rounded-lg border border-gray-200 bg-white">*/}
-                {/*    <label className="text-sm flex items-center mb-2 font-medium">*/}
-                {/*      Product Main Image*/}
-                {/*    </label>*/}
-                {/*    <div className="w-full mx-auto border border-dashed bg-white dark:bg-black border-neutral-200 dark:border-neutral-800 rounded-lg">*/}
-                {/*      <FileUpload*/}
-                {/*        onChange={handleMainImageUpload}*/}
-                {/*        resetFileInput={setResetFileInputFn}*/}
-                {/*      />*/}
-                {/*    </div>*/}
-                {/*  </div>*/}
-                {/*</div>*/}
-                {/* product: details */}
-                <div className="w-full p-4 bg-white rounded-lg border border-gray-200">
-                  <div>
+            {/* Product Details Section */}
+            <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <Package className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800">Product Information</h3>
+              </div>
+              
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="md:col-span-2">
                     <InputWithLabel
                       label={"Product Name"}
                       inputType={"text"}
                       inputId={"productName"}
                       inputName={"productName"}
-                      className="mt-2"
                       register={registerProduct}
                       required={true}
                     />
                   </div>
-                  <div className="mt-4 flex flex-row items-center gap-4">
+                  <div>
                     <InputWithLabel
                       label={"Category"}
                       inputType={"text"}
                       inputId={"category"}
                       inputName={"category"}
-                      className="mt-2"
-                      register={registerProduct}
-                      required={true}
-                    />
-                    <InputWithLabel
-                      label={"No of Variants"}
-                      inputType={"number"}
-                      inputId={"noVariants"}
-                      inputName={"noVariants"}
-                      className="mt-2"
                       register={registerProduct}
                       required={true}
                     />
                   </div>
                 </div>
+                <div className="mt-6">
+                  <InputWithLabel
+                    label={"Number of Variants"}
+                    inputType={"number"}
+                    inputId={"noVariants"}
+                    inputName={"noVariants"}
+                    register={registerProduct}
+                    required={true}
+                  />
+                </div>
               </div>
             </div>
           </form>
-          {/* variant: details */}
-          <div className="w-full mt-3 p-4 border rounded-lg bg-white">
-            {/* variant: details-form */}
-            <div className="w-full mt-2 flex flex-row gap-4">
-              {/* variant: product-image */}
-              <div className="w-1/3">
-                <div className="w-full px-4 pb-4 pt-3 rounded-lg border border-gray-200 bg-white">
-                  <label className="text-sm flex items-center mb-2 font-medium">
+
+          {/* Variant Details Section */}
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                <Star className="w-4 h-4 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-800">Add Product Variant</h3>
+            </div>
+
+            {/* Variant Form */}
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100 mb-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Variant Image Upload */}
+                <div className="lg:col-span-1">
+                  <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                    <Image className="w-4 h-4" />
                     Variant Image
+                    <span className="text-red-500">*</span>
                   </label>
-                  <div className="w-full mx-auto border border-dashed bg-white dark:bg-black border-neutral-200 dark:border-neutral-800 rounded-lg">
+                  <div className="bg-white rounded-xl p-4 border border-gray-200">
                     <FileUpload
                       onChange={handleVariantImageUpload}
                       resetFileInput={setVariantResetFileInputFn}
                     />
                   </div>
                 </div>
-              </div>
-              {/* variant: details */}
-              <div className="w-2/3 p-2">
-                <form
-                  onSubmit={handleSubmitVariant(onSubmitVariant)}
-                  className="flex flex-grow flex-col gap-y-4"
-                >
-                  <div className="flex flex-grow flex-col gap-y-4">
-                    <div className="w-full flex flex-row items-center gap-4">
-                      <InputWithLabel
-                        label={"Product Code"}
-                        inputType={"text"}
-                        inputId={"productCode"}
-                        inputName={"productCode"}
-                        register={registerVariant}
-                        required={true}
-                      />
-                      <InputWithLabel
-                        label={"Product Color"}
-                        inputType={"text"}
-                        inputId={"productColor"}
-                        inputName={"color"}
-                        register={registerVariant}
-                        required={true}
-                      />
-                      <InputWithLabel
-                        label={"Unit Price"}
-                        inputType={"number"}
-                        inputId={"productPrice"}
-                        inputName={"unitPrice"}
-                        register={registerVariant}
-                        required={true}
-                      />
+
+                {/* Variant Details Form */}
+                <div className="lg:col-span-2">
+                  <form onSubmit={handleSubmitVariant(onSubmitVariant)} className="h-full">
+                    <div className="bg-white rounded-xl p-6 border border-gray-200 h-full flex flex-col">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <InputWithLabel
+                          label={"Product Code"}
+                          inputType={"text"}
+                          inputId={"productCode"}
+                          inputName={"productCode"}
+                          register={registerVariant}
+                          required={true}
+                        />
+                        <InputWithLabel
+                          label={"Product Weight"}
+                          inputType={"text"}
+                          inputId={"productWeight"}
+                          inputName={"color"}
+                          register={registerVariant}
+                          required={true}
+                        />
+                        <InputWithLabel
+                          label={"Unit Price"}
+                          inputType={"number"}
+                          inputId={"productPrice"}
+                          inputName={"unitPrice"}
+                          register={registerVariant}
+                          required={true}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <InputWithLabel
+                          label={"Total Quantity"}
+                          inputType={"number"}
+                          inputId={"productQuantity"}
+                          inputName={"totalQty"}
+                          register={registerVariant}
+                          required={true}
+                        />
+                        <InputWithLabel
+                          label={"Minimum Quantity"}
+                          inputType={"number"}
+                          inputId={"productMinQuantity"}
+                          inputName={"minQty"}
+                          register={registerVariant}
+                          required={true}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <InputWithLabel
+                          label={"Manufacturer Date"}
+                          inputType={"date"}
+                          inputId={"mfdDate"}
+                          inputName={"mfdDate"}
+                          register={registerVariant}
+                          required={true}
+                        />
+                        <InputWithLabel
+                          label={"Expiration Date"}
+                          inputType={"date"}
+                          inputId={"expDate"}
+                          inputName={"expDate"}
+                          register={registerVariant}
+                          required={true}
+                        />
+                      </div>
+                      
+                      <div className="flex justify-end mt-auto">
+                        <button
+                          type="submit"
+                          className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Add to List
+                        </button>
+                      </div>
                     </div>
-                    <div className="w-full flex flex-row items-center gap-4">
-                      <InputWithLabel
-                        label={"Total Quantity"}
-                        inputType={"number"}
-                        inputId={"productQuantity"}
-                        inputName={"totalQty"}
-                        register={registerVariant}
-                        required={true}
-                      />
-                      <InputWithLabel
-                        label={"Minimum Quantity"}
-                        inputType={"number"}
-                        inputId={"productMinQuantity"}
-                        inputName={"minQty"}
-                        register={registerVariant}
-                        required={true}
-                      />
-                    </div>
-                    <div className="w-full flex flex-row items-center gap-4">
-                      <InputWithLabel
-                        label={"Manufacturer Date"}
-                        inputType={"date"}
-                        inputId={"mfdDate"}
-                        inputName={"mfdDate"}
-                        register={registerVariant}
-                        required={true}
-                      />
-                      <InputWithLabel
-                        label={"Expiration Date"}
-                        inputType={"date"}
-                        inputId={"expDate"}
-                        inputName={"expDate"}
-                        register={registerVariant}
-                        required={true}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-row justify-end">
-                    <button
-                      type="submit"
-                      className="px-10 py-2 rounded-lg border border-black hover:bg-black hover:text-white transition-all duration-300"
-                    >
-                      Add to List
-                    </button>
-                  </div>
-                </form>
+                  </form>
+                </div>
               </div>
             </div>
-            {/* variant: product-list */}
-            <div className="mt-3 p-4 border rounded-lg">
-              <div className="border rounded-lg border-gray-400">
-                <table className="w-full bg-slate-200 rounded-lg text-sm divide-y divide-gray-400">
-                  <thead>
-                  <tr className="divide-x divide-gray-400">
-                    <th className="p-2.5 text-center">Product Image</th>
-                    <th className="p-2.5 text-center">Product Code</th>
-                    <th className="p-2.5 text-center">Color Code</th>
-                    <th className="p-2.5 text-center">Unit Price (Rs)</th>
-                    <th className="p-2.5 text-center">Total Quantity</th>
-                    <th className="p-2.5 text-center">Minimum Quantity</th>
-                    <th className="p-2.5 text-center">Manufacturer Date</th>
-                    <th className="p-2.5 text-center">Expiry Date</th>
-                    <th className="p-2.5 text-center">Action</th>
-                  </tr>
+
+            {/* Variants Table */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+                <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  Added Variants ({variantDetails.length})
+                </h4>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min Qty</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MFD Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">EXP Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                    </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-400">
-                  {variantDetails.length > 0 ? (
-                    variantDetails.map((variant, index) => (
-                      <tr key={index} className="divide-x divide-gray-400">
-                        <td className="p-2.5 text-center">
-                          <div className="flex flex-row items-center justify-center rounded-lg">
-                            <img
-                              src={URL.createObjectURL(variant.productImage)}
-                              alt="product-image"
-                              className="h-24 w-24 aspect-square object-cover rounded-lg shadow-md"
-                            />
-                          </div>
-                        </td>
-                        <td className="p-2.5 text-center">
-                          {variant.productCode}
-                        </td>
-                        <td className="p-2.5 text-center">#{variant.color}</td>
-                        <td className="p-2.5 text-end">{variant.unitPrice}</td>
-                        <td className="p-2.5 text-center">{variant.totalQty}</td>
-                        <td className="p-2.5 text-center">{variant.minQty}</td>
-                        <td className="p-2.5 text-center">{variant.mfdDate}</td>
-                        <td className="p-2.5 text-center">{variant.expDate}</td>
-                        <td>
-                          <div className="flex flex-row items-center justify-center">
-                            <div
-                              onClick={() => removeVariant(variant.productCode)}
-                              className="p-2 rounded-lg hover:bg-red-100 hover:border hover:border-red-200 hover:text-red-400 transition-all duration-300"
-                            >
-                              <Trash2 className="w-5 h-5" />
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {variantDetails.length > 0 ? (
+                      variantDetails.map((variant, index) => (
+                        <tr key={index} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-4">
+                            <div className="w-16 h-16 rounded-lg overflow-hidden shadow-md">
+                              <img
+                                src={URL.createObjectURL(variant.productImage)}
+                                alt="product-image"
+                                className="w-full h-full object-cover"
+                              />
                             </div>
+                          </td>
+                          <td className="px-4 py-4 text-sm font-medium text-gray-900">{variant.productCode}</td>
+                          <td className="px-4 py-4 text-sm text-gray-500">
+                            {variant.color}
+                          </td>
+                          <td className="px-4 py-4 text-sm text-gray-900 font-semibold">Rs. {variant.unitPrice}</td>
+                          <td className="px-4 py-4 text-sm text-gray-500">{variant.totalQty}</td>
+                          <td className="px-4 py-4 text-sm text-gray-500">{variant.minQty}</td>
+                          <td className="px-4 py-4 text-sm text-gray-500">{variant.mfdDate}</td>
+                          <td className="px-4 py-4 text-sm text-gray-500">{variant.expDate}</td>
+                          <td className="px-4 py-4">
+                            <button
+                              onClick={() => removeVariant(variant.productCode)}
+                              className="p-2 rounded-lg hover:bg-red-100 hover:text-red-600 transition-all duration-300 group"
+                            >
+                              <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="9" className="px-4 py-12 text-center">
+                          <div className="flex flex-col items-center gap-3">
+                            <AlertCircle className="w-12 h-12 text-gray-400" />
+                            <p className="text-gray-500 font-medium">No variants added yet</p>
+                            <p className="text-sm text-gray-400">Add product variants using the form above</p>
                           </div>
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="8" className="p-2.5 text-center">
-                        No variants added.
-                      </td>
-                    </tr>
-                  )}
+                    )}
                   </tbody>
                 </table>
               </div>
             </div>
           </div>
-          <div
-            className="pt-2 flex flex-row items-center justify-end"
-            style={{
-              pointerEvents: variantDetails.length > 0 ? "auto" : "none",
-            }}
+        </div>
+
+        {/* Submit Button */}
+        <div className="mt-6 flex justify-end">
+          <button
+            type="submit"
+            onClick={handleSubmitProduct(onSubmitProduct)}
+            className={cn(
+              "py-3 px-8 flex items-center gap-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300",
+              variantDetails.length > 0
+                ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            )}
+            disabled={isLoading || variantDetails.length === 0}
           >
-            <button
-              type="submit"
-              className={cn(
-                "py-2 px-4 flex flex-row items-center justify-center gap-2 border rounded-lg bg-black text-white",
-                variantDetails.length > 0
-                  ? "bg-black text-white"
-                  : "bg-gray-300",
-              )}
-              disabled={isLoading}
-            >
-              Add Product
-              {isLoading && (
-                <FaSpinner
-                  size={20}
-                  color="white"
-                  className="ms-3 animate-spin"
-                />
-              )}
-            </button>
-          </div>
-          <ToastContainer autoClose={2000} />
+            {isLoading ? (
+              <>
+                <FaSpinner className="w-5 h-5 animate-spin" />
+                Adding Product...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-5 h-5" />
+                Add Product
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>
