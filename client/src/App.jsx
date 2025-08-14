@@ -2,9 +2,9 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthContextProvider } from "./context/auth/AuthContext.jsx";
 import Login from "./pages/auth/Login.jsx";
 import Unauthorized from "./pages/auth/Unauthorized.jsx";
-import MainRoutes from "./routes/MainRoutes";
-import DashboardRoutes from "./routes/DashboardRoutes";
-import ProtectedRoutes from "./routes/ProtectedRoutes.jsx";
+import SalesRepRoutes from "./routes/SalesRepRoutes.jsx";
+import InventoryManagerRoutes from "./routes/InventoryManagerRoutes.jsx";
+import AdmiAdministratorRoutes from "./routes/AdministratorRoutes.jsx";
 
 function App() {
   return (
@@ -15,16 +15,10 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
 
-          {/* Protected Routes (Sales-Reps) */}
-          <Route element={<ProtectedRoutes allowedRoles={["001", "002"]} />}>
-            <Route path="/*" element={<MainRoutes />} />
-          </Route>
-
-          {/* Protected Routes (Accountant and Admin) */}
-          <Route element={<ProtectedRoutes allowedRoles={["002"]} />}>
-            <Route path="/*" element={<MainRoutes />} />
-            <Route path="/dashboard/*" element={<DashboardRoutes />} />
-          </Route>
+          {/* Main Routes - No protection for development */}
+          <Route path="/*" element={<SalesRepRoutes />} />
+          <Route path="/inventorymanager/*" element={<InventoryManagerRoutes />} />
+          <Route path="/administrator/*" element={<AdmiAdministratorRoutes />} />
         </Routes>
       </Router>
     </AuthContextProvider>
