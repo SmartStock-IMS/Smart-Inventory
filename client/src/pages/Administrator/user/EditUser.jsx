@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Save, X, User, Mail, Phone, Building, Globe, MapPin, Calendar, Users } from 'lucide-react';
+import { ArrowLeft, Save, X, User, Mail, Phone, Building, Globe, MapPin, Calendar, Users, Lock, Eye, EyeOff, AlertTriangle, Check } from 'lucide-react';
 
 const EditProfileForm = () => {
   const navigate = useNavigate();
@@ -16,6 +16,17 @@ const EditProfileForm = () => {
     role: '',
     joinDate: ''
   });
+
+  const [passwordData, setPasswordData] = useState({
+    newPassword: '',
+    confirmPassword: ''
+  });
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordChanged, setPasswordChanged] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [showPasswordConfirmModal, setShowPasswordConfirmModal] = useState(false);
 
   // Get user data from location state or provide defaults
   useEffect(() => {
@@ -43,13 +54,88 @@ const EditProfileForm = () => {
     }));
   };
 
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user starts typing
+    if (passwordError) {
+      setPasswordError('');
+    }
+    
+    // Mark that password has been changed
+    if (!passwordChanged && (name === 'newPassword' || name === 'confirmPassword')) {
+      setPasswordChanged(true);
+    }
+  };
+
+  const validatePassword = () => {
+    if (passwordChanged) {
+      if (!passwordData.newPassword) {
+        setPasswordError('New password is required');
+        return false;
+      }
+      if (passwordData.newPassword.length < 6) {
+        setPasswordError('Password must be at least 6 characters long');
+        return false;
+      }
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        setPasswordError('Passwords do not match');
+        return false;
+      }
+    }
+    return true;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+    
+    // Validate password if it was changed
+    if (!validatePassword()) {
+      return;
+    }
+    
+    // Show confirmation dialog if password was changed
+    if (passwordChanged) {
+      setShowPasswordConfirmModal(true);
+      return;
+    }
+    
+    // If no password change, submit directly
+    submitForm();
+  };
+
+  const submitForm = () => {
+    const updatedData = { ...formData };
+    if (passwordChanged) {
+      updatedData.passwordChanged = true;
+      // In a real app, you would hash the password on the server
+      console.log('New password would be updated:', passwordData.newPassword);
+    }
+    
+    console.log('Form submitted:', updatedData);
+    
     // After successful save, navigate back to user details with updated data
     navigate('/administrator/userdetails', { 
-      state: { updatedUser: formData, message: 'User updated successfully!' }
+      state: { 
+        updatedUser: updatedData, 
+        message: passwordChanged 
+          ? 'User profile and password updated successfully!' 
+          : 'User profile updated successfully!' 
+      }
     });
+  };
+
+  const handlePasswordConfirm = () => {
+    setShowPasswordConfirmModal(false);
+    submitForm();
+  };
+
+  const handlePasswordCancel = () => {
+    setShowPasswordConfirmModal(false);
   };
 
   const handleCancel = () => {
@@ -275,6 +361,102 @@ const EditProfileForm = () => {
                 </div>
               </div>
 
+              {/* Password Management Section */}
+              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
+                  <div className="p-2 bg-red-100 rounded-lg">
+                    <Lock className="w-6 h-6 text-red-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-800">Password Management</h3>
+                  <div className="ml-auto">
+                    {passwordChanged && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        Password will be changed
+                      </span>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 text-yellow-600 mt-0.5">⚠️</div>
+                    <div>
+                      <h4 className="text-sm font-medium text-yellow-800">Password Change Notice</h4>
+                      <p className="text-sm text-yellow-700 mt-1">
+                        Changing the password will require the user to log in with the new credentials. Make sure to inform them about the password change.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700" htmlFor="newPassword">
+                      <Lock className="w-4 h-4" />
+                      New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                        id="newPassword"
+                        name="newPassword"
+                        type={showPassword ? "text" : "password"}
+                        value={passwordData.newPassword}
+                        onChange={handlePasswordChange}
+                        placeholder="Enter new password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700" htmlFor="confirmPassword">
+                      <Lock className="w-4 h-4" />
+                      Confirm Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={passwordData.confirmPassword}
+                        onChange={handlePasswordChange}
+                        placeholder="Confirm new password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                {passwordError && (
+                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-700 flex items-center gap-2">
+                      <X className="w-4 h-4" />
+                      {passwordError}
+                    </p>
+                  </div>
+                )}
+                
+                <div className="mt-4 text-sm text-gray-600">
+                  <p>• Password must be at least 6 characters long</p>
+                  <p>• Make sure both password fields match</p>
+                  <p>• Leave blank to keep the current password</p>
+                </div>
+              </div>
+
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row justify-end gap-4 pt-6 border-t border-gray-200">
                 <button
@@ -297,6 +479,96 @@ const EditProfileForm = () => {
           </div>
         </div>
       </div>
+
+      {/* Custom Password Confirmation Modal */}
+      {showPasswordConfirmModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 max-w-md w-full transform transition-all duration-300 scale-100">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 rounded-t-2xl text-white">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/20 rounded-full">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">Confirm Password Change</h3>
+                  <p className="text-orange-100 text-sm">This action requires confirmation</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              <div className="mb-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    {formData.firstName && formData.lastName ? 
+                      `${formData.firstName.charAt(0)}${formData.lastName.charAt(0)}` : 
+                      'U'}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-800">
+                      {formData.firstName && formData.lastName ? 
+                        `${formData.firstName} ${formData.lastName}` : 
+                        'User'}
+                    </p>
+                    <p className="text-sm text-gray-500">{formData.email}</p>
+                  </div>
+                </div>
+                
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm">
+                      <p className="font-medium text-orange-800 mb-1">
+                        Are you sure you want to change this user's password?
+                      </p>
+                      <ul className="text-orange-700 space-y-1">
+                        <li>• The user will need to use the new password to log in</li>
+                        <li>• This action cannot be undone</li>
+                        <li>• Make sure to inform the user about this change</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                    <Lock className="w-4 h-4" />
+                    <span className="font-medium">New Password Length:</span>
+                    <span className="text-gray-800">{passwordData.newPassword.length} characters</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Check className="w-4 h-4" />
+                    <span className="font-medium">Password Confirmation:</span>
+                    <span className={passwordData.newPassword === passwordData.confirmPassword ? "text-green-600" : "text-red-600"}>
+                      {passwordData.newPassword === passwordData.confirmPassword ? "Matched" : "Not matched"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handlePasswordCancel}
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium flex items-center justify-center gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePasswordConfirm}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-200 font-medium shadow-lg flex items-center justify-center gap-2"
+                >
+                  <Check className="w-4 h-4" />
+                  Confirm Change
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

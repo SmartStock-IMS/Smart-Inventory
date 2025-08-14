@@ -17,6 +17,10 @@ import RepsList from "../pages/InventoryManager/sales-rep/SalesRepList.jsx";
 import RepDetails from "../pages/InventoryManager/sales-rep/RepDetails.jsx";
 import EditRep from "../pages/InventoryManager/sales-rep/EditRep.jsx";
 import AddRep from "../pages/InventoryManager/sales-rep/AddRep.jsx";
+import AddRM from "../pages/InventoryManager/RManager/AddRM.jsx";
+import RMList from "../pages/InventoryManager/RManager/RMList.jsx";
+import RMDetails from "../pages/InventoryManager/RManager/RMDetails.jsx";
+import EditRM from "../pages/InventoryManager/RManager/EditRM.jsx";
 import Product from "../pages/InventoryManager/products/Product.jsx";
 import EditUser from "../pages/InventoryManager/user/EditUser.jsx";
 import OrderSummary from "../pages/InventoryManager/orders/OrderSummary.jsx";
@@ -61,10 +65,12 @@ function InventoryManagerRoutes() {
                     <Route path="/sales-rep" element={<RepsList />} />
                     <Route path="/sales-rep/:repCode" element={<RepDetails />} />
                     <Route path="/sales-rep/edit/:repCode" element={<EditRep />} />
-                    {/* item: users */}
-                    <Route path="/adduser" element={<AddUser />} />
-                    <Route path="/userdetails" element={<UserDetails />} />
-                    <Route path="/edituser" element={<EditUser />} />
+                    {/* item: resource managers */}
+                    <Route path="/addrm" element={<AddRM />} />
+                    <Route path="/rm-list" element={<RMList />} />
+                    <Route path="/rm-details/:repCode" element={<RMDetails />} />
+                    <Route path="/rm-edit/:repCode" element={<EditRM />} />
+                    
                     {/* item: reports */}
                     <Route path="/daily-summary" element={<DailySummary />} />
                     <Route path="/qb-export" element={<QBExport />} />

@@ -6,7 +6,7 @@ import { NotebookPen, Download, Calendar, Filter, TrendingUp, FileText, Users, P
 const mockDailySummaryData = [
   {
     quotation_id: "QUO001",
-    quotation_date: "2025-08-12",
+    quotation_date: "2025-08-13", // Today's date
     customer_id: "CUST001",
     sales_rep_id: "EMP001",
     no_items: 5,
@@ -15,7 +15,7 @@ const mockDailySummaryData = [
   },
   {
     quotation_id: "QUO002",
-    quotation_date: "2025-08-12",
+    quotation_date: "2025-08-13", // Today's date
     customer_id: "CUST002",
     sales_rep_id: "EMP002",
     no_items: 3,
@@ -24,7 +24,7 @@ const mockDailySummaryData = [
   },
   {
     quotation_id: "QUO003",
-    quotation_date: "2025-08-12",
+    quotation_date: "2025-08-13", // Today's date
     customer_id: "CUST003",
     sales_rep_id: "EMP001",
     no_items: 7,
@@ -33,7 +33,7 @@ const mockDailySummaryData = [
   },
   {
     quotation_id: "QUO004",
-    quotation_date: "2025-08-12",
+    quotation_date: "2025-08-13", // Today's date
     customer_id: "CUST004",
     sales_rep_id: "EMP003",
     no_items: 2,

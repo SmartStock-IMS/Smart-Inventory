@@ -12,6 +12,7 @@ import {
   UserCheck,
   User,
   BarChart3,
+  Settings,
   HelpCircle,
   LogOut,
   Sparkles,
@@ -22,7 +23,6 @@ import products from "../../../assets/images/InventoryManager/genaral/home1.png"
 import customers from "../../../assets/images/InventoryManager/genaral/home2-customers.png";
 import Salesrep from "../../../assets/images/InventoryManager/genaral/Salesrep.png";
 import reports from "../../../assets/images/InventoryManager/genaral/Report.png";
-import users from "../../../assets/images/InventoryManager/genaral/User.png";
 import { useAuth } from "../../../context/auth/AuthContext";
 import { useTheme } from "../../../context/theme/ThemeContext";
 import { useSidebar } from "../../../context/sidebar/SidebarContext";
@@ -99,15 +99,14 @@ const Sidebar = () => {
       ]
     },
     {
-      id: "users",
-      label: "Users",
-      icon: users,
-      lucideIcon: User,
+      id: "resources",
+      label: "R. Manager",
+      icon: null,
+      lucideIcon: Settings,
       hasSubmenu: true,
       submenu: [
-        { label: "Add User", path: "/inventorymanager/adduser" },
-        { label: "User Details", path: "/inventorymanager/userdetails" },
-        { label: "Edit User", path: "/inventorymanager/edituser" }
+        { label: "Add RM", path: "/inventorymanager/addrm" },
+        { label: "RM List", path: "/inventorymanager/rm-list" }
       ]
     },
     {
