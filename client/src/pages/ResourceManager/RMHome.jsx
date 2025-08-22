@@ -30,7 +30,7 @@ function getAssignedOrders() {
   return [];
 }
 
-// Get current RM (Arjun Singh - EMP001)
+// Get current RM (Test RM - EMP001 from Mumbai Central)
 const getCurrentRM = () => ({
   id: "EMP001",
   emp_code: "EMP001", 
@@ -39,6 +39,69 @@ const getCurrentRM = () => ({
   email: "arjun.singh@company.com",
   phone: "+91 98765 43210"
 });
+
+// Get the actual status of an order considering completion status from localStorage
+function getOrderStatus(order) {
+  const orderStatuses = JSON.parse(localStorage.getItem('orderStatuses') || '{}');
+  const completionStatus = orderStatuses[order.quotation_id];
+  
+  // If the order is marked as complete in localStorage, return "Complete"
+  if (completionStatus === 'Complete') {
+    return 'Complete';
+  }
+  
+  // Otherwise, check the original order status
+  const originalStatus = order.status || '';
+  
+  // If original status indicates completion
+  if (originalStatus.toLowerCase().includes('completed') || 
+      originalStatus.toLowerCase().includes('delivered') ||
+      originalStatus === 'Complete') {
+    return 'Complete';
+  }
+  
+  // For orders assigned to RM, if not completed, they are "In Progress"
+  if (order.assignedTo || order.assignedResourceManager) {
+    return 'In Progress';
+  }
+  
+  // Default status
+  return 'Pending';
+}
+
+// Enrich order with detailed information (same as ResourceOrders.jsx)
+const enrichOrderWithDetails = (order) => {
+  // Check localStorage for completion status
+  const orderStatuses = JSON.parse(localStorage.getItem('orderStatuses') || '{}');
+  const isCompleted = orderStatuses[order.quotation_id] === 'Complete';
+  
+  return {
+    ...order,
+    // Preserve the actual status from localStorage completion if it exists, otherwise keep original
+    status: isCompleted ? 'Complete' : (order.status || "In Progress"), 
+    quotationItems: order.quotationItems || order.items?.map((item, index) => ({
+      id: index + 1,
+      item_code: item.item_code || item.code || `ITEM-${String(index + 1).padStart(3, '0')}`,
+      description: item.description || item.name || `Item ${index + 1}`,
+      item_qty: item.item_qty || item.qty || 1,
+      unit_price: item.unit_price || (item.total_amount ? Math.round(item.total_amount / (item.item_qty || item.qty || 1)) : 0),
+      total_amount: item.total_amount || ((item.unit_price || 0) * (item.item_qty || item.qty || 1)),
+      delivery_status: item.delivery_status || "Ready to Pack",
+      priority: item.priority || "Normal",
+      variant_details: item.variant_details || {
+        category: item.category || "General",
+        weight: item.weight ? `${item.weight}kg` : "N/A",
+        batch_no: item.batch_no || `B${new Date().getFullYear()}${String(index + 1).padStart(3, '0')}`,
+        exp_date: item.exp_date || "N/A",
+        manufacturing_date: item.manufacturing_date || "N/A",
+        supplier: item.supplier || "N/A",
+        quality_grade: item.quality_grade || "Standard",
+        color: item.color || "N/A",
+        size: item.size || "Standard"
+      }
+    })) || []
+  };
+};
 
 // Get orders assigned to current RM
 function getMyOrders() {
@@ -52,49 +115,57 @@ function getMyOrders() {
 
 // Calculate delivery statistics
 function calculateDeliveryStats(orders) {
-  const today = new Date().toDateString();
+  // Enrich orders to ensure proper structure
+  const enrichedOrders = orders.map(order => enrichOrderWithDetails(order));
   
   // Group items by product name and size
   const itemSummary = {};
   let totalAmount = 0;
-  let totalOrders = orders.length;
+  let totalOrders = enrichedOrders.length;
   let totalItems = 0;
   let totalWeight = 0;
   let pendingOrders = 0;
+  let inProgressOrders = 0;
   let completedOrders = 0;
 
-  // Separate pending and completed orders
+  // Separate orders by status
   const pendingOrdersList = [];
+  const inProgressOrdersList = [];
   const completedOrdersList = [];
 
-  orders.forEach(order => {
+  enrichedOrders.forEach(order => {
     totalAmount += order.net_total || 0;
     
-    // Order status
-    const status = order.status || "Pending";
-    if (status === 'Complete' || status.toLowerCase().includes('completed') || status.toLowerCase().includes('delivered')) {
+    // Order status using consistent logic
+    const status = getOrderStatus(order);
+    
+    if (status === 'Complete') {
       completedOrders++;
       completedOrdersList.push(order);
+    } else if (status === 'In Progress') {
+      inProgressOrders++;
+      inProgressOrdersList.push(order);
     } else {
       pendingOrders++;
       pendingOrdersList.push(order);
     }
   });
 
-  // Only process items from PENDING orders for delivery summary
-  pendingOrdersList.forEach(order => {
-    // Process items
-    const items = order.items || order.quotationItems || [];
-    items.forEach(item => {
-      const quantity = item.item_qty || item.qty || 1;
+  // Only process items from IN PROGRESS orders for delivery summary
+  inProgressOrdersList.forEach(order => {
+    // Use quotationItems (which should now be available after enrichment)
+    const items = order.quotationItems || [];
+    
+    items.forEach((item, index) => {
+      const quantity = item.item_qty || item.qty || item.quantity || 1;
       totalItems += quantity;
       
-      // Extract product info
-      const description = item.description || item.name || 'Unknown Product';
-      const itemCode = item.item_code || '';
+      // Extract product info with better fallbacks
+      const description = item.description || item.name || item.product_name || `Product ${index + 1}`;
+      const itemCode = item.item_code || item.code || item.product_code || `ITEM-${index + 1}`;
       
       // Create unique key for similar products
-      const productKey = description;
+      const productKey = `${itemCode}_${description}`;
       
       if (!itemSummary[productKey]) {
         itemSummary[productKey] = {
@@ -127,11 +198,12 @@ function calculateDeliveryStats(orders) {
     totalOrders,
     completedOrders,
     pendingOrders,
+    inProgressOrders,
     totalAmount,
-    totalItems: totalItems, // Only items from pending orders
-    totalWeight: totalWeight, // Only weight from pending orders
-    pendingValue: pendingOrdersList.reduce((sum, order) => sum + (order.net_total || 0), 0), // Value of pending orders only
-    itemSummary: Object.values(itemSummary).sort((a, b) => b.totalQty - a.totalQty), // Only pending order items
+    totalItems: totalItems, // Only items from in-progress orders
+    totalWeight: totalWeight, // Only weight from in-progress orders
+    inProgressValue: inProgressOrdersList.reduce((sum, order) => sum + (order.net_total || 0), 0), // Value of in-progress orders only
+    itemSummary: Object.values(itemSummary).sort((a, b) => b.totalQty - a.totalQty), // Only in-progress order items
     completionRate: totalOrders > 0 ? Math.round((completedOrders / totalOrders) * 100) : 0
   };
 }
@@ -296,11 +368,11 @@ const RMHome = () => {
         <div className="bg-white rounded-xl shadow-lg p-4 border-l-4 border-orange-500">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-orange-100 rounded-lg">
-              <Clock className="w-6 h-6 text-orange-600" />
+              <Activity className="w-6 h-6 text-orange-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Pending</p>
-              <p className="text-2xl font-bold text-gray-900">{stats?.pendingOrders || 0}</p>
+              <p className="text-sm text-gray-600">In Progress</p>
+              <p className="text-2xl font-bold text-gray-900">{stats?.inProgressOrders || 0}</p>
             </div>
           </div>
         </div>
@@ -325,9 +397,9 @@ const RMHome = () => {
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center gap-3 mb-6">
               <Boxes className="w-6 h-6 text-indigo-600" />
-              <h2 className="text-xl font-bold text-gray-900">Items Pending for Delivery</h2>
+              <h2 className="text-xl font-bold text-gray-900">Items In Progress for Delivery</h2>
               <span className="bg-orange-100 text-orange-800 text-sm font-medium px-2 py-1 rounded-full">
-                {stats?.pendingOrders || 0} orders
+                {stats?.inProgressOrders || 0} orders
               </span>
             </div>
 
@@ -384,13 +456,13 @@ const RMHome = () => {
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center gap-3 mb-4">
               <BarChart3 className="w-6 h-6 text-emerald-600" />
-              <h2 className="text-lg font-bold text-gray-900">Pending Deliveries</h2>
+              <h2 className="text-lg font-bold text-gray-900">In Progress Deliveries</h2>
             </div>
             
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Orders to Deliver</span>
-                <span className="font-bold text-orange-600">{stats?.pendingOrders || 0}</span>
+                <span className="font-bold text-orange-600">{stats?.inProgressOrders || 0}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Items to Deliver</span>
@@ -401,8 +473,8 @@ const RMHome = () => {
                 <span className="font-bold text-purple-600">{formatWeight(stats?.totalWeight || 0)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Pending Value</span>
-                <span className="font-bold text-orange-600">{formatCurrency(stats?.pendingValue || 0)}</span>
+                <span className="text-gray-600">In Progress Value</span>
+                <span className="font-bold text-orange-600">{formatCurrency(stats?.inProgressValue || 0)}</span>
               </div>
               <div className="border-t pt-3">
                 <div className="flex justify-between items-center">
@@ -434,12 +506,12 @@ const RMHome = () => {
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">Pending Deliveries</span>
-                <span className="ml-auto font-bold text-orange-600">{stats?.pendingOrders || 0}</span>
+                <span className="text-sm text-gray-600">In Progress Deliveries</span>
+                <span className="ml-auto font-bold text-orange-600">{stats?.inProgressOrders || 0}</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">Ready to Deliver</span>
+                <span className="text-sm text-gray-600">Pending Orders</span>
                 <span className="ml-auto font-bold text-blue-600">{stats?.pendingOrders || 0}</span>
               </div>
             </div>

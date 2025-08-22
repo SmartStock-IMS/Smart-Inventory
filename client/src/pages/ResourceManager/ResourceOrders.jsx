@@ -38,7 +38,7 @@ function getOrdersForRM(rmId) {
 
 // Current logged-in Resource Manager (simulate authentication)
 const getCurrentRM = () => {
-  // Fixed RM - Arjun Singh (EMP001) from Mumbai Central
+  // Test RM - EMP001 from Mumbai Central (for testing purpose)
   // In a real app, this would come from authentication context/JWT token
   return {
     id: "EMP001",
@@ -50,60 +50,53 @@ const getCurrentRM = () => {
   };
 };
 
-// Mock detailed order data with quotation information
+// Enrich order data with calculated fields
 const enrichOrderWithDetails = (order) => {
+  // Check localStorage for completion status
+  const orderStatuses = JSON.parse(localStorage.getItem('orderStatuses') || '{}');
+  const isCompleted = orderStatuses[order.quotation_id] === 'Complete';
+  
   return {
     ...order,
-    status: order.status || "Order Process Completed", // Preserve actual status if exists
-    sub_total: order.net_total ? Math.round(order.net_total / 0.945) : 95000, // Calculate sub total from net
-    discount: 5.5,
-    no_items: order.no_items || 3,
-    total_variants: 2,
-    estimated_weight: 0.50,
-    quotationItems: order.items?.map((item, index) => ({
+    // Preserve the actual status from localStorage completion if it exists, otherwise keep original
+    status: isCompleted ? 'Complete' : (order.status || "In Progress"),
+    // Calculate sub_total from net_total if available
+    sub_total: order.sub_total || (order.net_total ? Math.round(order.net_total / 0.945) : order.net_total),
+    // Use actual discount or calculate from sub_total and net_total
+    discount: order.discount || (order.sub_total && order.net_total ? 
+      ((order.sub_total - order.net_total) / order.sub_total * 100) : 0),
+    // Use existing item count
+    no_items: order.no_items || order.items?.length || 0,
+    // Calculate variants from actual items
+    total_variants: order.items ? new Set(order.items.map(item => item.variant || 'Standard')).size : 0,
+    // Calculate estimated weight from items or use default
+    estimated_weight: order.estimated_weight || (order.items ? 
+      order.items.reduce((total, item) => total + ((item.weight || 0.1) * (item.item_qty || item.qty || 1)), 0) : 0),
+    // Transform items to quotationItems format if needed
+    quotationItems: order.quotationItems || order.items?.map((item, index) => ({
       id: index + 1,
-      item_code: item.item_code || `MH-PROD-${String(index + 1).padStart(3, '0')}-${item.name?.split(' ')[0]?.toUpperCase() || 'ITEM'}`,
-      description: item.description || item.name || `Product ${index + 1}`,
+      item_code: item.item_code || item.code || `ITEM-${String(index + 1).padStart(3, '0')}`,
+      description: item.description || item.name || `Item ${index + 1}`,
       item_qty: item.item_qty || item.qty || 1,
-      unit_price: item.unit_price || Math.round((item.total_amount || 3500) / (item.item_qty || item.qty || 1)),
-      total_amount: item.total_amount || 3500,
-      delivery_status: "📋 Ready to Pack",
-      priority: "Normal",
-      variant_details: {
-        category: "Electronics",
-        weight: "0.5 kg",
-        batch_no: `B2024${String(index + 1).padStart(3, '0')}`,
-        exp_date: "Dec 2025",
-        manufacturing_date: "Jan 2024",
-        supplier: "Mumbai Electronics Ltd.",
-        quality_grade: "A+",
-        color: "Black",
-        size: "Standard"
+      unit_price: item.unit_price || (item.total_amount ? Math.round(item.total_amount / (item.item_qty || item.qty || 1)) : 0),
+      total_amount: item.total_amount || ((item.unit_price || 0) * (item.item_qty || item.qty || 1)),
+      delivery_status: item.delivery_status || "Ready to Pack",
+      priority: item.priority || "Normal",
+      variant_details: item.variant_details || {
+        category: item.category || "General",
+        weight: item.weight ? `${item.weight}kg` : "N/A",
+        batch_no: item.batch_no || `B${new Date().getFullYear()}${String(index + 1).padStart(3, '0')}`,
+        exp_date: item.exp_date || "N/A",
+        manufacturing_date: item.manufacturing_date || "N/A",
+        supplier: item.supplier || "N/A",
+        quality_grade: item.quality_grade || "Standard",
+        color: item.color || "N/A",
+        size: item.size || "Standard"
       }
-    })) || [
-      {
-        id: 1,
-        item_code: "MH-PROD-001-DEFAULT",
-        description: "Premium Electronics Item",
-        item_qty: 2,
-        unit_price: 15000,
-        total_amount: 30000,
-        delivery_status: "📋 Ready to Pack",
-        priority: "High",
-        variant_details: {
-          category: "Electronics",
-          weight: "0.5 kg",
-          batch_no: "B2024001",
-          exp_date: "Dec 2025",
-          manufacturing_date: "Jan 2024",
-          supplier: "Mumbai Electronics Ltd.",
-          quality_grade: "A+",
-          color: "Black",
-          size: "Standard"
-        }
-      }
-    ],
-    packaging_notes: "Handle with care. Fragile items inside. Use bubble wrap for protection."
+    })) || [],
+    // Use provided packaging notes or generate basic one
+    packaging_notes: order.packaging_notes || (order.items && order.items.length > 0 ? 
+      `Handle ${order.items.length} item(s) with care during delivery.` : "Handle with care.")
   };
 };
 
@@ -131,12 +124,37 @@ const ResourceOrders = () => {
         const enrichedOrders = orders.map(enrichOrderWithDetails);
         setAssignedOrders(enrichedOrders);
         setSelectedOrder(enrichedOrders[0]); // Select first order by default
+      } else {
+        setAssignedOrders([]);
+        setSelectedOrder(null);
       }
       
       setLoading(false);
     };
 
     loadOrders();
+
+    // Listen for localStorage changes to automatically refresh when new orders are assigned
+    const handleStorageChange = (event) => {
+      if (event.key === 'assignedOrders') {
+        console.log('Detected new order assignment, refreshing...');
+        loadOrders();
+      }
+    };
+
+    // Listen for custom events from Inventory Manager order assignment
+    const handleOrderAssigned = (event) => {
+      console.log('Order assigned event received:', event.detail);
+      loadOrders();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('orderAssigned', handleOrderAssigned);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('orderAssigned', handleOrderAssigned);
+    };
   }, []);
 
   const handleRefresh = () => {
@@ -248,14 +266,29 @@ const ResourceOrders = () => {
               }
             </p>
           </div>
-          <button
-            onClick={handleRefresh}
-            className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-200 backdrop-blur-sm text-sm"
-            title="Refresh page data"
-          >
-            <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
-            Refresh
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                localStorage.removeItem('assignedOrders');
+                localStorage.removeItem('orderStatuses');
+                alert('Test data cleared! Refresh the page.');
+                window.location.reload();
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-colors duration-200 backdrop-blur-sm text-sm"
+              title="Clear test data from localStorage"
+            >
+              <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+              Clear Test Data
+            </button>
+            <button
+              onClick={handleRefresh}
+              className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-200 backdrop-blur-sm text-sm"
+              title="Refresh page data"
+            >
+              <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
+              Refresh
+            </button>
+          </div>
         </div>
       </div>
 
@@ -280,7 +313,7 @@ const ResourceOrders = () => {
                 <option value="">Choose an order...</option>
                 {assignedOrders.map((order, index) => (
                   <option key={order.id || order.quotation_id || index} value={order.quotation_id}>
-                    Order #{order.quotation_id} - {order.customerName || order.customer} - {formatCurrency(order.net_total || 89750)}
+                    Order #{order.quotation_id} - {order.customerName || order.customer} - {order.net_total ? formatCurrency(order.net_total) : 'Amount N/A'}
                   </option>
                 ))}
               </select>
@@ -315,7 +348,7 @@ const ResourceOrders = () => {
                         {order.customerName || order.customer}
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
-                        {formatCurrency(order.net_total || 89750)}
+                        {order.net_total ? formatCurrency(order.net_total) : 'Amount N/A'}
                       </div>
                       <div className="mt-2">
                         <span className="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">

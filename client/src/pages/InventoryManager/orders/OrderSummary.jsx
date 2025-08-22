@@ -561,6 +561,16 @@ const OrderSummary = () => {
         localStorage.setItem("assignedOrders", JSON.stringify(ordersToPass));
         console.log(`Auto-assigned ${ordersToPass.length} approved orders to ${firstRM.name} (${firstRM.id})`);
         
+        // Dispatch custom event to notify ResourceOrders page
+        window.dispatchEvent(new CustomEvent('orderAssigned', {
+          detail: {
+            count: ordersToPass.length,
+            resourceManager: firstRM.name,
+            type: 'auto-assignment',
+            assignedAt: new Date().toISOString()
+          }
+        }));
+        
         // Update the assigned orders state
         const assignedIds = new Set(ordersToPass.map(order => order.quotation_id));
         setAssignedOrders(assignedIds);
@@ -593,6 +603,28 @@ const OrderSummary = () => {
       setOrderResourceManagers(restoredRMMap);
     }
   }, [quotations]);
+
+  // Listen for order completion updates from Resource Manager
+  useEffect(() => {
+    const handleOrderCompletion = () => {
+      console.log("Order completion detected, refreshing UI...");
+      // Force a re-render to update button states
+      setAssignedOrders(new Set(assignedOrders));
+    };
+
+    // Listen for storage changes (when RM completes orders)
+    const handleStorageChange = (event) => {
+      if (event.key === 'assignedOrders') {
+        handleOrderCompletion();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [assignedOrders]);
 
   const fetchQuotations = async () => {
     try {
@@ -693,6 +725,38 @@ const OrderSummary = () => {
     });
   }
 
+  // Function to check if an order is completed by Resource Manager
+  const isOrderCompletedByRM = (quotationId) => {
+    try {
+      const assignedOrders = JSON.parse(localStorage.getItem("assignedOrders") || "[]");
+      const order = assignedOrders.find(o => o.quotation_id === quotationId);
+      return order && order.status === "Complete";
+    } catch (error) {
+      console.error("Error checking order completion status:", error);
+      return false;
+    }
+  };
+
+  // Function to get completion statistics
+  const getCompletionStats = () => {
+    try {
+      const assignedOrders = JSON.parse(localStorage.getItem("assignedOrders") || "[]");
+      const totalAssigned = assignedOrders.length;
+      const completedOrders = assignedOrders.filter(o => o.status === "Complete").length;
+      const pendingOrders = totalAssigned - completedOrders;
+      
+      return {
+        totalAssigned,
+        completedOrders,
+        pendingOrders,
+        completionRate: totalAssigned > 0 ? Math.round((completedOrders / totalAssigned) * 100) : 0
+      };
+    } catch (error) {
+      console.error("Error calculating completion stats:", error);
+      return { totalAssigned: 0, completedOrders: 0, pendingOrders: 0, completionRate: 0 };
+    }
+  };
+
   // Function to pass orders to Resource Manager
   const passOrdersToResourceManager = () => {
     try {
@@ -792,6 +856,16 @@ const OrderSummary = () => {
       
       alert(`Successfully assigned Order ${order.quotation_id} to ${lockedRM.name}!`);
       
+      // Dispatch custom event to notify ResourceOrders page
+      window.dispatchEvent(new CustomEvent('orderAssigned', {
+        detail: {
+          orderId: order.quotation_id,
+          resourceManager: lockedRM.name,
+          type: 'locked-assignment',
+          assignedAt: new Date().toISOString()
+        }
+      }));
+      
       // Add the order to assigned orders set
       setAssignedOrders(prev => new Set([...prev, order.quotation_id]));
       
@@ -863,6 +937,15 @@ const OrderSummary = () => {
       localStorage.setItem("assignedOrders", JSON.stringify(updatedOrders));
       
       alert(`Successfully passed Order ${orderToPass.quotation_id} to ${chosenRM.name}!`);
+      
+      // Dispatch custom event to notify ResourceOrders page
+      window.dispatchEvent(new CustomEvent('orderAssigned', {
+        detail: {
+          orderId: orderToPass.quotation_id,
+          resourceManager: chosenRM.name,
+          assignedAt: new Date().toISOString()
+        }
+      }));
       
       // Add the order to assigned orders set
       setAssignedOrders(prev => new Set([...prev, orderToPass.quotation_id]));
@@ -1153,9 +1236,27 @@ const OrderSummary = () => {
                       Orders List ({filteredQuotations.length} results)
                     </h3>
                     <div className="text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                        Only approved orders can be assigned
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          Only approved orders can be assigned
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <CheckCircle className="w-3 h-3 text-purple-600" />
+                          Completed orders cannot be reassigned
+                        </div>
+                        {(() => {
+                          const stats = getCompletionStats();
+                          if (stats.totalAssigned > 0) {
+                            return (
+                              <div className="flex items-center gap-2 text-xs mt-1 text-blue-600">
+                                <Activity className="w-3 h-3" />
+                                {stats.completedOrders}/{stats.totalAssigned} assigned orders completed ({stats.completionRate}%)
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -1201,6 +1302,12 @@ const OrderSummary = () => {
                             No of Products
                           </div>
                         </th>
+                        <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4" />
+                            Assigned RM
+                          </div>
+                        </th>
                         <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                       </tr>
@@ -1226,6 +1333,39 @@ const OrderSummary = () => {
                           <td className="px-4 py-4 text-sm text-gray-500 text-center">
                             {item.no_items}
                           </td>
+                          <td className="px-4 py-4 text-sm text-gray-600">
+                            {assignedOrders.has(item.quotation_id) ? (
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                  <span className="font-medium text-gray-900">
+                                    {orderResourceManagers.get(item.quotation_id)?.name || 'Assigned'}
+                                  </span>
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {orderResourceManagers.get(item.quotation_id)?.id || 'N/A'} • {orderResourceManagers.get(item.quotation_id)?.assignedAt ? 
+                                    new Date(orderResourceManagers.get(item.quotation_id).assignedAt).toLocaleDateString('en-US', { 
+                                      month: 'short', 
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    }) : 'Recently'
+                                  }
+                                </div>
+                                {isOrderCompletedByRM(item.quotation_id) && (
+                                  <div className="flex items-center gap-1 text-xs">
+                                    <CheckCircle className="w-3 h-3 text-green-600" />
+                                    <span className="text-green-600 font-medium">Completed</span>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 text-gray-400">
+                                <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                                <span className="text-sm">Not assigned</span>
+                              </div>
+                            )}
+                          </td>
                           <td className="px-4 py-4">
                             <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(item.status)}`}>
                               {item.status}
@@ -1242,13 +1382,25 @@ const OrderSummary = () => {
                               </button>
                               {item.status === "Approved" ? (
                                 assignedOrders.has(item.quotation_id) ? (
-                                  <button
-                                    onClick={() => changeResourceManager(item)}
-                                    className="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
-                                  >
-                                    <User className="w-4 h-4" />
-                                    Change RM
-                                  </button>
+                                  // Check if order is completed by Resource Manager
+                                  isOrderCompletedByRM(item.quotation_id) ? (
+                                    <button
+                                      disabled
+                                      className="inline-flex items-center gap-2 px-3 py-2 bg-green-100 text-green-800 text-sm font-medium rounded-lg cursor-default border border-green-200"
+                                      title="Order completed by Resource Manager"
+                                    >
+                                      <CheckCircle className="w-4 h-4" />
+                                      Completed
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => changeResourceManager(item)}
+                                      className="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+                                    >
+                                      <User className="w-4 h-4" />
+                                      Change RM
+                                    </button>
+                                  )
                                 ) : (
                                   <button
                                     onClick={() => initiatePassOrder(item)}
