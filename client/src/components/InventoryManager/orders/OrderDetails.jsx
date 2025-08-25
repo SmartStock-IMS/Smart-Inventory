@@ -425,6 +425,64 @@ const OrderDetails = ({ item, changeOpen }) => {
         </div>
       </div>
 
+      {/* Resource Manager Information */}
+      {item.assignedResourceManager && (
+        <div className="mt-5 px-4 pt-4 pb-4 border rounded-lg">
+          <div className="-mt-6 mb-4">
+            <h2 className="w-fit ms-2 px-3 py-1 bg-white text-lg font-semibold text-gray-800 border rounded-lg shadow-sm">
+              👤 Resource Manager Details
+            </h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Manager Name */}
+            <div className="bg-gradient-to-r from-teal-50 to-teal-100 p-4 rounded-xl border border-teal-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-teal-500 rounded-lg flex items-center justify-center">
+                  <User className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-teal-700">Manager Name</p>
+                  <p className="text-lg font-bold text-teal-900">{item.assignedResourceManager.name}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Resource Manager ID */}
+            <div className="bg-gradient-to-r from-rose-50 to-rose-100 p-4 rounded-xl border border-rose-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-rose-500 rounded-lg flex items-center justify-center">
+                  <Hash className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-rose-700">Resource Manager ID</p>
+                  <p className="text-lg font-bold text-rose-900">{item.assignedResourceManager.id}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Assignment Date */}
+            <div className="bg-gradient-to-r from-amber-50 to-amber-100 p-4 rounded-xl border border-amber-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-amber-700">Assigned On</p>
+                  <p className="text-lg font-bold text-amber-900">
+                    {new Date(item.assignedResourceManager.assignedAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Order */}
       <div className="mt-8 px-4 pt-2 pb-4 border rounded-lg">
         {/* Order Title */}

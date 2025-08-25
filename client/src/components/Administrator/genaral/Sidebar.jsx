@@ -94,6 +94,8 @@ const Sidebar = () => {
       hasSubmenu: true,
       submenu: [
         { label: "Daily Summary", path: "/administrator/daily-summary" },
+        { label: "Weekly Summary", path: "/administrator/weekly-summary" },
+        { label: "Yearly Summary", path: "/administrator/yearly-summary" },
         { label: "QB Export", path: "/administrator/qb-export" }
       ]
     }

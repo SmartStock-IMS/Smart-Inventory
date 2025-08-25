@@ -5,6 +5,7 @@ import Unauthorized from "./pages/auth/Unauthorized.jsx";
 import SalesRepRoutes from "./routes/SalesRepRoutes.jsx";
 import InventoryManagerRoutes from "./routes/InventoryManagerRoutes.jsx";
 import AdmiAdministratorRoutes from "./routes/AdministratorRoutes.jsx";
+import ResourceManagerRoutes from "./routes/ResourceManagerRoutes.jsx";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/*" element={<SalesRepRoutes />} />
           <Route path="/inventorymanager/*" element={<InventoryManagerRoutes />} />
           <Route path="/administrator/*" element={<AdmiAdministratorRoutes />} />
+          <Route path="/resourcemanager/*" element={<ResourceManagerRoutes />} />
         </Routes>
       </Router>
     </AuthContextProvider>
