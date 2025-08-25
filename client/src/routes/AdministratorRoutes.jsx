@@ -9,6 +9,8 @@ import UserDetails from "../pages/Administrator/user/UserDetails.jsx";
 import EditUser from "../pages/Administrator/user/EditUser.jsx";
 import OrderSummary from "../pages/Administrator/orders/OrderSummary.jsx";
 import DailySummary from "../pages/Administrator/reports/DailySummary.jsx";
+import WeeklySummary from "../pages/Administrator/reports/WeeklySummary.jsx";
+import YearlySummary from "../pages/Administrator/reports/YearlySummary.jsx";
 import QBExport from "../pages/Administrator/reports/QBExport.jsx";
 
 function InventoryManagerRoutes() {
@@ -36,6 +38,8 @@ function InventoryManagerRoutes() {
                     <Route path="/edituser" element={<EditUser />} />
                     {/* item: reports */}
                     <Route path="/daily-summary" element={<DailySummary />} />
+                    <Route path="/weekly-summary" element={<WeeklySummary />} />
+                    <Route path="/yearly-summary" element={<YearlySummary />} />
                     <Route path="/qb-export" element={<QBExport />} />
                   </Routes>
                 </div>

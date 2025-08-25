@@ -25,6 +25,8 @@ import Product from "../pages/InventoryManager/products/Product.jsx";
 import EditUser from "../pages/InventoryManager/user/EditUser.jsx";
 import OrderSummary from "../pages/InventoryManager/orders/OrderSummary.jsx";
 import DailySummary from "../pages/InventoryManager/reports/DailySummary.jsx";
+import WeeklySummary from "../pages/InventoryManager/reports/WeeklySummary.jsx";
+import YearlySummary from "../pages/InventoryManager/reports/YearlySummary.jsx";
 import QBExport from "../pages/InventoryManager/reports/QBExport.jsx";
 import BulkList from "../pages/InventoryManager/products/BulkList.jsx";
 
@@ -73,6 +75,8 @@ function InventoryManagerRoutes() {
                     
                     {/* item: reports */}
                     <Route path="/daily-summary" element={<DailySummary />} />
+                    <Route path="/weekly-summary" element={<WeeklySummary />} />
+                    <Route path="/yearly-summary" element={<YearlySummary />} />
                     <Route path="/qb-export" element={<QBExport />} />
                   </Routes>
                 </div>
