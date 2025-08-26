@@ -71,7 +71,7 @@ const Sidebar = () => {
       lucideIcon: UserCheck,
       hasSubmenu: true,
       submenu: [
-        { label: "Add Rep", path: "/administrator/addrep" },
+        //{ label: "Add Rep", path: "/administrator/addrep" },
         { label: "Sales-Rep List", path: "/administrator/sales-rep" }
       ]
     },
