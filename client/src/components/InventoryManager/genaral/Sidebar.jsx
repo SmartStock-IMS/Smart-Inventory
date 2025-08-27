@@ -118,8 +118,7 @@ const Sidebar = () => {
       submenu: [
         { label: "Daily Summary", path: "/inventorymanager/daily-summary" },
         { label: "Weekly Summary", path: "/inventorymanager/weekly-summary" },
-        { label: "Yearly Summary", path: "/inventorymanager/yearly-summary" },
-        { label: "QB Export", path: "/inventorymanager/qb-export" }
+        { label: "Yearly Summary", path: "/inventorymanager/yearly-summary" }
       ]
     }
   ];
