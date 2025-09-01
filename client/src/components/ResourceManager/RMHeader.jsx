@@ -36,14 +36,11 @@ const RMHeader = () => {
             <div className="hidden sm:block">
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-black bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent drop-shadow-lg tracking-tight">
-                  ResourcePro
+                  Inventory pro
                 </h1>
-                <div className="px-2 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full">
-                  <span className="text-xs font-bold text-black">PRO</span>
-                </div>
               </div>
               <p className="text-sm font-medium text-emerald-100 tracking-wide">
-                Advanced Management System
+                Smart Inventory Management System
               </p>
             </div>
           </div>

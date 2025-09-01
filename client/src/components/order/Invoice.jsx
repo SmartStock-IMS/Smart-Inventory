@@ -143,7 +143,7 @@ const Invoice = ({ cartState = mockCartState, billingDetails = mockBillingDetail
           }
           
           // Ensure we don't create empty pages or infinite loops
-          const sectionHeight = Math.min(nextPageY - currentY, canvas.height - currentY);
+          let sectionHeight = Math.min(nextPageY - currentY, canvas.height - currentY);
           if (sectionHeight <= 0) {
             sectionHeight = Math.min(pageHeightInPixels, canvas.height - currentY);
           }
