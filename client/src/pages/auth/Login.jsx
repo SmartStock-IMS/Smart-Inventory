@@ -116,24 +116,19 @@ const SalesRepLogin = () => {
         pauseOnHover
         theme="light"
       />
-          /* develop branch
+          {/* develop branch
     <div className="min-h-screen relative overflow-hidden">
-      {/* Animated Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-        {/* Floating geometric shapes */}
         <div className="absolute top-20 left-20 w-32 h-32 bg-purple-500/10 rounded-full blur-xl animate-pulse"></div>
         <div className="absolute top-40 right-32 w-24 h-24 bg-blue-500/10 rounded-full blur-lg animate-bounce delay-1000"></div>
         <div className="absolute bottom-32 left-1/4 w-40 h-40 bg-cyan-500/10 rounded-full blur-xl animate-pulse delay-500"></div>
         <div className="absolute bottom-20 right-20 w-28 h-28 bg-pink-500/10 rounded-full blur-lg animate-bounce delay-2000"></div>
         
-        {/* Grid pattern overlay */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
       </div>
 
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4">
-        {/* Logo Section */}
         <div className="text-center mb-8">          
-          {/* Company Name */}
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent mb-2">
             Inventory Pro
           </h1>
@@ -142,7 +137,6 @@ const SalesRepLogin = () => {
           </p>
         </div>
 
-        {/* Login Card */}
         <div className="w-full max-w-md">
           <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-8 shadow-2xl">
             <div className="text-center mb-8">
@@ -151,7 +145,6 @@ const SalesRepLogin = () => {
             </div>
 
             <div className="space-y-6">
-              {/* Email Field */}
               <div className="relative group">
                 <input
                   type="email"
@@ -162,7 +155,6 @@ const SalesRepLogin = () => {
                 />
               </div>
 
-              {/* Password Field */}
               <div className="relative group">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -180,7 +172,6 @@ const SalesRepLogin = () => {
                 </button>
               </div>
 
-              {/* Remember Me & Forgot Password */}
               <div className="flex items-center justify-between text-sm">
                 <label className="flex items-center space-x-2 text-gray-300 cursor-pointer">
                   <input type="checkbox" className="rounded border-gray-600 bg-white/10" />
@@ -191,7 +182,6 @@ const SalesRepLogin = () => {
                 </a>
               </div>
 
-              {/* Login Button */}
               <button
                 onClick={handleLogin}
                 disabled={isLoading}
@@ -216,7 +206,6 @@ const SalesRepLogin = () => {
               </button>
             </div>
 
-            {/* Additional Links */}
             <div className="mt-8 text-center">
               <p className="text-gray-400 text-sm">
                 Don't have an account?{" "}
@@ -228,12 +217,11 @@ const SalesRepLogin = () => {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="mt-8 text-center text-gray-500 text-xs">
           <p>© 2025 Inventory Pro. All rights reserved.</p>
         </div>
-      </div>
-            */
+      </div> */}
+           
 
     </div>
   );
