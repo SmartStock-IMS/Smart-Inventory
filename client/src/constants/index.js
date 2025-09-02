@@ -10,22 +10,22 @@ export const navigation = [
   {
     id: "0",
     title: "Home",
-    url: "/",
+    url: "/salesrep",
   },
   {
     id: "1",
     title: "Add customer",
-    url: "/addcustomer",
+    url: "/salesrep/addcustomer",
   },
   {
     id: "2",
     title: "Create Order",
-    url: "/order/add-items",
+    url: "/salesrep/order/add-items",
   },
   {
     id: "3",
     title: "History",
-    url: "/history",
+    url: "/salesrep/history",
   },
   {
     id: "4",
@@ -37,15 +37,15 @@ export const navigation = [
 // order section
 export const topbarLinks = [
   {
-    route: "/order/add-items",
+    route: "/salesrep/order/add-items",
     label: "Add items",
   },
   {
-    route: "/order/billing-details",
+    route: "/salesrep/order/billing-details",
     label: "Billing Details",
   },
   {
-    route: "/order/confirmation",
+    route: "/salesrep/order/confirmation",
     label: "Confirmation",
   },
 ];
