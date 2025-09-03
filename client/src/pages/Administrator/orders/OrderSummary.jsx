@@ -441,7 +441,7 @@ const OrderSummary = () => {
       ) : (
         <div className="h-full flex flex-col">
           {/* Header Section */}
-          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white p-6 relative overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-6 relative overflow-hidden">
             <div className="absolute inset-0 opacity-20">
               <div className="absolute inset-0 bg-white/10"></div>
             </div>
@@ -468,7 +468,7 @@ const OrderSummary = () => {
               {/* Summary Statistics Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Total Orders */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div className="bg-white rounded-2xl p-6 border-2 border-blue-500 shadow-sm hover:shadow-md transition-shadow duration-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-600">Total Orders</p>
@@ -486,7 +486,7 @@ const OrderSummary = () => {
                 </div>
 
                 {/* Total Revenue */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div className="bg-white rounded-2xl p-6 border-2 border-blue-500 shadow-sm hover:shadow-md transition-shadow duration-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-600">Total Revenue</p>
@@ -496,49 +496,49 @@ const OrderSummary = () => {
                         <span className="text-sm text-green-600 font-medium">Avg: Rs. {summaryStats.averageOrderValue.toLocaleString()}</span>
                       </div>
                     </div>
-                    <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center">
-                      <DollarSign className="w-6 h-6 text-green-600" />
+                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+                      <DollarSign className="w-6 h-6 text-blue-600" />
                     </div>
                   </div>
                 </div>
 
                 {/* Total Items */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div className="bg-white rounded-2xl p-6 border-2 border-blue-500 shadow-sm hover:shadow-md transition-shadow duration-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-600">Total Items Ordered</p>
                       <p className="text-3xl font-bold text-gray-900 mt-2">{summaryStats.totalItems}</p>
                       <div className="flex items-center mt-2">
-                        <Package className="w-4 h-4 text-purple-500 mr-1" />
-                        <span className="text-sm text-purple-600 font-medium">{summaryStats.totalVariants} Variants</span>
+                        <Package className="w-4 h-4 text-blue-500 mr-1" />
+                        <span className="text-sm text-blue-600 font-medium">{summaryStats.totalVariants} Variants</span>
                       </div>
                     </div>
-                    <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center">
-                      <Package className="w-6 h-6 text-purple-600" />
+                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+                      <Package className="w-6 h-6 text-blue-600" />
                     </div>
                   </div>
                 </div>
 
                 {/* Active Customers */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div className="bg-white rounded-2xl p-6 border-2 border-blue-500 shadow-sm hover:shadow-md transition-shadow duration-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-600">Active Customers</p>
                       <p className="text-3xl font-bold text-gray-900 mt-2">{summaryStats.totalCustomers}</p>
                       <div className="flex items-center mt-2">
-                        <Clock className="w-4 h-4 text-orange-500 mr-1" />
-                        <span className="text-sm text-orange-600 font-medium">{summaryStats.dailyOrders}/day avg</span>
+                        <Clock className="w-4 h-4 text-blue-500 mr-1" />
+                        <span className="text-sm text-blue-600 font-medium">{summaryStats.dailyOrders}/day avg</span>
                       </div>
                     </div>
-                    <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center">
-                      <Users className="w-6 h-6 text-orange-600" />
+                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+                      <Users className="w-6 h-6 text-blue-600" />
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Order Status Overview */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="bg-white rounded-2xl border-2 border-blue-400 shadow-sm p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-bold text-gray-900">Order Status Overview</h3>
                   <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -722,7 +722,7 @@ const OrderSummary = () => {
                           <td className="px-4 py-4">
                             <button
                               onClick={() => handleOrderView(item)}
-                              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
                             >
                               <Eye className="w-4 h-4" />
                               View

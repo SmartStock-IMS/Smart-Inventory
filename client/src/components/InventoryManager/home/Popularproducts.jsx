@@ -96,10 +96,10 @@ export default function PopularProducts() {
 
   const ProductCard = ({ product, index, rank }) => {
     const getRankColor = (rank) => {
-      if (rank === 1) return "from-yellow-400 to-orange-500";
-      if (rank === 2) return "from-gray-300 to-gray-500";
-      if (rank === 3) return "from-amber-600 to-yellow-700";
-      return "from-blue-400 to-indigo-500";
+      if (rank === 1) return "from-blue-500 to-indigo-600";
+      if (rank === 2) return "from-blue-500 to-indigo-600";
+      if (rank === 3) return "from-blue-500 to-indigo-600";
+      return "from-blue-400 to-indigo-400";
     };
 
     const getRankIcon = (rank) => {
@@ -190,7 +190,7 @@ export default function PopularProducts() {
   return (
     <div className="w-full h-full bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden flex flex-col">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 text-white p-6 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-6 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-white/10"></div>
         </div>
@@ -250,7 +250,7 @@ export default function PopularProducts() {
           to="/inventorymanager/productlist"
           className="block w-full group"
         >
-          <button className="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-3 group">
+          <button className="w-full py-3 px-6 bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-3 group">
             <span>View All Products</span>
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
           </button>
