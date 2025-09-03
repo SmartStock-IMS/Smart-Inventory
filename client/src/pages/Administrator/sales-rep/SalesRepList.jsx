@@ -288,7 +288,7 @@ const SalesRepList = () => {
   return (
     <div className="h-full w-full bg-gradient-to-br from-blue-50 via-white to-indigo-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-6 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-6 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-white/10"></div>
         </div>
@@ -332,7 +332,7 @@ const SalesRepList = () => {
       <div className="h-[calc(100%-200px)] p-6 overflow-y-auto">
         {/* Stats Bar */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-xl p-4 border-2 border-blue-500 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Users className="w-5 h-5 text-blue-600" />
@@ -344,10 +344,10 @@ const SalesRepList = () => {
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-xl p-4 border-2 border-blue-500 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <Building className="w-5 h-5 text-green-600" />
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Building className="w-5 h-5 text-blue-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-800">
@@ -358,28 +358,28 @@ const SalesRepList = () => {
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-xl p-4 border-2 border-blue-500 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Hash className="w-5 h-5 text-purple-600" />
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Hash className="w-5 h-5 text-blue-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-800">
-                  Rs{(salesReps || []).reduce((sum, rep) => sum + (rep.target_amount || 0), 0).toLocaleString()}
+                  Rs {(salesReps || []).reduce((sum, rep) => sum + (rep.target_amount || 0), 0).toLocaleString()}
                 </p>
                 <p className="text-sm text-gray-600">Total Targets</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-xl p-4 border-2 border-blue-500 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Eye className="w-5 h-5 text-orange-600" />
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Eye className="w-5 h-5 text-blue-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-800">
-                  Rs{(salesReps || []).reduce((sum, rep) => sum + (rep.achievements || 0), 0).toLocaleString()}
+                  Rs {(salesReps || []).reduce((sum, rep) => sum + (rep.achievements || 0), 0).toLocaleString()}
                 </p>
                 <p className="text-sm text-gray-600">Total Achieved</p>
               </div>
@@ -515,7 +515,7 @@ const SalesRepList = () => {
                         <div className="flex items-center gap-3">
                           <button
                             onClick={() => handleClick(rep.emp_code)}
-                            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2"
+                            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2"
                           >
                             <Eye className="w-4 h-4" />
                             View

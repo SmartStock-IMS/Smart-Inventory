@@ -76,7 +76,7 @@ const Overview = () => {
     </div>
   );
 
-  const StatCard = ({ icon: Icon, title, value, gradient, iconBg, textColor = "text-white" }) => (
+  const StatCard = ({ icon: Icon, title, value, gradient, iconBg, textColor = "text-gray-900" }) => (
     <div className={`relative overflow-hidden rounded-2xl ${gradient} p-6 shadow-lg hover:shadow-xl transition-all duration-300 group`}>
       <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
         <div className="absolute inset-0 bg-white rounded-full transform rotate-12 scale-150"></div>
@@ -100,19 +100,19 @@ const Overview = () => {
 
   const SalesRepCard = ({ rep, index }) => {
     const colors = [
-      "from-yellow-400 to-orange-500",
-      "from-blue-400 to-indigo-500", 
-      "from-green-400 to-emerald-500",
-      "from-purple-400 to-pink-500",
-      "from-red-400 to-rose-500"
+      "from-blue-400 to-indigo-500",
+      "from-blue-300 to-blue-500", 
+      "from-blue-300 to-blue-500",
+      "from-blue-300 to-blue-500",
+      "from-blue-300 to-blue-500"
     ];
     
     const iconBgs = [
-      "bg-yellow-500/20",
+      "bg-indigo-500/20",
       "bg-blue-500/20",
-      "bg-green-500/20", 
-      "bg-purple-500/20",
-      "bg-red-500/20"
+      "bg-blue-500/20", 
+      "bg-blue-500/20",
+      "bg-blue-500/20"
     ];
 
     return (
@@ -158,7 +158,7 @@ const Overview = () => {
       ) : (
         <div className="p-6 space-y-6">
           {/* Header Section */}
-          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-6 text-white relative overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-6 text-white relative overflow-hidden">
             <div className="absolute inset-0 opacity-20">
               <div className="absolute inset-0 bg-white/10"></div>
             </div>
@@ -194,8 +194,8 @@ const Overview = () => {
               icon={Users}
               title="Total Customers"
               value={overviewData?.totalCustomers || 0}
-              gradient="bg-gradient-to-br from-blue-500 to-indigo-600"
-              iconBg="bg-white/20"
+              gradient="border-2 border border-blue-500"
+              iconBg="bg-gradient-to-br from-blue-400 to-blue-500"
             />
             <StatCard
               icon={HandCoins}
@@ -204,16 +204,16 @@ const Overview = () => {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
               })}`}
-              gradient="bg-gradient-to-br from-green-500 to-emerald-600"
-              iconBg="bg-white/20"
+              gradient="border-2 border border-blue-500"
+              iconBg="bg-gradient-to-br from-blue-400 to-blue-500"
             />
           </div>
 
           {/* Sales Representatives Section */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+          <div className="bg-white rounded-2xl border border-2 border-blue-500 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-400 rounded-lg flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
                 <div>
