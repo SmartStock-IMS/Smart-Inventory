@@ -341,13 +341,13 @@ const ModernDateSelector = ({ fromDate, toDate, setFromDate, setToDate, onGranul
 };
 
 const StatCard = ({ title, value, change, icon: Icon, color }) => (
-  <div className={`relative overflow-hidden rounded-2xl p-6 ${color} shadow-lg isolate`}>
+  <div className="relative overflow-hidden rounded-2xl p-6 bg-white shadow-lg isolate border-2 border-blue-500">
     <div className="absolute top-0 right-0 w-32 h-32 opacity-10 -z-10">
       <div className="absolute inset-0 bg-gradient-to-br from-white to-transparent rounded-full transform rotate-12 scale-150"></div>
     </div>
     <div className="relative z-0">
       <div className="flex items-center justify-between mb-4">
-        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-500">
           <Icon className="w-6 h-6 text-white" />
         </div>
         {change && (
@@ -363,8 +363,8 @@ const StatCard = ({ title, value, change, icon: Icon, color }) => (
           </div>
         )}
       </div>
-      <h3 className="text-white/80 text-sm font-medium mb-2">{title}</h3>
-      <p className="text-white text-2xl font-bold">{value}</p>
+      <h3 className="text-gray-900 text-sm font-medium mb-2">{title}</h3>
+      <p className="text-gray-900 text-2xl font-bold">{value}</p>
     </div>
   </div>
 );
@@ -514,7 +514,7 @@ const DashboardIncome = () => {
   return (
     <div className="w-full h-full bg-gradient-to-br from-white to-gray-50 rounded-2xl border border-gray-200 shadow-lg overflow-hidden relative">
       {/* Header Section */}
-      <div className="p-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white relative overflow-hidden dashboard-header">
+      <div className="p-6 bg-gradient-to-r from-blue-500 to-blue-400 text-white relative overflow-hidden dashboard-header">
         <div className="absolute inset-0 opacity-30">
           <div className="absolute inset-0 bg-white/10 bg-opacity-10"></div>
         </div>
@@ -566,21 +566,19 @@ const DashboardIncome = () => {
           value={`Rs.${totalIncome.toLocaleString()}`}
           change={12.5}
           icon={DollarSign}
-          color="bg-gradient-to-br from-green-500 to-emerald-600"
+          
         />
         <StatCard
           title="Average Monthly"
           value={`Rs.${Math.round(averageIncome).toLocaleString()}`}
           change={8.2}
           icon={TrendingUp}
-          color="bg-gradient-to-br from-blue-500 to-indigo-600"
         />
         <StatCard
           title="Best Performance"
           value={highestMonth.name}
           change={null}
           icon={Sparkles}
-          color="bg-gradient-to-br from-purple-500 to-pink-600"
         />
       </div>
 
