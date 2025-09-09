@@ -5,7 +5,7 @@ import { useAuth } from "../../context/auth/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
 import { FaSpinner, FaUser, FaLock, FaShieldAlt } from "react-icons/fa";
 import { cn } from "@lib/utils";
-
+import axios from "axios";
 
 const SalesRepLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,14 +15,43 @@ const SalesRepLogin = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate login process
-    setTimeout(() => {
+    try {
+      const response = await axios.post("http://localhost:3000/api/auth/login", {
+        email,
+        password
+      });
+      const result = response.data;
+      if (result.success && result.data && result.data.accessToken) {
+        localStorage.setItem("token", result.data.accessToken);
+        localStorage.setItem("refreshToken", result.data.refreshToken);
+        localStorage.setItem("user", JSON.stringify(result.data.user));
+        toast.success("Login successful!");
+        const role = result.data.user.role;
+        if (role === "admin") {
+          navigate("/administrator");
+        } else if (role === "inventory_manager") {
+          navigate("/inventorymanager");
+        } else if (role === "sales_staff") {
+          navigate("/");
+        } else if (role === "resource_manager") {
+          navigate("/resourcemanager");
+        } else {
+          navigate("/");
+        }
+      } else {
+        toast.error(result.message || "Login failed");
+      }
+    } catch (error) {
+      toast.error("Server error or invalid credentials");
+    } finally {
       setIsLoading(false);
-      alert("Login successful!");
-    }, 2000);
+    }
   };
   
   return (
@@ -55,6 +84,7 @@ const SalesRepLogin = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  
                 />
               </div>
             </div>

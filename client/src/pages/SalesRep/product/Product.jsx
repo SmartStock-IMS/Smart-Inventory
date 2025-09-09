@@ -16,14 +16,14 @@ const Product = () => {
   const { cart, addToCart, addMultipleToCart } = useCart();
   
   // Local state variables - optimized for B2B
-  const [selectedVariants, setSelectedVariants] = useState(new Map()); // Map to store variant code -> quantity
+  const [selectedVariants, setSelectedVariants] = useState(new Map()); // Map to store variant id -> quantity
   const [isAddingToOrder, setIsAddingToOrder] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
 
   // Memoized calculations for multi-variant selection
   const totalOrderValue = useMemo(() => {
-    return Array.from(selectedVariants.entries()).reduce((total, [variantCode, quantity]) => {
-      const variant = variants.find(v => v.product_code === variantCode);
+    return Array.from(selectedVariants.entries()).reduce((total, [variantId, quantity]) => {
+      const variant = variants.find(v => v.id === variantId);
       return total + (variant ? variant.price * quantity : 0);
     }, 0);
   }, [selectedVariants, variants]);
@@ -35,40 +35,40 @@ const Product = () => {
   const hasSelectedVariants = selectedVariants.size > 0;
 
   // Optimized handlers with useCallback for multi-variant selection
-  const handleVariantQuantityChange = useCallback((variantCode, quantity) => {
+  const handleVariantQuantityChange = useCallback((variantId, quantity) => {
     setSelectedVariants(prev => {
       const newMap = new Map(prev);
       if (quantity <= 0) {
-        newMap.delete(variantCode);
+        newMap.delete(variantId);
       } else {
-        const variant = variants.find(v => v.product_code === variantCode);
+        const variant = variants.find(v => v.id === variantId);
         const maxStock = variant ? variant.quantity : 999;
-        newMap.set(variantCode, Math.min(quantity, maxStock));
+        newMap.set(variantId, Math.min(quantity, maxStock));
       }
       return newMap;
     });
   }, [variants]);
 
-  const handleVariantIncrement = useCallback((variantCode) => {
-    const variant = variants.find(v => v.product_code === variantCode);
-    const currentQuantity = selectedVariants.get(variantCode) || 0;
+  const handleVariantIncrement = useCallback((variantId) => {
+    const variant = variants.find(v => v.id === variantId);
+    const currentQuantity = selectedVariants.get(variantId) || 0;
     const maxStock = variant ? variant.quantity : 999;
     
     if (currentQuantity < maxStock) {
-      handleVariantQuantityChange(variantCode, currentQuantity + 1);
+      handleVariantQuantityChange(variantId, currentQuantity + 1);
     }
   }, [selectedVariants, variants, handleVariantQuantityChange]);
 
-  const handleVariantDecrement = useCallback((variantCode) => {
-    const currentQuantity = selectedVariants.get(variantCode) || 0;
-    handleVariantQuantityChange(variantCode, currentQuantity - 1);
+  const handleVariantDecrement = useCallback((variantId) => {
+    const currentQuantity = selectedVariants.get(variantId) || 0;
+    handleVariantQuantityChange(variantId, currentQuantity - 1);
   }, [selectedVariants, handleVariantQuantityChange]);
 
-  const setSuggestedQuantity = useCallback((variantCode) => {
-    const variant = variants.find(v => v.product_code === variantCode);
+  const setSuggestedQuantity = useCallback((variantId) => {
+    const variant = variants.find(v => v.id === variantId);
     if (variant) {
       const suggestedQty = Math.min(Math.max(5, Math.floor(variant.quantity * 0.1)), 50);
-      handleVariantQuantityChange(variantCode, suggestedQty);
+      handleVariantQuantityChange(variantId, suggestedQty);
     }
   }, [variants, handleVariantQuantityChange]);
 
@@ -89,8 +89,8 @@ const Product = () => {
       const validVariantQuantityMap = new Map();
       let hasValidItems = false;
       
-      for (const [variantCode, quantity] of selectedVariants.entries()) {
-        const variant = variants.find(v => v.product_code === variantCode);
+      for (const [variantId, quantity] of selectedVariants.entries()) {
+        const variant = variants.find(v => v.id === variantId);
         if (variant && quantity > 0) {
           if (quantity > variant.quantity) {
             toast.error(`Insufficient stock for ${variant.weight}. Only ${variant.quantity} units available.`);
@@ -241,7 +241,7 @@ const Product = () => {
                     {variants.length > 0 ? (
                       <div className="grid grid-cols-1 gap-4">
                         {variants.map((variant, index) => {
-                          const selectedQuantity = selectedVariants.get(variant.product_code) || 0;
+                          const selectedQuantity = selectedVariants.get(variant.id) || 0;
                           const isSelected = selectedQuantity > 0;
                           const isLowStock = variant.quantity < 10;
                           const isOutOfStock = variant.quantity === 0;
@@ -265,7 +265,7 @@ const Product = () => {
                                     {variant.weight}
                                   </div>
                                   <div className="text-sm text-slate-600 mt-1">
-                                    Code: {variant.product_code}
+                                    Name: {variant.name}
                                   </div>
                                   <div className="text-lg font-bold text-green-600 mt-2">
                                     {formatCurrency(variant.price)}
@@ -290,7 +290,7 @@ const Product = () => {
                                   <div className="flex items-center gap-2">
                                     <div className="flex items-center bg-slate-100 rounded-lg">
                                       <button
-                                        onClick={() => handleVariantDecrement(variant.product_code)}
+                                        onClick={() => handleVariantDecrement(variant.id)}
                                         disabled={selectedQuantity <= 0}
                                         className="p-2 text-slate-600 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
                                       >
@@ -299,14 +299,14 @@ const Product = () => {
                                       <input
                                         type="number"
                                         value={selectedQuantity}
-                                        onChange={(e) => handleVariantQuantityChange(variant.product_code, parseInt(e.target.value) || 0)}
+                                        onChange={(e) => handleVariantQuantityChange(variant.id, parseInt(e.target.value) || 0)}
                                         min="0"
                                         max={variant.quantity}
                                         className="w-12 text-center py-2 text-sm font-semibold bg-transparent border-0 focus:outline-none"
                                         placeholder="0"
                                       />
                                       <button
-                                        onClick={() => handleVariantIncrement(variant.product_code)}
+                                        onClick={() => handleVariantIncrement(variant.id)}
                                         disabled={selectedQuantity >= variant.quantity}
                                         className="p-2 text-slate-600 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
                                       >
@@ -315,7 +315,7 @@ const Product = () => {
                                     </div>
                                     
                                     <button
-                                      onClick={() => setSuggestedQuantity(variant.product_code)}
+                                      onClick={() => setSuggestedQuantity(variant.id)}
                                       className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 rounded border border-blue-200 hover:bg-blue-50"
                                     >
                                       Suggest: {suggestedQty}
@@ -368,12 +368,12 @@ const Product = () => {
                   <div className="bg-slate-50 rounded-lg p-4">
                     <div className="text-sm text-slate-600 mb-2">Order Summary</div>
                     <div className="space-y-2">
-                      {Array.from(selectedVariants.entries()).map(([variantCode, quantity]) => {
-                        const variant = variants.find(v => v.product_code === variantCode);
+                      {Array.from(selectedVariants.entries()).map(([variantId, quantity]) => {
+                        const variant = variants.find(v => v.id === variantId);
                         if (!variant) return null;
                         
                         return (
-                          <div key={variantCode} className="flex justify-between items-center text-sm">
+                          <div key={variantId} className="flex justify-between items-center text-sm">
                             <div>
                               <span className="font-medium">{variant.weight}</span>
                               <span className="text-slate-600 ml-2">× {quantity}</span>

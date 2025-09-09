@@ -452,12 +452,12 @@ const BillingDetails = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-6">
-                  {/* Address Line 1 */}
-                  <div className="sm:col-span-2 lg:col-span-3 xl:col-span-3 space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Address Line 1</label>
+                  {/* Combined Address Field */}
+                  <div className="col-span-6 space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Address</label>
                     <input
                       type="text"
-                      placeholder="Street address"
+                      placeholder="Address (e.g. No 34, Kanaththagoda Road, Madiha, City)"
                       {...register("addressLine1")}
                       className={cn(
                         "w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:outline-none transition-all duration-200",
@@ -470,39 +470,6 @@ const BillingDetails = () => {
                       <p className="text-sm text-red-600 flex items-center gap-1">
                         <span className="w-4 h-4">⚠</span>
                         {errors.addressLine1.message}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Address Line 2 */}
-                  <div className="sm:col-span-2 lg:col-span-3 xl:col-span-3 space-y-2">
-                    <label className="text-sm font-medium text-slate-700">Address Line 2 (Optional)</label>
-                    <input
-                      type="text"
-                      placeholder="Apartment, suite, etc."
-                      {...register("addressLine2")}
-                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:outline-none focus:border-blue-500 focus:ring-blue-200 transition-all duration-200"
-                    />
-                  </div>
-
-                  {/* City */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-700">City</label>
-                    <input
-                      type="text"
-                      placeholder="Enter city"
-                      {...register("city")}
-                      className={cn(
-                        "w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:outline-none transition-all duration-200",
-                        errors.city
-                          ? "border-red-300 focus:border-red-500 focus:ring-red-200"
-                          : "border-slate-200 focus:border-blue-500 focus:ring-blue-200"
-                      )}
-                    />
-                    {errors.city && (
-                      <p className="text-sm text-red-600 flex items-center gap-1">
-                        <span className="w-4 h-4">⚠</span>
-                        {errors.city.message}
                       </p>
                     )}
                   </div>

@@ -13,11 +13,11 @@ function App() {
       <Router>
         <Routes>
           {/* Auth Routes */}
-          <Route path="/" element={<Login />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
 
           {/* Main Routes - No protection for development */}
-          <Route path="/salesrep/*" element={<SalesRepRoutes />} />
+          <Route path="/*" element={<SalesRepRoutes />} />
           <Route path="/inventorymanager/*" element={<InventoryManagerRoutes />} />
           <Route path="/administrator/*" element={<AdmiAdministratorRoutes />} />
           <Route path="/resourcemanager/*" element={<ResourceManagerRoutes />} />

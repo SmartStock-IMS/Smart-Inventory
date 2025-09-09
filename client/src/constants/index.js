@@ -10,22 +10,22 @@ export const navigation = [
   {
     id: "0",
     title: "Home",
-    url: "/salesrep",
+    url: "/",
   },
   {
     id: "1",
     title: "Add customer",
-    url: "/salesrep/addcustomer",
+    url: "/addcustomer",
   },
   {
     id: "2",
     title: "Create Order",
-    url: "/salesrep/order/add-items",
+    url: "/order/add-items",
   },
   {
     id: "3",
     title: "History",
-    url: "/salesrep/history",
+    url: "/history",
   },
   {
     id: "4",
