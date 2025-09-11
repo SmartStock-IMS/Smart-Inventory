@@ -145,6 +145,32 @@ class UserController {
       });
     }
   }
+  async getSalesStaff(req, res) {
+    try {
+      const { page = 1, limit = 10 } = req.query;
+      const parsedLimit = parseInt(limit);
+      const offset = (page - 1) * parsedLimit;
+
+      const users = await UserModel.findAllSalesStaff(parsedLimit, offset);
+
+      res.status(200).json({
+        success: true,
+        message: 'Users retrieved successfully',
+        data: {
+          users: users,
+          pagination: {
+            page: parseInt(page),
+            limit: parsedLimit
+          }
+        }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
 }
 
 module.exports = new UserController();

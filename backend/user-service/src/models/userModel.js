@@ -356,6 +356,17 @@ class User extends BaseModel {
       throw error;
     }
   }
+
+  async findAllSalesStaff(limit = 10, offset = 0) {
+    try {
+      return await this.callFunction('fn_get_sales_reps', [
+        limit,
+        offset
+      ]);
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = new User();
