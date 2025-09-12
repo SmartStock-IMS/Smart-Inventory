@@ -143,6 +143,57 @@ class ProductController {
       });
     }
   }
+
+  async getAllCategories(req, res) {
+    try {
+      const { page = 1, limit = 10, category, status, search } = req.query;
+      const offset = (page - 1) * limit;
+
+      const filters = {};
+      if (category) filters.category = category;
+      if (status) filters.status = status;
+      if (search) filters.search = search;
+
+      const categories = await Variant.findAll(parseInt(limit), parseInt(offset), filters);
+
+      res.status(200).json({
+        success: true,
+        message: 'Categories retrieved successfully',
+        data: {
+          categories: categories,
+          pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit)
+          }
+        }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  async createProductCategory(req, res) {
+    try {
+      const categoryData = req.body;
+
+      const category = await Variant.create(categoryData);
+
+      res.status(201).json({
+        success: true,
+        message: 'Product category created successfully',
+        data: { category }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
 }
 
 module.exports = new ProductController();

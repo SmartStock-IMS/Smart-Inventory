@@ -2,7 +2,7 @@ const BaseModel = require('./baseModel');
 
 class Product extends BaseModel {
   constructor() {
-    super('products');
+    super('product');
   }
 
   async findAll(limit = 10, offset = 0) {

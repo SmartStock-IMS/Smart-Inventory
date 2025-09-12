@@ -1,13 +1,9 @@
 const express = require('express');
+const productController = require('../controllers/productController');
 
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Categories retrieved successfully'
-  });
-});
+
 
 /*
 router.get('/', productController.getAllProducts);
@@ -16,5 +12,8 @@ router.post('/', createProductValidation, productController.createProduct);
 router.put('/:id', updateProductValidation, productController.updateProduct);
 router.delete('/:id', productController.deleteProduct);
 */
+
+router.get('/', productController.getAllCategories);
+router.post('/', productController.createProductCategory);
 
 module.exports = router;
