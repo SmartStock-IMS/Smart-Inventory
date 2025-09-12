@@ -2,7 +2,31 @@ const BaseModel = require('./baseModel');
 
 class Variant extends BaseModel {
   constructor() {
-    super('product_variants');
+    super('product_category');
+  }
+
+  async findAll(limit = 10, offset = 0) {
+    try {
+      return await this.callFunction('fn_get_categories');
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async create(variantData) {
+    try {
+      const result = await this.callProcedure('sp_create_product_category', [
+        null,
+        null,
+        null,
+        variantData.category_name || null,
+        variantData.description || null,
+        variantData.pic_url || null
+      ]);
+      return result[0];
+    } catch (error) {
+      throw error;
+    }
   }
 /*
   async findByProductId(productId) {
