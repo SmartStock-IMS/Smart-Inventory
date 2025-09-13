@@ -280,12 +280,32 @@ const ProductList = () => {
         acc[key] = (acc[key] || 0) + 1;
         return acc;
       }, {});
+
+      const categoryImage = (name) => {
+          switch (name) {
+            case "Black Pepper":
+              return "https://images.unsplash.com/photo-1591801058986-9e28e68670f7?q=80&w=1228&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+            case "Herbs":
+              return "https://plus.unsplash.com/premium_photo-1693266635481-37de41003239?q=80&w=688&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+            case "Cinnamon":
+              return "https://images.unsplash.com/photo-1601379758962-cadba22b1e3a?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+            case "Cardamom":
+              return "https://images.unsplash.com/photo-1701190588800-67a7007492ad?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+            case "White Pepper":
+              return "https://media.istockphoto.com/id/2159774748/photo/white-pepper-or-peppercorns-in-wooden-spoon-with-bowl.jpg?s=2048x2048&w=is&k=20&c=8E_80C-Xsj_iCRfzfJSwlTKUqmxrGKy5-puKqfc8glc=";
+            case "Blends":
+              return "https://media.istockphoto.com/id/2195466084/photo/curry-powder.jpg?s=2048x2048&w=is&k=20&c=BMSyanE-Q-2Sja8JrSeATaaEHW_R_V_4icRo0H0ioXs=";
+            case "Spices":
+              return "https://images.unsplash.com/photo-1532336414038-cf19250c5757?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+          }}
+
+
       // Use only the least stocked product per category for display
       if (response.success && response.data && response.data.data && Array.isArray(response.data.data.products)) {
         const mapped = Object.values(leastStockedByCategory).map(product => ({
           id: product.product_id,
           name: product.category_name,
-          main_image: `https://loremflickr.com/400/400/${product.category_name}`,
+          main_image: categoryImage(product.category_name),
           no_variants: categoryCounts[product.category_name] || 1,
           variants: [],
           description: `${product.category_name} | Cost: ₹${product.cost_price} | Sell: ₹${product.selling_price}`,

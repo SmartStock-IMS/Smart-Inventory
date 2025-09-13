@@ -1,50 +1,84 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaSpinner } from "react-icons/fa";
-import { PackageSearch, TrendingUp, Star, ArrowRight, Trophy, Sparkles, ShoppingBag } from "lucide-react";
+import {
+  PackageSearch,
+  TrendingUp,
+  Star,
+  ArrowRight,
+  Trophy,
+  Sparkles,
+  ShoppingBag,
+} from "lucide-react";
+import axios from "axios";
+
 
 // Mock service function for demo
 const getPopularProductsData = async () => {
   // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+
   // Generate mock data
   const mockProducts = [
     {
       name: "Wireless Headphones Pro",
       category: "Electronics",
       totalSold: 245,
-      main_image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=150&h=150&fit=crop&crop=center"
+      
     },
     {
       name: "Smart Fitness Watch",
       category: "Wearables",
       totalSold: 189,
-      main_image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150&h=150&fit=crop&crop=center"
+      
     },
     {
       name: "Organic Coffee Beans",
       category: "Food & Beverage",
       totalSold: 156,
-      main_image: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=150&h=150&fit=crop&crop=center"
     },
     {
       name: "Designer Backpack",
       category: "Fashion",
       totalSold: 134,
-      main_image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=150&h=150&fit=crop&crop=center"
     },
     {
       name: "Gaming Mechanical Keyboard",
       category: "Electronics",
       totalSold: 98,
-      main_image: "https://images.unsplash.com/photo-1541140532154-b024d705b90a?w=150&h=150&fit=crop&crop=center"
-    }
+      
+    },
   ];
-  
+
   return { success: true, data: mockProducts };
 };
 
+const getPopularProductsDataOriginal = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(
+      "http://localhost:3000/api/products/popular",
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
+    console.log('getPopularProductsOriginal',response.data.data.products);
+
+    const [nameOnly, quantity] = "Black Peppercorns 100g".match(/^(.*)\s(\d+\s?[a-zA-Z]+)$/).slice(1);
+
+    const dataToFrontend = response.data.data.products.map((product) => ({
+      name: nameOnly,
+      category: quantity,
+      totalSold: product.total_quantity || 0,
+      
+    }));
+
+    return { success: true, data: dataToFrontend };
+  } catch (error) {
+    console.error("Error fetching popular products:", error);
+    return { success: false, message: "Error fetching popular products" };
+  }
+};
 export default function PopularProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +89,7 @@ export default function PopularProducts() {
       setLoading(true);
       setError(null);
       try {
-        const result = await getPopularProductsData();
+        const result = await getPopularProductsDataOriginal();
         if (result.success) {
           console.log("result: ", result.data);
           setProducts(Array.isArray(result.data) ? result.data : []);
@@ -115,7 +149,9 @@ export default function PopularProducts() {
           <div className="flex items-center gap-4">
             {/* Rank Badge */}
             <div className="relative flex-shrink-0">
-              <div className={`w-12 h-12 bg-gradient-to-br ${getRankColor(rank)} rounded-xl flex items-center justify-center shadow-lg`}>
+              <div
+                className={`w-12 h-12 bg-gradient-to-br ${getRankColor(rank)} rounded-xl flex items-center justify-center shadow-lg`}
+              >
                 <span className="text-white font-bold text-lg">#{rank}</span>
               </div>
               <div className="absolute -top-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md">
@@ -124,18 +160,19 @@ export default function PopularProducts() {
             </div>
 
             {/* Product Image */}
-            <div className="w-16 h-16 flex-shrink-0">
+            {/* <div className="w-16 h-16 flex-shrink-0">
               <div className="w-full h-full rounded-xl overflow-hidden shadow-md group-hover:shadow-lg transition-shadow duration-300">
-                <img 
-                  src={product.main_image} 
-                  alt="product-image" 
+                <img
+                  src={product.main_image}
+                  alt="product-image"
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   onError={(e) => {
-                    e.target.src = "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=150&h=150&fit=crop&crop=center";
+                    e.target.src =
+                      "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=150&h=150&fit=crop&crop=center";
                   }}
                 />
               </div>
-            </div>
+            </div> */}
 
             {/* Product Info */}
             <div className="flex-1 min-w-0">
@@ -154,7 +191,6 @@ export default function PopularProducts() {
                 <TrendingUp className="w-3 h-3" />
                 <span className="font-bold text-sm">{product.totalSold}</span>
               </div>
-              <p className="text-xs text-gray-400 mt-1">units sold</p>
             </div>
           </div>
         </div>
@@ -180,7 +216,9 @@ export default function PopularProducts() {
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <PackageSearch className="w-8 h-8 text-red-500" />
           </div>
-          <h3 className="text-red-700 font-semibold text-lg mb-2">Error Loading Data</h3>
+          <h3 className="text-red-700 font-semibold text-lg mb-2">
+            Error Loading Data
+          </h3>
           <p className="text-red-600">{error}</p>
         </div>
       </div>
@@ -216,17 +254,17 @@ export default function PopularProducts() {
           {/* Column Headers */}
           <div className="flex justify-between items-center text-gray-500 text-sm mb-4 px-4 pb-2 border-b border-gray-100">
             <span className="font-medium">Product Rankings</span>
-            <span className="font-medium">Performance</span>
+            <span className="font-medium">Stock</span>
           </div>
 
           {/* Products Container */}
           <div className="flex-1 overflow-y-auto space-y-3 pr-2">
             {Array.isArray(products) && products.length > 0 ? (
               products.map((product, index) => (
-                <ProductCard 
-                  key={index} 
-                  product={product} 
-                  index={index} 
+                <ProductCard
+                  key={index}
+                  product={product}
+                  index={index}
                   rank={index + 1}
                 />
               ))
@@ -236,7 +274,9 @@ export default function PopularProducts() {
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <PackageSearch className="w-8 h-8 text-gray-400" />
                   </div>
-                  <p className="text-gray-500 font-medium">No popular products data available</p>
+                  <p className="text-gray-500 font-medium">
+                    No popular products data available
+                  </p>
                 </div>
               </div>
             )}
@@ -246,10 +286,7 @@ export default function PopularProducts() {
 
       {/* Footer CTA */}
       <div className="p-6 bg-gradient-to-r from-gray-50 to-white border-t border-gray-100">
-        <Link
-          to="/administrator/productlist"
-          className="block w-full group"
-        >
+        <Link to="/administrator/productlist" className="block w-full group">
           <button className="w-full py-3 px-6 bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-3 group">
             <span>View All Products</span>
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
