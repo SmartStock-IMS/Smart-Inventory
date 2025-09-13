@@ -1,8 +1,17 @@
 const BaseModel = require('./baseModel');
 
+
 class Product extends BaseModel {
   constructor() {
     super('product');
+  }
+
+  async getMostPopularProducts(limit = 10) {
+    try {
+      return await this.callFunction('fn_get_most_popular_products', [limit]);
+    } catch (error) {
+      throw error;
+    }
   }
 
   async findAll(limit = 10, offset = 0) {

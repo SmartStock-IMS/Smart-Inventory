@@ -8,6 +8,23 @@ const Inventory = new InventoryModel();
 
 class ProductController {
 
+  async getMostPopularProducts(req, res) {
+    try {
+      const { limit = 10 } = req.query;
+      const products = await Product.getMostPopularProducts(parseInt(limit));
+      res.status(200).json({
+        success: true,
+        message: 'Most popular products retrieved successfully',
+        data: { products }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
   async getAllProducts(req, res) {
     try {
       const { page = 1, limit = 10, category, status, search } = req.query;
