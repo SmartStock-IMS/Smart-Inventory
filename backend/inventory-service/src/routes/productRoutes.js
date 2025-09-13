@@ -17,6 +17,7 @@ const updateProductValidation = [
 ];
 
 // Routes
+router.get('/popular', productController.getMostPopularProducts);
 router.get('/', productController.getAllProducts);
 router.get('/:id', productController.getProductById);
 router.post('/', createProductValidation, productController.createProduct);
