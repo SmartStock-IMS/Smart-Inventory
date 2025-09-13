@@ -87,6 +87,7 @@ const updateProduct = async (productCode, data) => {
     const response = await axios.put(`http://localhost:3000/api/products/${productCode}`, data, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
+    console.log("Update response:", response);
     return { success: true, message: "Product updated successfully", data: response.data };
   } catch (error) {
     console.error("Error updating product:", error);
@@ -100,7 +101,6 @@ const deleteVariant = async (productCode) => {
     const response = await axios.delete(`http://localhost:3000/api/products/${productCode}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
-    console.log(response);
     return { success: true, message: "Product variant deleted successfully", data: response.data };
   } catch (error) {
     console.error("Error deleting variant:", error);
@@ -223,11 +223,6 @@ const ProductPage = () => {
     })();
   }, [id]);
 
-  useEffect(() => {
-  console.log('updatedProduct after set:', updatedProduct );
-  console.log('updatedVariants after set:', updatedVariants );
-}, [updatedProduct, updatedVariants]);
-
   // handle if product is missing
   if (!initProduct || Object.keys(initProduct).length === 0) {
     return (
@@ -252,6 +247,7 @@ const ProductPage = () => {
 
   // handle input changes for variants
   const handleVariantChange = (index, field, value) => {
+    console.log("Variant change:", { index, field, value });
   const updated = [...updatedVariants];
   updated[index] = {
     ...updated[index],
@@ -271,6 +267,7 @@ const ProductPage = () => {
         name: variant.name,
         cost_price: variant.cost_price,
         selling_price: variant.selling_price,
+        current_stock: variant.current_stock,
         min_stock_level: variant.min_stock_level,
         max_stock_level: variant.max_stock_level,
         reorder_point: variant.reorder_point,

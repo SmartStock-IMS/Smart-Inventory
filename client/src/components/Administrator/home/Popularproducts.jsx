@@ -247,7 +247,7 @@ export default function PopularProducts() {
       {/* Footer CTA */}
       <div className="p-6 bg-gradient-to-r from-gray-50 to-white border-t border-gray-100">
         <Link
-          to="/inventorymanager/productlist"
+          to="/administrator/productlist"
           className="block w-full group"
         >
           <button className="w-full py-3 px-6 bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-3 group">
