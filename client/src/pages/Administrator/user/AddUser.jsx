@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Loader2, AlertCircle, UserPlus, User, Mail, Phone, MapPin, Shield, Lock, CheckCircle, Sparkles, Camera, CreditCard } from "lucide-react";
+import axiosInstance from '../../../../src/utills/axiosinstance.jsx';
 
 const AddUser = () => {
     const [loading, setLoading] = useState(false);
@@ -71,33 +72,57 @@ const AddUser = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Submit button clicked');
-        
-        if (!validateForm()) {
-            console.log('Form validation failed, submission cancelled');
-            return;
-        }
+        if (!validateForm()) return;
 
         setLoading(true);
-        console.log('Starting submission process...', formData);
-        
+        setError("");
+        setSuccess(false);
+
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            console.log("Form submitted successfully:", {
-                firstName: formData.firstName,
-                lastName: formData.lastName,
-                email: formData.email,
-                phone: formData.phone,
-                address: formData.address,
-                nicNo: formData.nicNo,
-                profilePicture: formData.profilePicture?.name || null,
-                role: formData.role
+
+            const token = localStorage.getItem("accessToken");
+            let payload;
+            let headers = {
+                Authorization: `Bearer ${token}`,
+            };
+
+            if (formData.profilePicture) {
+                // Send as FormData if profile picture is present
+                payload = new FormData();
+                payload.append("username", formData.email); // using email as username
+                payload.append("password", formData.password);
+                payload.append("first_name", formData.firstName);
+                payload.append("last_name", formData.lastName);
+                payload.append("role", formData.role);
+                payload.append("email", formData.email);
+                payload.append("phone", formData.phone);
+                payload.append("address", formData.address);
+                payload.append("nic", formData.nicNo);
+                payload.append("branch", "Test Branch - Colombo"); // dummy value
+                payload.append("profilePicture", formData.profilePicture);
+                headers["Content-Type"] = "multipart/form-data";
+            } else {
+                // Send as JSON if no profile picture
+                payload = {
+                    username: formData.email,
+                    password: formData.password,
+                    first_name: formData.firstName,
+                    last_name: formData.lastName,
+                    role: formData.role,
+                    email: formData.email,
+                    phone: formData.phone,
+                    address: formData.address,
+                    nic: formData.nicNo,
+                    branch: "Test Branch - Colombo"
+                };
+                headers["Content-Type"] = "application/json";
+            }
+
+            await axiosInstance.post("/api/auth/register", payload, {
+                headers,
             });
-            
+
             setSuccess(true);
-            // Reset form
             setFormData({
                 firstName: "",
                 lastName: "",
@@ -111,11 +136,12 @@ const AddUser = () => {
                 confirmPassword: ""
             });
         } catch (err) {
-            console.error('Submission failed:', err);
-            setError("Failed to add user. Please try again.");
+            setError(
+                err.response?.data?.message ||
+                "Failed to add user. Please try again."
+            );
         } finally {
             setLoading(false);
-            console.log('Submission process completed');
         }
     };
 
@@ -369,7 +395,7 @@ const AddUser = () => {
                                         >
                                             <option value="user">👤 User</option>
                                             <option value="admin">👑 Admin</option>
-                                            <option value="manager">📊 Manager</option>
+                                            <option value="inventory_manager">📊 Manager</option>
                                         </select>
                                         <div className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-gradient-to-r ${getRoleColor(formData.role)} rounded-full`}></div>
                                     </div>

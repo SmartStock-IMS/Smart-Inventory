@@ -306,8 +306,7 @@ const Invoice = ({ cartState = mockCartState, billingDetails = mockBillingDetail
                   <table className="w-full min-w-[600px]">
                     <thead>
                       <tr className="bg-black text-white">
-                        <th className="py-4 px-4 text-left font-semibold border-r border-gray-600">ITEM CODE</th>
-                        <th className="py-4 px-4 text-left font-semibold border-r border-gray-600">DESCRIPTION</th>
+                        <th className="py-4 px-4 text-left font-semibold border-r border-gray-600">ITEM NAME</th>
                         <th className="py-4 px-4 text-right font-semibold border-r border-gray-600">QUANTITY</th>
                         <th className="py-4 px-4 text-right font-semibold border-r border-gray-600">UNIT PRICE</th>
                         <th className="py-4 px-4 text-right font-semibold">AMOUNT</th>
@@ -316,8 +315,7 @@ const Invoice = ({ cartState = mockCartState, billingDetails = mockBillingDetail
                     <tbody>
                       {cartState.selectedItems.map((item, index) => (
                         <tr key={item.id} className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} border-b-2 border-gray-300`}>
-                          <td className="py-4 px-4 font-medium text-black border-r border-gray-300">{item.code}</td>
-                          <td className="py-4 px-4 text-gray-700 border-r border-gray-300">{item.name} ({item.color})</td>
+                          <td className="py-4 px-4 font-medium text-black border-r border-gray-300">{item.name}{item.color ? ` (${item.color})` : ''}</td>
                           <td className="py-4 px-4 text-right text-gray-700 border-r border-gray-300">{item.quantity}</td>
                           <td className="py-4 px-4 text-right text-gray-700 border-r border-gray-300">Rs.{item.price.toLocaleString()}</td>
                           <td className="py-4 px-4 text-right font-semibold text-black">Rs.{(item.price * item.quantity).toLocaleString()}</td>

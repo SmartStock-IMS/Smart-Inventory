@@ -4,10 +4,10 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 require('dotenv').config();
 
-const orderRoutes = require('./src/routes/orderRoutes');
+// const orderRoutes = require('./src/routes/orderRoutes');
 const customerRoutes = require('./src/routes/customerRoutes');
-const quotationRoutes = require('./src/routes/quotationRoutes');
-const reportRoutes = require('./src/routes/reportRoutes');
+// const quotationRoutes = require('./src/routes/quotationRoutes');
+// const reportRoutes = require('./src/routes/reportRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3003;
@@ -39,10 +39,10 @@ app.get('/health', (req, res) => {
 });
 
 // Routes
-app.use('/orders', orderRoutes);
+// app.use('/orders', orderRoutes);
 app.use('/customers', customerRoutes);
-app.use('/quotations', quotationRoutes);
-app.use('/reports', reportRoutes);
+// app.use('/quotations', quotationRoutes);
+// app.use('/reports', reportRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

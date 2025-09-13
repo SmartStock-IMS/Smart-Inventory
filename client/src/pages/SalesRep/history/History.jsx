@@ -25,96 +25,22 @@ const History = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const fetchQuotations = async () => {
-      setIsLoading(true);
-      try {
-        // TODO: Replace with real API when backend is connected
-        // const response = await getQuotationsBySalesRep(user.user_code);
-        
-        // Mock data for demonstration since backend is not connected
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
-        
-        const mockQuotations = [
-          {
-            quotation_id: "QT-2024-001",
-            quotation_date: "2024-08-15T10:30:00.000Z",
-            quotation_due_date: "2024-09-15",
-            subtotal: 15000,
-            discount: 5,
-            total: 14250,
-            customer_code: "CUST-001",
-            sales_rep_id: user?.user_code || "SR001",
-            payment_term: "Credit",
-            company: "Trollius",
-            status: "Pending",
-            selected_items: [
-              {
-                id: 1,
-                name: "Product A",
-                code: "PA001",
-                color: "Red",
-                weight: "500g",
-                quantity: 2,
-                price: 5000,
-                url: "/api/placeholder/100/100"
-              },
-              {
-                id: 2,
-                name: "Product B", 
-                code: "PB002",
-                color: "Blue",
-                weight: "300g", 
-                quantity: 1,
-                price: 5000,
-                url: "/api/placeholder/100/100"
-              }
-            ]
-          },
-          {
-            quotation_id: "QT-2024-002",
-            quotation_date: "2024-08-18T14:15:00.000Z",
-            quotation_due_date: "2024-09-18",
-            subtotal: 8500,
-            discount: 10,
-            total: 7650,
-            customer_code: "CUST-002", 
-            sales_rep_id: user?.user_code || "SR001",
-            payment_term: "Cash",
-            company: "Mehera",
-            status: "Completed",
-            selected_items: [
-              {
-                id: 3,
-                name: "Product C",
-                code: "PC003", 
-                color: "Green",
-                weight: "750g",
-                quantity: 1,
-                price: 8500,
-                url: "/api/placeholder/100/100"
-              }
-            ]
-          }
-        ];
-        
-        const response = { success: true, data: mockQuotations };
-        
-        if (response.success) {
-          setOrders(response.data);
-        } else {
-          console.log("Error fetching Quotations:", response.error);
-          toast.error("Failed to load quotation history");
-        }
-      } catch (error) {
-        console.error("Error fetching quotations:", error);
-        toast.error("Failed to load quotation history");
-      } finally {
-        setIsLoading(false);
+    setIsLoading(true);
+    try {
+      // Get quotations from localStorage for frontend dev
+      const savedQuotations = localStorage.getItem('quotations');
+      let quotations = [];
+      if (savedQuotations) {
+        quotations = JSON.parse(savedQuotations);
       }
-    };
-
-    fetchQuotations();
-  }, [user?.user_code]);
+      setOrders(quotations);
+    } catch (error) {
+      console.error("Error fetching quotations from localStorage:", error);
+      toast.error("Failed to load quotation history");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   // const filteredOrders = orders.filter(order =>
   //   order.id.includes(searchQuery) ||

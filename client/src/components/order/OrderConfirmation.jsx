@@ -256,16 +256,6 @@ const OrderConfirmation = () => {
                                   <span>Weight: {item.weight}</span>
                                 </div>
                               )}
-                              {item.color && (
-                                <div className="flex items-center gap-1">
-                                  <div className="w-3 h-3 rounded-full border" style={{backgroundColor: item.color.toLowerCase()}}></div>
-                                  <span>Color: {item.color}</span>
-                                </div>
-                              )}
-                              <div className="flex items-center gap-1">
-                                <span className="w-3 h-3 bg-gray-400 rounded-full"></span>
-                                <span>Code: {item.code}</span>
-                              </div>
                             </div>
                             <div className="flex items-center justify-between">
                               <p className="text-gray-600">

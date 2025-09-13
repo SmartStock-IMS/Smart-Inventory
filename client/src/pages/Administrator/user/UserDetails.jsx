@@ -1,42 +1,69 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Phone, MapPin, Building, Globe, User, Search, ArrowLeft, Calendar, Edit3, Star, Users } from 'lucide-react';
+import axiosInstance from '../../../../src/utills/axiosinstance.jsx';
 
 const UserDetails = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [users, setUsers] = useState([
-        {
-            id: 1,
-            firstName: 'John',
-            lastName: 'Doe',
-            email: 'john.doe@example.com',
-            phone: '+1 (555) 123-4567',
-            address: '123 Main Street, City, Country',
-            company: 'Tech Solutions Inc.',
-            website: 'www.johndoe.com',
-            role: 'Senior Developer',
-            joinDate: '2023-01-15',
-            avatarUrl: 'https://api.dicebear.com/7.x/initials/svg?seed=JD'
-        },
-        {
-            id: 2,
-            firstName: 'Jane',
-            lastName: 'Smith',
-            email: 'jane.smith@example.com',
-            phone: '+1 (555) 987-6543',
-            address: '456 Oak Avenue, Town, Country',
-            company: 'Design Studio',
-            website: 'www.janesmith.com',
-            role: 'UI Designer',
-            joinDate: '2023-02-20',
-            avatarUrl: 'https://api.dicebear.com/7.x/initials/svg?seed=JS'
-        },
-    ]);
-
-    const [selectedUser, setSelectedUser] = useState(users[0]);
+    const [users, setUsers] = useState([]);
+    const [selectedUser, setSelectedUser] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [showMobileDetails, setShowMobileDetails] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Fetch users from backend
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                setLoading(true);
+                let token = localStorage.getItem("accessToken");
+                if (!token) {
+                    token = localStorage.getItem("token");
+                }
+                if (!token) {
+                    setError("Access token not found. Please log in again.");
+                    setLoading(false);
+                    return;
+                }
+                const response = await axiosInstance.get('/api/users/', {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                if (response.data.success) {
+                    // Transform backend data to match frontend format
+                    const transformedUsers = response.data.data.users.map(user => ({
+                        id: user.userid,
+                        firstName: user.first_name,
+                        lastName: user.last_name,
+                        email: user.email,
+                        phone: user.phone,
+                        address: user.address,
+                        company: user.company || 'Not specified', // Add if available in backend
+                        website: user.website || 'Not specified', // Add if available in backend
+                        role: user.role,
+                        joinDate: user.created_at,
+                        avatarUrl: user.pic_url || `https://api.dicebear.com/7.x/initials/svg?seed=${user.first_name?.charAt(0) || ''}${user.last_name?.charAt(0) || ''}`,
+                        nic: user.nic
+                    }));
+                    setUsers(transformedUsers);
+                    if (transformedUsers.length > 0) {
+                        setSelectedUser(transformedUsers[0]);
+                    }
+                } else {
+                    setError('Failed to fetch users');
+                }
+            } catch (err) {
+                console.error('Error fetching users:', err);
+                setError('Error fetching users. Please try again.');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchUsers();
+    }, []);
 
     // Handle updated user data from EditUser page
     useEffect(() => {
@@ -60,7 +87,7 @@ const UserDetails = () => {
             // Clear the state to prevent re-triggering
             window.history.replaceState({}, document.title);
         }
-    }, [location.state, selectedUser.id]);
+    }, [location.state, selectedUser?.id]);
 
     const filteredUsers = users.filter(user => 
         `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -68,23 +95,23 @@ const UserDetails = () => {
     );
 
     const getRoleColor = (role) => {
-        if (role.toLowerCase().includes('senior') || role.toLowerCase().includes('lead')) {
+        if (role.toLowerCase().includes('admin')) {
+            return 'from-red-500 to-red-600';
+        } else if (role.toLowerCase().includes('manager')) {
             return 'from-purple-500 to-indigo-600';
-        } else if (role.toLowerCase().includes('designer')) {
-            return 'from-pink-500 to-rose-600';
-        } else if (role.toLowerCase().includes('developer')) {
+        } else if (role.toLowerCase().includes('inventory')) {
             return 'from-blue-500 to-cyan-600';
         }
         return 'from-gray-500 to-slate-600';
     };
 
     const getRoleIcon = (role) => {
-        if (role.toLowerCase().includes('senior') || role.toLowerCase().includes('lead')) {
+        if (role.toLowerCase().includes('admin')) {
             return '👑';
-        } else if (role.toLowerCase().includes('designer')) {
-            return '🎨';
-        } else if (role.toLowerCase().includes('developer')) {
-            return '💻';
+        } else if (role.toLowerCase().includes('manager')) {
+            return '💼';
+        } else if (role.toLowerCase().includes('inventory')) {
+            return '📦';
         }
         return '👤';
     };
@@ -125,13 +152,21 @@ const UserDetails = () => {
                             </div>
                         </div>
                     </div>
-                    <button 
-                        onClick={onEditUser}
-                        className="hidden sm:flex items-center gap-2 px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl transition-all duration-300 hover:scale-105 border border-white/20"
-                    >
-                        <Edit3 className="w-4 h-4" />
-                        <span className="font-medium">Edit Profile</span>
-                    </button>
+                    <div className="flex gap-2">
+                        <button 
+                            onClick={onEditUser}
+                            className="hidden sm:flex items-center gap-2 px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl transition-all duration-300 hover:scale-105 border border-white/20"
+                        >
+                            <Edit3 className="w-4 h-4" />
+                            <span className="font-medium">Edit Profile</span>
+                        </button>
+                        <button
+                            onClick={() => alert('Remove user logic goes here')}
+                            className="hidden sm:flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-400 text-white rounded-xl transition-all duration-300 border border-blue-500"
+                        >
+                            <span className="font-medium">Remove</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -167,7 +202,7 @@ const UserDetails = () => {
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Phone</p>
-                                        <p className="font-semibold text-gray-800 truncate">{user.phone}</p>
+                                        <p className="font-semibold text-gray-800 truncate">{user.phone || 'Not provided'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -190,8 +225,8 @@ const UserDetails = () => {
                                         <Globe className="h-5 w-5 text-orange-600" />
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Website</p>
-                                        <p className="font-semibold text-gray-800 truncate">{user.website}</p>
+                                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">NIC</p>
+                                        <p className="font-semibold text-gray-800 truncate">{user.nic || 'Not provided'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -214,7 +249,7 @@ const UserDetails = () => {
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Address</p>
-                                    <p className="font-semibold text-gray-800">{user.address}</p>
+                                    <p className="font-semibold text-gray-800">{user.address || 'Not provided'}</p>
                                 </div>
                             </div>
                         </div>
@@ -258,6 +293,35 @@ const UserDetails = () => {
         </div>
     );
 
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading users...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex items-center justify-center">
+                <div className="bg-white p-6 rounded-xl shadow-lg text-center">
+                    <div className="text-red-500 text-2xl mb-4">⚠️</div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Error</h3>
+                    <p className="text-gray-600">{error}</p>
+                    <button 
+                        onClick={() => window.location.reload()} 
+                        className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                    >
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 py-6">
             {/* Floating Background Elements */}
@@ -287,7 +351,7 @@ const UserDetails = () => {
                     <div className={`${showMobileDetails ? 'hidden lg:block' : ''} w-full lg:w-1/3`}>
                         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
                             {/* Enhanced Search Bar */}
-                            <div className="p-6 bg-gradient-to-r from-gray-800 to-gray-900 text-white">
+                            <div className="p-6 bg-gradient-to-r from-blue-500 to-blue-500 text-white">
                                 <div className="relative">
                                     <input
                                         type="text"
@@ -302,37 +366,43 @@ const UserDetails = () => {
 
                             {/* Enhanced User List */}
                             <div className="divide-y divide-gray-100 max-h-[calc(100vh-250px)] overflow-y-auto">
-                                {filteredUsers.map(user => (
-                                    <div
-                                        key={user.id}
-                                        onClick={() => {
-                                            setSelectedUser(user);
-                                            setShowMobileDetails(true);
-                                        }}
-                                        className={`p-6 cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 group ${
-                                            selectedUser?.id === user.id ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-r-4 border-blue-500' : ''
-                                        }`}
-                                    >
-                                        <div className="flex items-center space-x-4">
-                                            <div className="relative">
-                                                <img
-                                                    src={user.avatarUrl}
-                                                    alt={`${user.firstName} ${user.lastName}`}
-                                                    className="h-12 w-12 rounded-full border-2 border-gray-200 group-hover:border-blue-300 transition-all duration-200 shadow-md"
-                                                />
-                                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-sm"></div>
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <h3 className="font-bold text-gray-800 truncate group-hover:text-blue-700 transition-colors">{`${user.firstName} ${user.lastName}`}</h3>
-                                                <p className="text-sm text-gray-500 truncate">{user.email}</p>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-sm">{getRoleIcon(user.role)}</span>
-                                                    <span className="text-xs text-gray-400 font-medium">{user.role}</span>
+                                {filteredUsers.length > 0 ? (
+                                    filteredUsers.map(user => (
+                                        <div
+                                            key={user.id}
+                                            onClick={() => {
+                                                setSelectedUser(user);
+                                                setShowMobileDetails(true);
+                                            }}
+                                            className={`p-6 cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 group ${
+                                                selectedUser?.id === user.id ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-r-4 border-blue-500' : ''
+                                            }`}
+                                        >
+                                            <div className="flex items-center space-x-4">
+                                                <div className="relative">
+                                                    <img
+                                                        src={user.avatarUrl}
+                                                        alt={`${user.firstName} ${user.lastName}`}
+                                                        className="h-12 w-12 rounded-full border-2 border-gray-200 group-hover:border-blue-300 transition-all duration-200 shadow-md"
+                                                    />
+                                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-sm"></div>
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <h3 className="font-bold text-gray-800 truncate group-hover:text-blue-700 transition-colors">{`${user.firstName} ${user.lastName}`}</h3>
+                                                    <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="text-sm">{getRoleIcon(user.role)}</span>
+                                                        <span className="text-xs text-gray-400 font-medium">{user.role}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
+                                    ))
+                                ) : (
+                                    <div className="p-6 text-center text-gray-500">
+                                        No users found
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
                     </div>

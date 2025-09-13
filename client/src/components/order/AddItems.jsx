@@ -11,7 +11,34 @@ const AddItems = () => {
   const { cart, removeFromCart, setCartState, updateQuantity: updateCartQuantity } = useCart();
   
   // Local state - optimized
-  const [items, setItems] = useState(cart);
+  // Flatten cart so each variant is a separate item, but fallback to cart if already flat
+  const [items, setItems] = useState(() => {
+    if (Array.isArray(cart)) {
+      // If cart items have 'variants', flatten them
+      if (cart.some(product => product.variants && Array.isArray(product.variants))) {
+        return cart.flatMap(product => {
+          if (product.variants && Array.isArray(product.variants)) {
+            return product.variants.map(variant => ({
+              ...variant,
+              productName: product.name || product.category,
+              url: product.main_image,
+              code: variant.id
+            }));
+          }
+          return [{ ...product, code: product.id }];
+        });
+      } else {
+        // If cart is already flat, just use it
+        return cart.map(item => ({
+          ...item,
+          code: item.code || item.id,
+          url: item.url || item.main_image,
+          productName: item.productName || item.name || item.category
+        }));
+      }
+    }
+    return [];
+  });
   const [discount, setDiscount] = useState("");
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [showSummary, setShowSummary] = useState(false);
@@ -42,10 +69,34 @@ const AddItems = () => {
 
   // Sync local items with cart context
   useEffect(() => {
-    setItems(cart);
+    // Always sync items with cart context
+    let newItems = [];
+    if (Array.isArray(cart)) {
+      if (cart.some(product => product.variants && Array.isArray(product.variants))) {
+        newItems = cart.flatMap(product => {
+          if (product.variants && Array.isArray(product.variants)) {
+            return product.variants.map(variant => ({
+              ...variant,
+              productName: product.name || product.category,
+              url: product.main_image,
+              code: variant.id
+            }));
+          }
+          return [{ ...product, code: product.id }];
+        });
+      } else {
+        newItems = cart.map(item => ({
+          ...item,
+          code: item.code || item.id,
+          url: item.url || item.main_image,
+          productName: item.productName || item.name || item.category
+        }));
+      }
+    }
+    setItems(newItems);
     setSelectedItems(prevSelected => {
       const newSelected = new Set();
-      cart.forEach(item => {
+      newItems.forEach(item => {
         if (prevSelected.has(item.code)) {
           newSelected.add(item.code);
         }
@@ -77,12 +128,11 @@ const AddItems = () => {
 
   const deleteSelected = useCallback(async () => {
     if (selectedItems.size === 0) return;
-    
     setIsDeleting(true);
     try {
       const selectedCodes = Array.from(selectedItems);
       selectedCodes.forEach(code => removeFromCart(code));
-      
+      // No need to update local items state, useEffect will sync items from cart context
       setSelectedItems(new Set());
       toast.success(`${selectedCodes.length} item${selectedCodes.length !== 1 ? 's' : ''} removed from order`);
     } catch (error) {
@@ -282,7 +332,7 @@ const AddItems = () => {
                           )}
                           
                           <div className="text-sm text-slate-600">
-                            Code: <span className="font-mono">{item.code}</span>
+                            Name: <span className="font-mono">{item.name}</span>
                           </div>
                           
                           <div className="text-lg font-bold text-green-600">
@@ -331,7 +381,7 @@ const AddItems = () => {
                       <th className="p-4 font-semibold">SELECT</th>
                       <th className="p-4 font-semibold">PRODUCT</th>
                       <th className="p-4 font-semibold">VARIANT</th>
-                      <th className="p-4 font-semibold">CODE</th>
+                      <th className="p-4 font-semibold">NAME</th>
                       <th className="p-4 font-semibold">PRICE</th>
                       <th className="p-4 font-semibold">QUANTITY</th>
                       <th className="p-4 font-semibold">TOTAL</th>
@@ -380,7 +430,7 @@ const AddItems = () => {
                           )}
                         </td>
                         <td className="p-4">
-                          <span className="font-mono text-slate-600">{item.code}</span>
+                          <span className="font-mono text-slate-600">{item.name}</span>
                         </td>
                         <td className="p-4">
                           <span className="font-semibold text-green-600">{formatCurrency(item.price)}</span>
