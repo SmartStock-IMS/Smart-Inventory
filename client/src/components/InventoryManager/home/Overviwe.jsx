@@ -1,26 +1,67 @@
 import { useState, useEffect } from "react";
 import { User, Users, HandCoins, ChartNoAxesGantt, TrendingUp, Award, Sparkles, Calendar } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
+import axios from "axios";
 
-// Mock service function for demo
+// // Mock service function for demo
+// const getOverviewData = async (period) => {
+//   // Simulate API delay
+//   await new Promise(resolve => setTimeout(resolve, 1500));
+  
+//   // Generate mock data based on period
+//   const baseData = {
+//     totalCustomers: Math.floor(Math.random() * 500) + 100,
+//     totalIncome: Math.floor(Math.random() * 5000000) + 1000000,
+//     bestSalesReps: [
+//       { sales_rep_id: 1, name: "Alice Johnson" },
+//       { sales_rep_id: 2, name: "Bob Smith" },
+//       { sales_rep_id: 3, name: "Carol Davis" },
+//       { sales_rep_id: 4, name: "David Wilson" },
+//       { sales_rep_id: 5, name: "Eva Brown" }
+//     ]
+//   };
+  
+//   return { success: true, data: baseData };
+// };
+
 const getOverviewData = async (period) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  // Generate mock data based on period
-  const baseData = {
-    totalCustomers: Math.floor(Math.random() * 500) + 100,
-    totalIncome: Math.floor(Math.random() * 5000000) + 1000000,
-    bestSalesReps: [
-      { sales_rep_id: 1, name: "Alice Johnson" },
-      { sales_rep_id: 2, name: "Bob Smith" },
-      { sales_rep_id: 3, name: "Carol Davis" },
-      { sales_rep_id: 4, name: "David Wilson" },
-      { sales_rep_id: 5, name: "Eva Brown" }
-    ]
-  };
-  
-  return { success: true, data: baseData };
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get("http://localhost:3000/api/customers", {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    const totalCustomers = response.data.data.customers[0].total_count;
+
+    const response2 = await axios.get(
+      "http://localhost:3000/api/users/sales-staff",
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
+
+    const rankedUsers = response2.data.data.users
+      .sort(
+        (a, b) =>
+          parseFloat(b.performance_rating) - parseFloat(a.performance_rating)
+      )
+      .map((user, i) => ({ ...user, rank: i + 1 }));
+
+
+    const baseData = {
+      totalCustomers: totalCustomers,
+      totalIncome: Math.floor(Math.random() * 5000000) + 1000000,
+      bestSalesReps: rankedUsers.slice(0, 5).map((u, i) => ({
+        sales_rep_id: i + 1,
+        name: u.full_name,
+      })),
+    };
+
+    return { success: true, data: baseData };
+    //return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return { success: false, error: error.message };
+  }
 };
 
 const Overview = () => {

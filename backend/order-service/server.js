@@ -17,7 +17,7 @@ app.use(helmet());
 
 // CORS
 app.use(cors({
-  origin: process.env.GATEWAY_URL || 'http://localhost:3000',
+  origin: 'http://localhost:5173', // Allow frontend origin
   credentials: true
 }));
 

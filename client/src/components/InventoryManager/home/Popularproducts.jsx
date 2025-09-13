@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaSpinner } from "react-icons/fa";
 import { PackageSearch, TrendingUp, Star, ArrowRight, Trophy, Sparkles, ShoppingBag } from "lucide-react";
+import axios from "axios";
 
 // Mock service function for demo
 const getPopularProductsData = async () => {
@@ -45,6 +46,33 @@ const getPopularProductsData = async () => {
   return { success: true, data: mockProducts };
 };
 
+const getPopularProductsDataOriginal = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(
+      "http://localhost:3000/api/products/popular",
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
+    console.log('getPopularProductsOriginal',response.data.data.products);
+
+    const [nameOnly, quantity] = "Black Peppercorns 100g".match(/^(.*)\s(\d+\s?[a-zA-Z]+)$/).slice(1);
+
+    const dataToFrontend = response.data.data.products.map((product) => ({
+      name: nameOnly,
+      category: quantity,
+      totalSold: product.total_quantity || 0,
+      
+    }));
+
+    return { success: true, data: dataToFrontend };
+  } catch (error) {
+    console.error("Error fetching popular products:", error);
+    return { success: false, message: "Error fetching popular products" };
+  }
+};
+
 export default function PopularProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +83,7 @@ export default function PopularProducts() {
       setLoading(true);
       setError(null);
       try {
-        const result = await getPopularProductsData();
+        const result = await getPopularProductsDataOriginal();
         if (result.success) {
           console.log("result: ", result.data);
           setProducts(Array.isArray(result.data) ? result.data : []);
@@ -124,7 +152,7 @@ export default function PopularProducts() {
             </div>
 
             {/* Product Image */}
-            <div className="w-16 h-16 flex-shrink-0">
+            {/* <div className="w-16 h-16 flex-shrink-0">
               <div className="w-full h-full rounded-xl overflow-hidden shadow-md group-hover:shadow-lg transition-shadow duration-300">
                 <img 
                   src={product.main_image} 
@@ -135,7 +163,7 @@ export default function PopularProducts() {
                   }}
                 />
               </div>
-            </div>
+            </div> */}
 
             {/* Product Info */}
             <div className="flex-1 min-w-0">
@@ -154,7 +182,6 @@ export default function PopularProducts() {
                 <TrendingUp className="w-3 h-3" />
                 <span className="font-bold text-sm">{product.totalSold}</span>
               </div>
-              <p className="text-xs text-gray-400 mt-1">units sold</p>
             </div>
           </div>
         </div>
@@ -216,7 +243,7 @@ export default function PopularProducts() {
           {/* Column Headers */}
           <div className="flex justify-between items-center text-gray-500 text-sm mb-4 px-4 pb-2 border-b border-gray-100">
             <span className="font-medium">Product Rankings</span>
-            <span className="font-medium">Performance</span>
+            <span className="font-medium">Stock</span>
           </div>
 
           {/* Products Container */}
