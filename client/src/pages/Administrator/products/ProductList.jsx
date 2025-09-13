@@ -258,6 +258,43 @@ const ProductList = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
 
+  // useEffect(() => {
+  //   (async () => {
+  //     try {
+  //       const response = await getProducts();
+  //       console.log('get products function response',response);
+  //       if (response.success && response.data && response.data.products.length > 0) {
+  //         console.log('aaaa',response.data.length);
+  //         setAllProducts(response.data);
+  //       } else {
+  //         console.log("Using mock spice data for demonstration");
+  //         setAllProducts(mockSpiceProducts);
+  //       }
+  //     } catch (error) {
+  //       console.error("Error getting products, using mock data:", error);
+  //       setAllProducts(mockSpiceProducts);
+  //     }
+  //   })();
+
+  //   (async () => {
+  //     try {
+  //       const response = await getAllProducts(cursor, limit);
+  //       if (response.data && response.data.length > 0) {
+  //         console.log('aaaaa',response.data.length);
+  //         setProducts(response.data);
+  //         setHasMore(response.nextCursor !== null);
+  //       } else {
+  //         setProducts(mockSpiceProducts.slice(0, limit));
+  //         setHasMore(mockSpiceProducts.length > limit);
+  //       }
+  //     } catch (error) {
+  //       console.error("Error getting paginated products, using mock data:", error);
+  //       setProducts(mockSpiceProducts.slice(0, limit));
+  //       setHasMore(mockSpiceProducts.length > limit);
+  //     }
+  //   })();
+  // }, [cursor, limit]);
+
   useEffect(() => {
   (async () => {
     try {
@@ -433,7 +470,7 @@ const ProductList = () => {
 
   const handleViewProduct = (product) => {
     // Navigate to product detail page with product data
-    navigate(`/inventorymanager/product/${product.id}`, { state: {...product} });
+    navigate(`/administrator/product/${product.id}`, { state: {...product} });
   };
 
   const GridView = () => (

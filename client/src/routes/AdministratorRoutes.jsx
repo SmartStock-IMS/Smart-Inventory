@@ -14,6 +14,8 @@ import YearlySummary from "../pages/Administrator/reports/YearlySummary.jsx";
 import QBExport from "../pages/Administrator/reports/QBExport.jsx";
 import SalesRepList from "../pages/Administrator/sales-rep/SalesRepList.jsx";
 import RepDetails from "../pages/Administrator/sales-rep/RepDetails.jsx";
+import ProductList from "../pages/Administrator/products/ProductList.jsx";
+import Product from "../pages/Administrator/products/Product.jsx";
 
 function InventoryManagerRoutes() {
   return (
@@ -36,6 +38,11 @@ function InventoryManagerRoutes() {
                     <Route path="/orders" element={<OrderSummary />} />
                     <Route path="/sales-rep" element={<SalesRepList />} />
                     <Route path="/sales-rep/:repCode" element={<RepDetails />} />
+
+                    <Route path="/productlist" element={<ProductList />} />
+                    <Route path="/product">
+                      <Route path=":id" element={<Product />} />
+                    </Route>
                     {/* item: users */}
                     <Route path="/adduser" element={<AddUser />} />
                     <Route path="/userdetails" element={<UserDetails />} />
