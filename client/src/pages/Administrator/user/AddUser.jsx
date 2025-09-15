@@ -78,18 +78,14 @@ const AddUser = () => {
         setError("");
         setSuccess(false);
 
-        try {
 
-            const token = localStorage.getItem("accessToken");
+        try {
             let payload;
-            let headers = {
-                Authorization: `Bearer ${token}`,
-            };
+            let headers = {};
 
             if (formData.profilePicture) {
-                // Send as FormData if profile picture is present
                 payload = new FormData();
-                payload.append("username", formData.email); // using email as username
+                payload.append("username", formData.email);
                 payload.append("password", formData.password);
                 payload.append("first_name", formData.firstName);
                 payload.append("last_name", formData.lastName);
@@ -98,11 +94,10 @@ const AddUser = () => {
                 payload.append("phone", formData.phone);
                 payload.append("address", formData.address);
                 payload.append("nic", formData.nicNo);
-                payload.append("branch", "Test Branch - Colombo"); // dummy value
+                payload.append("branch", "Test Branch - Colombo");
                 payload.append("profilePicture", formData.profilePicture);
                 headers["Content-Type"] = "multipart/form-data";
             } else {
-                // Send as JSON if no profile picture
                 payload = {
                     username: formData.email,
                     password: formData.password,

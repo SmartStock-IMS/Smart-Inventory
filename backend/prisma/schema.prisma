@@ -1,0 +1,266 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Change to your database provider (mysql, sqlite, etc.)
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  userID           String  @id @db.VarChar(50)
+  username         String  @db.VarChar(100)
+  password_hash    String  @db.VarChar(255)
+  role             Role
+  first_name       String  @db.VarChar(100)
+  last_name        String  @db.VarChar(100)
+  pic_url          String? @db.VarChar(255)
+  pic              String? @db.VarChar(255)
+  email            String  @db.VarChar(150)
+  phone            String  @db.VarChar(20)
+  address          String  @db.VarChar(255)
+  branch           String  @db.VarChar(100)
+  date_of_employment DateTime @db.Date
+  performance_rating Float   @db.DoublePrecision
+
+  // Relations
+  customerOrders   CustomerOrder[]
+  inventoryManaged InventoryManager[]
+  stockMovements   StockMovements[]
+  resourceManager  ResourceManager?
+  adminManaged     Admin?
+  salesStaffManaged SalesStaff?
+  notifications    Notification[]
+
+  @@map("user")
+}
+
+model Supplier {
+  supplier_id  String @id @db.VarChar(50)
+  name         String @db.VarChar(150)
+  contact_no   String @db.VarChar(20)
+  email        String @db.VarChar(150)
+  address      String @db.VarChar(255)
+
+  // Relations
+  supplierOrders SupplierOrder[]
+
+  @@map("supplier")
+}
+
+model SupplierOrder {
+  supplier_order_id String      @id @db.VarChar(50)
+  supplier_id       String      @db.VarChar(50)
+  order_status      OrderStatus
+  order_type        OrderType
+  product_id        String      @db.VarChar(50)
+  inventory_manager_id String   @db.VarChar(50)
+
+  // Relations
+  supplier         Supplier         @relation(fields: [supplier_id], references: [supplier_id])
+  product          Product          @relation(fields: [product_id], references: [product_id])
+  inventoryManager InventoryManager @relation(fields: [inventory_manager_id], references: [inventory_manager_id])
+
+  @@map("supplier_orders")
+}
+
+model InventoryManager {
+  inventory_manager_id String   @id @db.VarChar(50)
+  userID               String   @db.VarChar(50)
+  branch               String   @db.VarChar(100)
+  date_of_employment   DateTime @db.Date
+  performance_rating   Float    @db.DoublePrecision
+
+  // Relations
+  user           User            @relation(fields: [userID], references: [userID])
+  supplierOrders SupplierOrder[]
+  products       Product[]
+
+  @@map("inventory_manager")
+}
+
+model ProductCategory {
+  category_id     String @id @db.VarChar(50)
+  category_name   String @db.VarChar(100)
+  description     String @db.Text
+
+  // Relations
+  products Product[]
+
+  @@map("product_category")
+}
+
+model Product {
+  product_id           String  @id @db.VarChar(50)
+  category_id          String  @db.VarChar(50)
+  name                 String  @db.VarChar(150)
+  cost_price           Float   @db.DoublePrecision
+  selling_price        Float   @db.DoublePrecision
+  min_stock_level      Int
+  max_stock_level      Int
+  reorder_point        Int
+  shelf_life           Int
+  inventory_manager_id String  @db.VarChar(50)
+
+  // Relations
+  category          ProductCategory @relation(fields: [category_id], references: [category_id])
+  inventoryManager  InventoryManager @relation(fields: [inventory_manager_id], references: [inventory_manager_id])
+  supplierOrders    SupplierOrder[]
+  inventory         Inventory[]
+  customerOrders    CustomerOrder[]
+
+  @@map("product")
+}
+
+model Inventory {
+  product_id String @db.VarChar(50)
+  quantity   Int
+
+  // Relations
+  product Product @relation(fields: [product_id], references: [product_id])
+
+  @@id([product_id])
+  @@map("inventory")
+}
+
+model Customer {
+  customer_id String @id @db.VarChar(50)
+  name        String @db.VarChar(150)
+  contact_no  String @db.VarChar(20)
+  email       String @db.VarChar(150)
+  address     String @db.VarChar(255)
+
+  // Relations
+  customerOrders CustomerOrder[]
+
+  @@map("customer")
+}
+
+model CustomerOrder {
+  order_id       String      @id @db.VarChar(50)
+  customer_id    String      @db.VarChar(50)
+  order_status   OrderStatus
+  order_type     OrderType
+  sales_staff_id String      @db.VarChar(50)
+  product_id     String      @db.VarChar(50)
+
+  // Relations
+  customer   Customer   @relation(fields: [customer_id], references: [customer_id])
+  salesStaff User       @relation(fields: [sales_staff_id], references: [userID])
+  product    Product    @relation(fields: [product_id], references: [product_id])
+
+  @@map("customer_orders")
+}
+
+model StockMovements {
+  order_id           String @db.VarChar(50)
+  vehicle_id         String @db.VarChar(50)
+  driver_name        String @db.VarChar(100)
+  driver_phone_no    String @db.VarChar(20)
+  resource_manager_id String @db.VarChar(50)
+
+  // Relations
+  resource        Resource @relation(fields: [vehicle_id], references: [vehicle_id])
+  resourceManager User     @relation(fields: [resource_manager_id], references: [userID])
+
+  @@id([order_id])
+  @@map("stock_movements")
+}
+
+model Resource {
+  vehicle_id     String      @id @db.VarChar(50)
+  plate_number   String      @db.VarChar(20)
+  type           VehicleType
+
+  // Relations
+  stockMovements StockMovements[]
+
+  @@map("resource")
+}
+
+model ResourceManager {
+  userID                String   @id @unique @db.VarChar(50)
+  resource_manager_id   String   @db.VarChar(50)
+  branch                String   @db.VarChar(100)
+  date_of_employment    DateTime @db.Date
+  performance_rating    Float    @db.DoublePrecision
+
+  // Relations
+  user User @relation(fields: [userID], references: [userID])
+
+  @@map("resource_manager")
+}
+
+model Admin {
+  userID  String @id @unique @db.VarChar(50)
+  admin_id String @db.VarChar(50)
+  branch   String @db.VarChar(100)
+
+  // Relations
+  user User @relation(fields: [userID], references: [userID])
+
+  @@map("admin")
+}
+
+model SalesStaff {
+  sales_staff_id       String   @id @db.VarChar(50)
+  userID               String   @unique @db.VarChar(50)
+  performance_rating   Float    @db.DoublePrecision
+  date_of_employment   DateTime @db.Date
+
+  // Relations
+  user User @relation(fields: [userID], references: [userID])
+
+  @@map("sales_staff")
+}
+
+model Notification {
+  userID  String            @db.VarChar(50)
+  message String            @db.VarChar(255)
+  status  NotificationStatus
+
+  // Relations
+  user User @relation(fields: [userID], references: [userID])
+
+  @@id([userID, message])
+  @@map("notification")
+}
+
+// Enums
+enum Role {
+  ADMIN
+  INVENTORY_MANAGER
+  SALES_STAFF
+  RESOURCE_MANAGER
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum OrderType {
+  PURCHASE
+  SALE
+  RETURN
+  TRANSFER
+}
+
+enum VehicleType {
+  TRUCK
+  VAN
+  CAR
+  MOTORCYCLE
+}
+
+enum NotificationStatus {
+  READ
+  UNREAD
+  ARCHIVED
+}
