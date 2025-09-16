@@ -12,6 +12,53 @@ const UserDetails = () => {
     const [showMobileDetails, setShowMobileDetails] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [deleteConfirmation, setDeleteConfirmation] = useState({ show: false, user: null });
+
+    // Remove user function
+    const removeUser = async (userId) => {
+        try {
+            let token = localStorage.getItem("authToken");
+            if (!token) {
+                token = localStorage.getItem("token");
+            }
+            if (!token) {
+                setError("Access token not found. Please log in again.");
+                return;
+            }
+
+            const response = await axiosInstance.delete(`/api/users/${userId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (response.data.success) {
+                // Remove user from local state
+                setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+                
+                // If deleted user was selected, select another user or clear selection
+                if (selectedUser?.id === userId) {
+                    const remainingUsers = users.filter(user => user.id !== userId);
+                    setSelectedUser(remainingUsers.length > 0 ? remainingUsers[0] : null);
+                    setShowMobileDetails(false);
+                }
+                
+                // Show success message (you can replace this with a toast notification)
+                alert('User removed successfully!');
+            } else {
+                setError('Failed to remove user');
+            }
+        } catch (err) {
+            console.error('Error removing user:', err);
+            if (err.response?.status === 401) {
+                setError('Authentication failed. Please log in again.');
+            } else if (err.response?.status === 404) {
+                setError('User not found.');
+            } else {
+                setError('Error removing user. Please try again.');
+            }
+        }
+    };
 
     // Fetch users from backend
     useEffect(() => {
@@ -111,13 +158,13 @@ const UserDetails = () => {
 
     const getRoleColor = (role) => {
         if (role.toLowerCase().includes('admin')) {
-            return 'from-red-500 to-red-600';
+            return 'from-blue-500 to-blue-600';
         } else if (role.toLowerCase().includes('manager')) {
-            return 'from-purple-500 to-indigo-600';
+            return 'from-blue-400 to-blue-500';
         } else if (role.toLowerCase().includes('inventory')) {
-            return 'from-blue-500 to-cyan-600';
+            return 'from-blue-400 to-blue-500';
         }
-        return 'from-gray-500 to-slate-600';
+        return 'from-blue-400 to-blue-500';
     };
 
     const getRoleIcon = (role) => {
@@ -132,37 +179,34 @@ const UserDetails = () => {
     };
 
     const UserDetailsComponent = ({ user, onBack, onEditUser }) => (
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 h-full overflow-hidden">
-            {/* Enhanced Header */}
-            <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-6 lg:p-8 text-white relative overflow-hidden">
-                <div className="absolute inset-0 bg-black/10"></div>
-                <div className="absolute top-4 right-4 opacity-20">
-                    <Star className="w-20 h-20 animate-pulse" />
-                </div>
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 h-full overflow-hidden">
+            {/* Compact Header */}
+            <div className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 p-4 text-white relative overflow-hidden">
+                <div className="absolute inset-0 bg-black/5"></div>
                 
                 <div className="relative flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-3">
                         {/* Enhanced Back button for mobile */}
                         <button 
                             onClick={onBack}
-                            className="lg:hidden p-3 hover:bg-white/20 rounded-full transition-all duration-200 backdrop-blur-sm"
+                            className="lg:hidden p-2 hover:bg-white/20 rounded-lg transition-all duration-200"
                         >
-                            <ArrowLeft className="h-5 w-5" />
+                            <ArrowLeft className="h-4 w-4" />
                         </button>
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-3">
                             <div className="relative">
                                 <img
                                     src={user.avatarUrl}
                                     alt={`${user.firstName} ${user.lastName}`}
-                                    className="h-16 w-16 lg:h-20 lg:w-20 rounded-full border-4 border-white/30 shadow-xl"
+                                    className="h-12 w-12 rounded-full border-2 border-white/30 shadow-md"
                                 />
-                                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-400 rounded-full border-2 border-white shadow-lg"></div>
+                                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-sm"></div>
                             </div>
                             <div>
-                                <h2 className="text-2xl lg:text-3xl font-bold tracking-wide">{`${user.firstName} ${user.lastName}`}</h2>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <span className="text-lg">{getRoleIcon(user.role)}</span>
-                                    <p className="text-indigo-100 font-medium">{user.role}</p>
+                                <h2 className="text-lg font-bold">{`${user.firstName} ${user.lastName}`}</h2>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm">{getRoleIcon(user.role)}</span>
+                                    <p className="text-blue-100 text-sm font-medium">{user.role}</p>
                                 </div>
                             </div>
                         </div>
@@ -170,136 +214,139 @@ const UserDetails = () => {
                     <div className="flex gap-2">
                         <button 
                             onClick={onEditUser}
-                            className="hidden sm:flex items-center gap-2 px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl transition-all duration-300 hover:scale-105 border border-white/20"
+                            className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-all duration-200 text-sm"
                         >
                             <Edit3 className="w-4 h-4" />
-                            <span className="font-medium">Edit Profile</span>
+                            <span className="font-medium">Edit</span>
                         </button>
                         <button
-                            onClick={() => alert('Remove user logic goes here')}
-                            className="hidden sm:flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-400 text-white rounded-xl transition-all duration-300 border border-blue-500"
+                            onClick={() => setDeleteConfirmation({ show: true, user })}
+                            className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg transition-all duration-200 text-sm"
                         >
                             <span className="font-medium">Remove</span>
                         </button>
                     </div>
                 </div>
+                
+                {/* Mobile Action Buttons */}
+                <div className="sm:hidden flex gap-2 mt-3">
+                    <button 
+                        onClick={onEditUser}
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-all duration-200 text-sm"
+                    >
+                        <Edit3 className="w-4 h-4" />
+                        <span className="font-medium">Edit</span>
+                    </button>
+                    <button
+                        onClick={() => setDeleteConfirmation({ show: true, user })}
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg transition-all duration-200 text-sm"
+                    >
+                        <span className="font-medium">Remove</span>
+                    </button>
+                </div>
             </div>
 
-            {/* Enhanced Content */}
-            <div className="p-6 lg:p-8 overflow-y-auto bg-gradient-to-br from-gray-50 to-white">
-                <div className="space-y-8">
-                    {/* Enhanced Basic Information */}
-                    <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
-                            <div className="p-2 bg-blue-100 rounded-lg">
-                                <User className="w-6 h-6 text-blue-600" />
+            {/* Compact Content */}
+            <div className="p-4 overflow-y-auto bg-gray-50">
+                <div className="space-y-4">
+                    {/* Basic Information */}
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                            <div className="p-1.5 bg-blue-100 rounded-md">
+                                <User className="w-4 h-4 text-blue-600" />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-800">Basic Information</h3>
+                            <h3 className="text-sm font-semibold text-gray-800">Basic Information</h3>
                         </div>
                         
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div className="group">
-                                <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl hover:shadow-md transition-all duration-200">
-                                    <div className="p-3 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors">
-                                        <Mail className="h-5 w-5 text-blue-600" />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Email</p>
-                                        <p className="font-semibold text-gray-800 truncate">{user.email}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="group">
-                                <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl hover:shadow-md transition-all duration-200">
-                                    <div className="p-3 bg-green-100 rounded-full group-hover:bg-green-200 transition-colors">
-                                        <Phone className="h-5 w-5 text-green-600" />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Phone</p>
-                                        <p className="font-semibold text-gray-800 truncate">{user.phone || 'Not provided'}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="group">
-                                <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:shadow-md transition-all duration-200">
-                                    <div className="p-3 bg-purple-100 rounded-full group-hover:bg-purple-200 transition-colors">
-                                        <Building className="h-5 w-5 text-purple-600" />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Company</p>
-                                        <p className="font-semibold text-gray-800 truncate">{user.company}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="group">
-                                <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-xl hover:shadow-md transition-all duration-200">
-                                    <div className="p-3 bg-orange-100 rounded-full group-hover:bg-orange-200 transition-colors">
-                                        <Globe className="h-5 w-5 text-orange-600" />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">NIC</p>
-                                        <p className="font-semibold text-gray-800 truncate">{user.nic || 'Not provided'}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Enhanced Address Information */}
-                    <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
-                            <div className="p-2 bg-red-100 rounded-lg">
-                                <MapPin className="w-6 h-6 text-red-600" />
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-800">Location Information</h3>
-                        </div>
-                        
-                        <div className="group">
-                            <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-xl hover:shadow-md transition-all duration-200">
-                                <div className="p-3 bg-red-100 rounded-full group-hover:bg-red-200 transition-colors">
-                                    <MapPin className="h-6 w-6 text-red-600" />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
+                                <div className="p-2 bg-blue-100 rounded-md">
+                                    <Mail className="h-4 w-4 text-blue-600" />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Address</p>
-                                    <p className="font-semibold text-gray-800">{user.address || 'Not provided'}</p>
+                                    <p className="text-xs font-medium text-gray-500 uppercase">Email</p>
+                                    <p className="text-sm font-semibold text-gray-800 truncate">{user.email}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
+                                <div className="p-2 bg-blue-100 rounded-md">
+                                    <Phone className="h-4 w-4 text-blue-600" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-medium text-gray-500 uppercase">Phone</p>
+                                    <p className="text-sm font-semibold text-gray-800 truncate">{user.phone || 'Not provided'}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
+                                <div className="p-2 bg-blue-100 rounded-md">
+                                    <Building className="h-4 w-4 text-blue-600" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-medium text-gray-500 uppercase">Company</p>
+                                    <p className="text-sm font-semibold text-gray-800 truncate">{user.company}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
+                                <div className="p-2 bg-blue-100 rounded-md">
+                                    <Globe className="h-4 w-4 text-blue-600" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-medium text-gray-500 uppercase">NIC</p>
+                                    <p className="text-sm font-semibold text-gray-800 truncate">{user.nic || 'Not provided'}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Enhanced Role & Join Date */}
-                    <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
-                            <div className="p-2 bg-indigo-100 rounded-lg">
-                                <Users className="w-6 h-6 text-indigo-600" />
+                    {/* Address Information */}
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                            <div className="p-1.5 bg-blue-100 rounded-md">
+                                <MapPin className="w-4 h-4 text-blue-600" />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-800">Role Information</h3>
+                            <h3 className="text-sm font-semibold text-gray-800">Location</h3>
                         </div>
                         
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div className="group">
-                                <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl hover:shadow-md transition-all duration-200">
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <span className="text-2xl">{getRoleIcon(user.role)}</span>
-                                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Role</p>
-                                    </div>
-                                    <div className={`inline-block px-4 py-2 rounded-full text-white font-bold bg-gradient-to-r ${getRoleColor(user.role)} shadow-lg`}>
-                                        {user.role}
-                                    </div>
+                        <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
+                            <div className="p-2 bg-blue-100 rounded-md">
+                                <MapPin className="h-4 w-4 text-blue-600" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-xs font-medium text-gray-500 uppercase">Address</p>
+                                <p className="text-sm font-semibold text-gray-800">{user.address || 'Not provided'}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Role & Join Date */}
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-100">
+                            <div className="p-1.5 bg-blue-100 rounded-md">
+                                <Users className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <h3 className="text-sm font-semibold text-gray-800">Role Information</h3>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="p-3 bg-blue-50 rounded-lg">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-lg">{getRoleIcon(user.role)}</span>
+                                    <p className="text-xs font-medium text-gray-500 uppercase">Role</p>
+                                </div>
+                                <div className={`inline-block px-3 py-1 rounded-full text-white text-sm font-medium bg-gradient-to-r ${getRoleColor(user.role)}`}>
+                                    {user.role}
                                 </div>
                             </div>
                             
-                            <div className="group">
-                                <div className="p-4 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl hover:shadow-md transition-all duration-200">
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <Calendar className="w-6 h-6 text-teal-600" />
-                                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Join Date</p>
-                                    </div>
-                                    <p className="font-bold text-lg text-gray-800">{new Date(user.joinDate).toLocaleDateString()}</p>
+                            <div className="p-3 bg-blue-50 rounded-lg">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Calendar className="w-4 h-4 text-blue-600" />
+                                    <p className="text-xs font-medium text-gray-500 uppercase">Join Date</p>
                                 </div>
+                                <p className="text-sm font-semibold text-gray-800">{new Date(user.joinDate).toLocaleDateString()}</p>
                             </div>
                         </div>
                     </div>
@@ -310,9 +357,9 @@ const UserDetails = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br from-blue-100 via-blue-50 to-blue-200 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
                     <p className="mt-4 text-gray-600">Loading users...</p>
                 </div>
             </div>
@@ -321,14 +368,14 @@ const UserDetails = () => {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br from-blue-100 via-blue-50 to-blue-200 flex items-center justify-center">
                 <div className="bg-white p-6 rounded-xl shadow-lg text-center">
-                    <div className="text-red-500 text-2xl mb-4">⚠️</div>
+                    <div className="text-blue-500 text-2xl mb-4">⚠️</div>
                     <h3 className="text-lg font-semibold text-gray-800 mb-2">Error</h3>
                     <p className="text-gray-600">{error}</p>
                     <button 
                         onClick={() => window.location.reload()} 
-                        className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                     >
                         Try Again
                     </button>
@@ -338,49 +385,80 @@ const UserDetails = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 py-6">
-            {/* Floating Background Elements */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-full blur-3xl animate-pulse"></div>
-                <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-to-r from-pink-400/20 to-yellow-400/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-            </div>
+        <div className="min-h-screen bg-gradient-to-br from-blue-100 via-blue-50 to-blue-200 py-3">
+            {/* Delete Confirmation Modal */}
+            {deleteConfirmation.show && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+                        <div className="text-center">
+                            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                                <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">Remove User</h3>
+                            <p className="text-sm text-gray-500 mb-6">
+                                Are you sure you want to remove <strong>{deleteConfirmation.user?.firstName} {deleteConfirmation.user?.lastName}</strong>? 
+                                This action cannot be undone.
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setDeleteConfirmation({ show: false, user: null })}
+                                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    removeUser(deleteConfirmation.user.id);
+                                    setDeleteConfirmation({ show: false, user: null });
+                                }}
+                                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                            >
+                                Remove
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-            <div className="relative w-full max-w-none px-4">
-                {/* Enhanced Page Header */}
-                <div className="mb-8">
-                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full">
-                                <Users className="w-8 h-8 text-white" />
+            <div className="relative w-full max-w-none px-3">
+                {/* Compact Page Header */}
+                <div className="mb-3">
+                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg">
+                                <Users className="w-6 h-6 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-3xl font-bold text-gray-800">Administrative Staff</h1>
-                                <p className="text-gray-600 mt-1">Manage administrators and inventory managers</p>
+                                <h1 className="text-xl font-bold text-gray-800">Administrative Staff</h1>
+                                <p className="text-sm text-gray-600">Manage administrators and inventory managers</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <div className={`flex flex-col lg:flex-row gap-6 ${showMobileDetails ? 'lg:gap-8' : ''}`}>
-                    {/* Enhanced Left Side - User List */}
+                <div className={`flex flex-col lg:flex-row gap-4 ${showMobileDetails ? 'lg:gap-6' : ''}`}>
+                    {/* Compact Left Side - User List */}
                     <div className={`${showMobileDetails ? 'hidden lg:block' : ''} w-full lg:w-1/3`}>
-                        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
-                            {/* Enhanced Search Bar */}
-                            <div className="p-6 bg-gradient-to-r from-blue-500 to-blue-500 text-white">
+                        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 overflow-hidden">
+                            {/* Compact Search Bar */}
+                            <div className="p-4 bg-gradient-to-r from-blue-400 to-blue-500 text-white">
                                 <div className="relative">
                                     <input
                                         type="text"
-                                        placeholder="Search administrators and managers..."
+                                        placeholder="Search staff..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full pl-12 pr-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-300 transition-all duration-200"
+                                        className="w-full pl-10 pr-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-white placeholder-gray-300 text-sm"
                                     />
-                                    <Search className="absolute left-4 top-3.5 h-5 w-5 text-gray-300" />
+                                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-300" />
                                 </div>
                             </div>
 
-                            {/* Enhanced User List */}
-                            <div className="divide-y divide-gray-100 max-h-[calc(100vh-250px)] overflow-y-auto">
+                            {/* Compact User List */}
+                            <div className="divide-y divide-gray-100 max-h-[calc(100vh-200px)] overflow-y-auto">
                                 {filteredUsers.length > 0 ? (
                                     filteredUsers.map(user => (
                                         <div
@@ -389,24 +467,24 @@ const UserDetails = () => {
                                                 setSelectedUser(user);
                                                 setShowMobileDetails(true);
                                             }}
-                                            className={`p-6 cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 group ${
-                                                selectedUser?.id === user.id ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-r-4 border-blue-500' : ''
+                                            className={`p-4 cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 transition-all duration-200 group ${
+                                                selectedUser?.id === user.id ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-r-4 border-blue-400' : ''
                                             }`}
                                         >
-                                            <div className="flex items-center space-x-4">
+                                            <div className="flex items-center space-x-3">
                                                 <div className="relative">
                                                     <img
                                                         src={user.avatarUrl}
                                                         alt={`${user.firstName} ${user.lastName}`}
-                                                        className="h-12 w-12 rounded-full border-2 border-gray-200 group-hover:border-blue-300 transition-all duration-200 shadow-md"
+                                                        className="h-10 w-10 rounded-full border-2 border-gray-200 group-hover:border-blue-400 transition-all duration-200"
                                                     />
-                                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-sm"></div>
+                                                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
                                                 </div>
                                                 <div className="min-w-0 flex-1">
-                                                    <h3 className="font-bold text-gray-800 truncate group-hover:text-blue-700 transition-colors">{`${user.firstName} ${user.lastName}`}</h3>
-                                                    <p className="text-sm text-gray-500 truncate">{user.email}</p>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-sm">{getRoleIcon(user.role)}</span>
+                                                    <h3 className="text-sm font-semibold text-gray-800 truncate group-hover:text-blue-500 transition-colors">{`${user.firstName} ${user.lastName}`}</h3>
+                                                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                                                    <div className="flex items-center gap-1 mt-1">
+                                                        <span className="text-xs">{getRoleIcon(user.role)}</span>
                                                         <span className="text-xs text-gray-400 font-medium">{user.role}</span>
                                                     </div>
                                                 </div>
@@ -414,8 +492,8 @@ const UserDetails = () => {
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="p-6 text-center text-gray-500">
-                                        No administrators or managers found
+                                    <div className="p-4 text-center text-gray-500 text-sm">
+                                        No staff found
                                     </div>
                                 )}
                             </div>

@@ -158,6 +158,11 @@ class PrismaUserModel {
         delete updateData.password;
       }
 
+      // Convert date_of_employment to Date object if provided
+      if (userData.date_of_employment) {
+        updateData.date_of_employment = new Date(userData.date_of_employment);
+      }
+
       // Map role to Prisma enum if provided
       if (userData.role) {
         let prismaRole;

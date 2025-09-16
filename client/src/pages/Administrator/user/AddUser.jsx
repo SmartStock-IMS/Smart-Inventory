@@ -175,74 +175,65 @@ const AddUser = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 py-6">
-            {/* Floating Background Elements */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-full blur-3xl animate-pulse"></div>
-                <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-to-r from-pink-400/20 to-yellow-400/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-            </div>
-
-            <div className="relative w-full max-w-none px-4">
-                {/* Enhanced Header Card */}
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 mb-8 overflow-hidden">
-                    <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-8 text-white relative">
-                        <div className="absolute inset-0 bg-black/10"></div>
-                        <div className="relative flex items-center justify-center gap-4">
-                            <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
-                                <UserPlus className="w-8 h-8 text-white" />
+        <div className="min-h-screen bg-gradient-to-br from-blue-100 via-blue-50 to-blue-200 py-3">
+            <div className="relative w-full max-w-none px-3">
+                {/* Compact Header Card */}
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 mb-4 overflow-hidden">
+                    <div className="bg-gradient-to-r from-blue-400 to-blue-500 p-4 text-white relative">
+                        <div className="absolute inset-0 bg-black/5"></div>
+                        <div className="relative flex items-center justify-center gap-3">
+                            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                <UserPlus className="w-6 h-6 text-white" />
                             </div>
                             <div className="text-center">
-                                <h2 className="text-3xl font-bold tracking-wide">Add New User</h2>
-                                <p className="text-indigo-100 mt-2">Create a new team member account</p>
+                                <h2 className="text-xl font-bold">Add New User</h2>
+                                <p className="text-blue-100 text-sm">Create a new team member account</p>
                             </div>
                         </div>
-                        {/* Decorative elements */}
-                        <Sparkles className="absolute top-4 right-4 w-6 h-6 text-white/40 animate-pulse" />
-                        <Sparkles className="absolute bottom-4 left-4 w-4 h-4 text-white/40 animate-pulse delay-500" />
                     </div>
                 </div>
 
                 {/* Main Form Card */}
-                <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
-                    <div className="p-8">
-                        {/* Enhanced Error Alert */}
+                <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 overflow-hidden">
+                    <div className="p-4">
+                        {/* Compact Error Alert */}
                         {error && (
-                            <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-400 rounded-lg shadow-md">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-red-100 rounded-full">
-                                        <AlertCircle className="h-5 w-5 text-red-600" />
+                            <div className="mb-4 p-3 bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-400 rounded-lg shadow-sm">
+                                <div className="flex items-center gap-2">
+                                    <div className="p-1.5 bg-red-100 rounded-lg">
+                                        <AlertCircle className="h-4 w-4 text-red-600" />
                                     </div>
-                                    <p className="text-red-700 font-medium">{error}</p>
+                                    <p className="text-red-700 font-medium text-sm">{error}</p>
                                 </div>
                             </div>
                         )}
                         
-                        {/* Enhanced Success Alert */}
+                        {/* Compact Success Alert */}
                         {success && (
-                            <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-400 rounded-lg shadow-md">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-green-100 rounded-full">
-                                        <CheckCircle className="h-5 w-5 text-green-600" />
+                            <div className="mb-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-400 rounded-lg shadow-sm">
+                                <div className="flex items-center gap-2">
+                                    <div className="p-1.5 bg-green-100 rounded-lg">
+                                        <CheckCircle className="h-4 w-4 text-green-600" />
                                     </div>
-                                    <p className="text-green-700 font-medium">User successfully added! 🎉</p>
+                                    <p className="text-green-700 font-medium text-sm">User successfully added! 🎉</p>
                                 </div>
                             </div>
                         )}
 
-                        <div className="space-y-8">
+                        <div className="space-y-4">
                             {/* Personal Information Section */}
-                            <div className="space-y-6">
-                                <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-                                    <div className="p-2 bg-blue-100 rounded-lg">
-                                        <User className="w-5 h-5 text-blue-600" />
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 pb-3 border-b border-gray-200">
+                                    <div className="p-1.5 bg-blue-100 rounded-lg">
+                                        <User className="w-4 h-4 text-blue-600" />
                                     </div>
-                                    <h3 className="text-lg font-semibold text-gray-800">Personal Information</h3>
+                                    <h3 className="text-base font-semibold text-gray-800">Personal Information</h3>
                                 </div>
                                 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
-                                            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                            <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
                                             First Name
                                         </label>
                                         <input
@@ -250,14 +241,14 @@ const AddUser = () => {
                                             name="firstName"
                                             value={formData.firstName}
                                             onChange={handleChange}
-                                            className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300"
+                                            className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300"
                                             placeholder="Enter first name"
                                             required
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
-                                            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                    <div className="space-y-1">
+                                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                            <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
                                             Last Name
                                         </label>
                                         <input
@@ -265,15 +256,15 @@ const AddUser = () => {
                                             name="lastName"
                                             value={formData.lastName}
                                             onChange={handleChange}
-                                            className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300"
+                                            className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300"
                                             placeholder="Enter last name"
                                             required
                                         />
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                                <div className="space-y-1">
+                                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                                         <CreditCard className="w-4 h-4 text-blue-500" />
                                         NIC Number
                                     </label>
@@ -282,13 +273,13 @@ const AddUser = () => {
                                         name="nicNo"
                                         value={formData.nicNo}
                                         onChange={handleChange}
-                                        className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300"
+                                        className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300"
                                         placeholder="Enter NIC number"
                                     />
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                                <div className="space-y-1">
+                                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                                         <Camera className="w-4 h-4 text-blue-500" />
                                         Profile Picture <span className="text-gray-400 text-xs">(Optional)</span>
                                     </label>
@@ -298,11 +289,11 @@ const AddUser = () => {
                                             name="profilePicture"
                                             onChange={handleChange}
                                             accept="image/*"
-                                            className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                            className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                         />
                                         {formData.profilePicture && (
-                                            <div className="mt-2 flex items-center gap-2 text-sm text-green-600">
-                                                <CheckCircle className="w-4 h-4" />
+                                            <div className="mt-2 flex items-center gap-2 text-xs text-green-600">
+                                                <CheckCircle className="w-3 h-3" />
                                                 <span>{formData.profilePicture.name}</span>
                                             </div>
                                         )}
@@ -311,18 +302,18 @@ const AddUser = () => {
                             </div>
 
                             {/* Contact Information Section */}
-                            <div className="space-y-6">
-                                <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-                                    <div className="p-2 bg-green-100 rounded-lg">
-                                        <Mail className="w-5 h-5 text-green-600" />
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 pb-3 border-b border-gray-200">
+                                    <div className="p-1.5 bg-blue-100 rounded-lg">
+                                        <Mail className="w-4 h-4 text-blue-600" />
                                     </div>
-                                    <h3 className="text-lg font-semibold text-gray-800">Contact Information</h3>
+                                    <h3 className="text-base font-semibold text-gray-800">Contact Information</h3>
                                 </div>
                                 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
-                                            <Mail className="w-4 h-4 text-green-500" />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                            <Mail className="w-4 h-4 text-blue-500" />
                                             Email
                                         </label>
                                         <input
@@ -330,14 +321,14 @@ const AddUser = () => {
                                             name="email"
                                             value={formData.email}
                                             onChange={handleChange}
-                                            className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all duration-200 hover:border-gray-300"
+                                            className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300"
                                             placeholder="user@example.com"
                                             required
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
-                                            <Phone className="w-4 h-4 text-green-500" />
+                                    <div className="space-y-1">
+                                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                            <Phone className="w-4 h-4 text-blue-500" />
                                             Phone
                                         </label>
                                         <input
@@ -345,40 +336,40 @@ const AddUser = () => {
                                             name="phone"
                                             value={formData.phone}
                                             onChange={handleChange}
-                                            className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all duration-200 hover:border-gray-300"
+                                            className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300"
                                             placeholder="+1 (555) 123-4567"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
-                                        <MapPin className="w-4 h-4 text-green-500" />
+                                <div className="space-y-1">
+                                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                        <MapPin className="w-4 h-4 text-blue-500" />
                                         Address
                                     </label>
                                     <textarea
                                         name="address"
                                         value={formData.address}
                                         onChange={handleChange}
-                                        rows="3"
-                                        className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all duration-200 hover:border-gray-300 resize-none"
+                                        rows="2"
+                                        className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300 resize-none"
                                         placeholder="Enter full address"
                                     />
                                 </div>
                             </div>
 
                             {/* Role & Security Section */}
-                            <div className="space-y-6">
-                                <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-                                    <div className="p-2 bg-purple-100 rounded-lg">
-                                        <Shield className="w-5 h-5 text-purple-600" />
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 pb-3 border-b border-gray-200">
+                                    <div className="p-1.5 bg-blue-100 rounded-lg">
+                                        <Shield className="w-4 h-4 text-blue-600" />
                                     </div>
-                                    <h3 className="text-lg font-semibold text-gray-800">Role & Security</h3>
+                                    <h3 className="text-base font-semibold text-gray-800">Role & Security</h3>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
-                                        <Shield className="w-4 h-4 text-purple-500" />
+                                <div className="space-y-1">
+                                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                        <Shield className="w-4 h-4 text-blue-500" />
                                         Role
                                     </label>
                                     <div className="relative">
@@ -386,20 +377,20 @@ const AddUser = () => {
                                             name="role"
                                             value={formData.role}
                                             onChange={handleChange}
-                                            className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 hover:border-gray-300 appearance-none bg-white"
+                                            className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300 appearance-none bg-white"
                                         >
                                             <option value="user">👤 User</option>
                                             <option value="admin">👑 Admin</option>
                                             <option value="inventory_manager">📊 Manager</option>
                                         </select>
-                                        <div className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-gradient-to-r ${getRoleColor(formData.role)} rounded-full`}></div>
+                                        <div className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-gradient-to-r ${getRoleColor(formData.role)} rounded-full`}></div>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
-                                            <Lock className="w-4 h-4 text-purple-500" />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                            <Lock className="w-4 h-4 text-blue-500" />
                                             Password
                                         </label>
                                         <input
@@ -407,14 +398,14 @@ const AddUser = () => {
                                             name="password"
                                             value={formData.password}
                                             onChange={handleChange}
-                                            className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 hover:border-gray-300"
+                                            className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300"
                                             placeholder="Min. 6 characters"
                                             required
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
-                                            <Lock className="w-4 h-4 text-purple-500" />
+                                    <div className="space-y-1">
+                                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                            <Lock className="w-4 h-4 text-blue-500" />
                                             Confirm Password
                                         </label>
                                         <input
@@ -422,7 +413,7 @@ const AddUser = () => {
                                             name="confirmPassword"
                                             value={formData.confirmPassword}
                                             onChange={handleChange}
-                                            className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 hover:border-gray-300"
+                                            className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300"
                                             placeholder="Confirm password"
                                             required
                                         />
@@ -430,21 +421,21 @@ const AddUser = () => {
                                 </div>
                             </div>
 
-                            {/* Enhanced Action Buttons */}
-                            <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                            {/* Compact Action Buttons */}
+                            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                                 <button
                                     type="button"
-                                    className="group px-6 py-3 text-sm font-medium border-2 border-gray-300 rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 flex items-center gap-2"
+                                    className="group px-4 py-2 text-sm font-medium border-2 border-gray-300 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 flex items-center gap-2"
                                     onClick={handleClear}
                                 >
-                                    <span className="w-2 h-2 bg-gray-400 rounded-full group-hover:bg-gray-500 transition-colors"></span>
+                                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full group-hover:bg-gray-500 transition-colors"></span>
                                     Clear Form
                                 </button>
                                 <button 
                                     type="submit"
                                     disabled={loading}
                                     onClick={handleSubmit}
-                                    className="group px-6 py-3 text-sm font-medium bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none"
+                                    className="group px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none"
                                 >
                                     {loading ? (
                                         <div className="flex items-center gap-2">
