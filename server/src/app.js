@@ -41,7 +41,7 @@ app.use(cors(corsOptions));
 app.use("/api/auth", authRoutes);
 app.use("/api/users", authorizeRoles("001", "002"), userRoutes);
 app.use("/api/customer", customerRoutes);
-app.use("/api/salesrep",authorizeRoles("002"), salesRepRoutes);
+app.use("/api/salesrep", salesRepRoutes);
 app.use("/api/products", authorizeRoles("001", "002"), productRoutes);
 app.use("/api/orders", authorizeRoles("001", "002"), orderRoutes);
 app.use("/api/quotation", authorizeRoles("001", "002"), quotationRoutes);

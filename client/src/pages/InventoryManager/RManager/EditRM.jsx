@@ -1,94 +1,10 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, User, Mail, Phone, MapPin, Hash, Building, Target, Briefcase, Save, X, CheckCircle, AlertCircle, Camera, Upload, Sparkles, Star, Activity } from "lucide-react";
+import { ChevronLeft, User, Mail, Phone, MapPin, Hash, Building, Target, Briefcase, Save, X, CheckCircle, AlertCircle, Camera, Upload, Lock, Eye, EyeOff, AlertTriangle, Check } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
+import { getAllResourceManagers, updateUser } from "@services/user-services";
 import "react-toastify/dist/ReactToastify.css";
-
-// Mock sales reps data matching the main list
-const mockSalesReps = [
-  {
-    emp_code: "EMP001",
-    sales_area: "Mumbai Central",
-    commission_rate: 5.5,
-    target_amount: 500000,
-    achievements: 420000,
-    join_date: "2022-01-15",
-    status: "Active",
-    is_active: true,
-    monthly_performance: [45000, 52000, 48000, 55000, 42000, 47000],
-    total_clients: 25,
-    active_deals: 8,
-    closed_deals: 17,
-    users: {
-      name: "Arjun Singh",
-      email: "arjun.singh@company.com",
-      phone: "+91 98765 43210",
-      contact: "+91 98765 43210",
-      address: "Plot 123, Sector 15, Navi Mumbai, Maharashtra 400614",
-      first_name: "Arjun",
-      last_name: "Singh",
-      nic_no: "199512345678",
-      city: "Mumbai",
-      state: "Maharashtra",
-      zip_code: "400614"
-    }
-  },
-  {
-    emp_code: "EMP002",
-    sales_area: "Delhi North",
-    commission_rate: 6.0,
-    target_amount: 450000,
-    achievements: 465000,
-    join_date: "2021-08-20",
-    status: "Active",
-    is_active: true,
-    monthly_performance: [38000, 42000, 51000, 48000, 55000, 61000],
-    total_clients: 32,
-    active_deals: 12,
-    closed_deals: 28,
-    users: {
-      name: "Sneha Patel",
-      email: "sneha.patel@company.com",
-      phone: "+91 87654 32109",
-      contact: "+91 87654 32109",
-      address: "House 456, Block A, Rohini, New Delhi 110085",
-      first_name: "Sneha",
-      last_name: "Patel",
-      nic_no: "198812345679",
-      city: "New Delhi",
-      state: "Delhi",
-      zip_code: "110085"
-    }
-  },
-  {
-    emp_code: "EMP003",
-    sales_area: "Bangalore East",
-    commission_rate: 5.8,
-    target_amount: 600000,
-    achievements: 580000,
-    join_date: "2020-12-10",
-    status: "Active",
-    is_active: true,
-    monthly_performance: [62000, 58000, 65000, 72000, 68000, 75000],
-    total_clients: 40,
-    active_deals: 15,
-    closed_deals: 35,
-    users: {
-      name: "Rajesh Kumar",
-      email: "rajesh.kumar@company.com",
-      phone: "+91 76543 21098",
-      contact: "+91 76543 21098",
-      address: "Flat 789, Whitefield, Bangalore, Karnataka 560066",
-      first_name: "Rajesh",
-      last_name: "Kumar",
-      nic_no: "198512345677",
-      city: "Bangalore",
-      state: "Karnataka",
-      zip_code: "560066"
-    }
-  }
-];
 
 // Mock Avatar component
 const Avatar = ({ firstName, lastName, imageUrl, editable, size, onImageUpload }) => {
@@ -97,13 +13,13 @@ const Avatar = ({ firstName, lastName, imageUrl, editable, size, onImageUpload }
   return (
     <div className="relative group">
       <div 
-        className={`w-32 h-32 rounded-2xl overflow-hidden shadow-lg border-4 border-white bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white text-2xl font-bold transition-transform duration-300 group-hover:scale-105`}
+        className={`w-24 h-24 rounded-2xl overflow-hidden shadow-lg border-4 border-white bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center text-white text-xl font-bold transition-transform duration-300 group-hover:scale-105`}
         style={{ width: size, height: size }}
       >
         {imageUrl ? (
           <img src={imageUrl} alt="Avatar" className="w-full h-full object-cover" />
         ) : (
-          <span className="text-3xl">{initials || '👨‍💼'}</span>
+          <span className="text-2xl">{initials || '👨‍💼'}</span>
         )}
       </div>
       
@@ -116,7 +32,7 @@ const Avatar = ({ firstName, lastName, imageUrl, editable, size, onImageUpload }
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           />
           <div className="text-white text-center">
-            <Camera className="w-6 h-6 mx-auto mb-1" />
+            <Camera className="w-5 h-5 mx-auto mb-1" />
             <span className="text-xs font-medium">Upload Photo</span>
           </div>
         </div>
@@ -124,12 +40,6 @@ const Avatar = ({ firstName, lastName, imageUrl, editable, size, onImageUpload }
     </div>
   );
 };
-
-// Mock services
-// const toast = {
-//   success: (message) => console.log(`✅ ${message}`),
-//   error: (message) => console.log(`❌ ${message}`)
-// };
 
 const EditRM = () => {
   const { repCode } = useParams();
@@ -147,48 +57,112 @@ const EditRM = () => {
     email: '',
     phone: '',
     address: '',
-    city: '',
-    state: '',
-    zipCode: '',
     salesRegion: '',
     status: 'Active',
     photo: null
   });
 
+  const [passwordData, setPasswordData] = useState({
+    newPassword: '',
+    confirmPassword: ''
+  });
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordChanged, setPasswordChanged] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [showPasswordConfirmModal, setShowPasswordConfirmModal] = useState(false);
+
   useEffect(() => {
-    const fetchSalesRep = () => {
+    const fetchResourceManager = async () => {
       try {
-        const foundRep = mockSalesReps.find(r => r.emp_code === repCode);
-        if (foundRep) {
-          setRep(foundRep);
-          setFormData({
-            firstName: foundRep.users.first_name || foundRep.users.name.split(' ')[0] || '',
-            lastName: foundRep.users.last_name || foundRep.users.name.split(' ').slice(1).join(' ') || '',
-            nicNo: foundRep.users.nic_no || '',
-            email: foundRep.users.email || '',
-            phone: foundRep.users.phone || foundRep.users.contact || '',
-            address: foundRep.users.address || '',
-            city: foundRep.users.city || '',
-            state: foundRep.users.state || '',
-            zipCode: foundRep.users.zip_code || '',
-            salesRegion: foundRep.sales_area || '',
-            status: foundRep.status || 'Active',
-            photo: null
-          });
+        setIsLoading(true);
+        console.log("🔍 Fetching resource manager with ID:", repCode);
+        
+        // Check if user is authenticated
+        const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+        if (!token) {
+          console.error("❌ No authentication token found");
+          toast.error("Please log in to edit resource manager details");
+          navigate("/inventorymanager/rm-list");
+          return;
+        }
+        
+        // Fetch all resource managers and find the specific one
+        const result = await getAllResourceManagers();
+        console.log("📥 Resource managers result:", result);
+        
+        if (result.success && result.data) {
+          // Convert repCode to string for comparison since URL params are always strings
+          const targetId = String(repCode);
+          const foundRep = result.data.find(rm => 
+            String(rm.userID) === targetId || 
+            String(rm.id) === targetId ||
+            String(rm.user_id) === targetId
+          );
+          
+          if (foundRep) {
+            console.log("✅ Found resource manager:", foundRep);
+            console.log("🔍 Checking NIC field values:");
+            console.log("foundRep.nic_no:", foundRep.nic_no);
+            console.log("foundRep.nicNo:", foundRep.nicNo);
+            console.log("foundRep.nic:", foundRep.nic);
+            console.log("foundRep.NIC:", foundRep.NIC);
+            console.log("All foundRep keys:", Object.keys(foundRep));
+            
+            setRep(foundRep);
+            const newFormData = {
+              firstName: foundRep.first_name || foundRep.firstName || '',
+              lastName: foundRep.last_name || foundRep.lastName || '',
+              nicNo: foundRep.nic_no || foundRep.nicNo || foundRep.nic || foundRep.NIC || '',
+              email: foundRep.email || '',
+              phone: foundRep.phone || '',
+              address: foundRep.address || '',
+              salesRegion: foundRep.branch || foundRep.salesRegion || 'Resource Management',
+              status: foundRep.status || 'Active',
+              photo: null
+            };
+            
+            console.log("📋 Setting form data:", newFormData);
+            setFormData(newFormData);
+          } else {
+            console.error("❌ Resource manager not found with ID:", repCode);
+            toast.error("Resource manager not found");
+            navigate("/inventorymanager/rm-list");
+          }
         } else {
-          toast.error("Resource manager not found");
+          console.error("❌ Failed to fetch resource managers:", result.message);
+          toast.error(result.message || "Failed to fetch resource manager details");
           navigate("/inventorymanager/rm-list");
         }
       } catch (error) {
-        console.error("Error fetching sales rep:", error);
-        toast.error("Error loading resource manager details");
+        console.error("💥 Error fetching resource manager:", error);
+        
+        // Handle network and authentication errors
+        if (error.response?.status === 401) {
+          toast.error("Session expired. Please log in again.");
+          navigate("/login");
+        } else if (error.response?.status === 403) {
+          toast.error("Access denied. You don't have permission to edit this resource manager.");
+          navigate("/inventorymanager/rm-list");
+        } else if (error.response?.status >= 500) {
+          toast.error("Server error. Please try again later.");
+        } else {
+          toast.error("Error loading resource manager details");
+        }
+        navigate("/inventorymanager/rm-list");
       } finally {
         setIsLoading(false);
       }
     };
 
-    setTimeout(fetchSalesRep, 1200);
-  }, [repCode]);
+    if (repCode) {
+      fetchResourceManager();
+    } else {
+      toast.error("Invalid resource manager ID");
+      navigate("/inventorymanager/rm-list");
+    }
+  }, [repCode, navigate]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -211,6 +185,54 @@ const EditRM = () => {
     }));
   };
 
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user starts typing
+    if (passwordError) {
+      setPasswordError('');
+    }
+    
+    // Mark that password has been changed only if both fields have content
+    if (value.trim() && (passwordData.newPassword.trim() || passwordData.confirmPassword.trim())) {
+      setPasswordChanged(true);
+    } else if (!passwordData.newPassword.trim() && !passwordData.confirmPassword.trim()) {
+      setPasswordChanged(false);
+    }
+  };
+
+  const validatePassword = () => {
+    // If user hasn't entered any password data, skip validation
+    if (!passwordData.newPassword.trim() && !passwordData.confirmPassword.trim()) {
+      setPasswordChanged(false);
+      return true;
+    }
+    
+    // If user started entering password, validate it
+    if (passwordData.newPassword.trim() || passwordData.confirmPassword.trim()) {
+      setPasswordChanged(true);
+      
+      if (!passwordData.newPassword.trim()) {
+        setPasswordError('New password is required');
+        return false;
+      }
+      if (passwordData.newPassword.length < 6) {
+        setPasswordError('Password must be at least 6 characters long');
+        return false;
+      }
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        setPasswordError('Passwords do not match');
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -224,76 +246,109 @@ const EditRM = () => {
     }
     if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
     if (!formData.address.trim()) newErrors.address = 'Address is required';
-    if (!formData.city.trim()) newErrors.city = 'City is required';
-    if (!formData.state.trim()) newErrors.state = 'State is required';
-    if (!formData.zipCode.trim()) newErrors.zipCode = 'ZIP code is required';
     if (!formData.salesRegion.trim()) newErrors.salesRegion = 'Sales region is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = async () => {
+  const handleSave = async (e) => {
+    if (e) e.preventDefault();
+    
     if (!validateForm()) {
       toast.error("Please fill in all required fields correctly");
       return;
     }
 
+    // Validate password if it was changed
+    if (!validatePassword()) {
+      return;
+    }
+    
+    // Show confirmation dialog if password was changed
+    if (passwordChanged) {
+      setShowPasswordConfirmModal(true);
+      return;
+    }
+    
+    // If no password change, submit directly
+    submitForm();
+  };
+
+  const submitForm = async () => {
     try {
       setIsSaving(true);
+      console.log("💾 Saving resource manager updates...");
       
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Prepare the update data
+      const updateData = {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        nic_no: formData.nicNo,
+        branch: formData.salesRegion,
+        status: formData.status,
+        role: "RESOURCE_MANAGER" // Ensure the role stays correct
+      };
+
+      // Add password if it was changed
+      if (passwordChanged && passwordData.newPassword.trim()) {
+        updateData.password = passwordData.newPassword;
+      }
       
-      toast.success("Resource manager updated successfully!");
+      console.log("📤 Update data:", updateData);
       
-      setTimeout(() => {
-        navigate(`/inventorymanager/rm-details/${repCode}`);
-      }, 1500);
+      // Call the update API
+      const result = await updateUser(rep.userID || rep.id, updateData);
+      console.log("✅ Update result:", result);
+      
+      if (result.success) {
+        toast.success(passwordChanged 
+          ? "Resource manager and password updated successfully!" 
+          : "Resource manager updated successfully!");
+        
+        setTimeout(() => {
+          navigate(`/inventorymanager/rm-details/${repCode}`);
+        }, 1500);
+      } else {
+        toast.error(result.message || "Failed to update resource manager");
+      }
       
     } catch (error) {
-      console.error("Error updating sales rep:", error);
-      toast.error("Error updating resource manager");
+      console.error("💥 Error updating resource manager:", error);
+      
+      // Handle specific error types
+      if (error.response?.status === 401) {
+        toast.error("Session expired. Please log in again.");
+        navigate("/login");
+      } else if (error.response?.status === 403) {
+        toast.error("Access denied. You don't have permission to update this resource manager.");
+      } else if (error.response?.status === 404) {
+        toast.error("Resource manager not found.");
+      } else if (error.response?.status >= 500) {
+        toast.error("Server error. Please try again later.");
+      } else {
+        toast.error("Error updating resource manager");
+      }
     } finally {
       setIsSaving(false);
     }
   };
 
+  const handlePasswordConfirm = () => {
+    setShowPasswordConfirmModal(false);
+    submitForm();
+  };
+
+  const handlePasswordCancel = () => {
+    setShowPasswordConfirmModal(false);
+  };
+
   const handleCancel = () => {
     navigate(`/inventorymanager/rm-details/${repCode}`);
   };
-
-  const InputField = ({ label, name, type = "text", icon: Icon, error, required = true, ...props }) => (
-    <div className="space-y-2">
-      <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-        {Icon && <Icon className="w-4 h-4 text-gray-500" />}
-        {label}
-        {required && <span className="text-red-500">*</span>}
-      </label>
-      <div className="relative">
-        <input
-          type={type}
-          name={name}
-          value={formData[name]}
-          onChange={handleInputChange}
-          className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm hover:border-gray-400 ${
-            error ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'
-          }`}
-          {...props}
-        />
-        {error && (
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-            <AlertCircle className="w-4 h-4 text-red-500" />
-          </div>
-        )}
-      </div>
-      {error && (
-        <p className="text-red-500 text-sm flex items-center gap-1 mt-1">
-          <AlertCircle className="w-3 h-3" />
-          {error}
-        </p>
-      )}
-    </div>
-  );
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
@@ -306,16 +361,16 @@ const EditRM = () => {
 
   if (isLoading) {
     return (
-      <div className="h-full w-full bg-gradient-to-br from-green-50 via-white to-emerald-50 rounded-3xl border border-gray-200 shadow-xl flex items-center justify-center">
+      <div className="h-full w-full bg-gradient-to-br from-blue-50 via-white to-blue-100 rounded-2xl border border-gray-200 shadow-lg flex items-center justify-center">
         <div className="text-center">
-          <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <FaSpinner className="w-8 h-8 text-white animate-spin" />
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
+            <FaSpinner className="w-6 h-6 text-white animate-spin" />
           </div>
-          <p className="text-gray-600 font-medium text-xl">Loading resource manager details...</p>
-          <div className="flex items-center justify-center gap-2 mt-3">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce delay-0"></div>
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce delay-150"></div>
-            <div className="w-2 h-2 bg-teal-500 rounded-full animate-bounce delay-300"></div>
+          <p className="text-gray-600 font-medium text-lg">Loading resource manager details...</p>
+          <div className="flex items-center justify-center gap-2 mt-2">
+            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce delay-0"></div>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-150"></div>
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce delay-300"></div>
           </div>
         </div>
       </div>
@@ -343,285 +398,524 @@ const EditRM = () => {
   }
 
   return (
-    <div className="h-full w-full bg-gradient-to-br from-green-50 via-white to-emerald-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
-      {/* Header Section */}
-      <div className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-6 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute inset-0 bg-white/10"></div>
-        </div>
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={handleCancel}
-              className="flex items-center gap-2 text-white hover:text-white/80 transition-colors bg-white/10 px-4 py-2 rounded-xl backdrop-blur-sm hover:bg-white/20"
-            >
-              <ChevronLeft className="w-5 h-5" />
-              <span className="font-medium">Back to Details</span>
-            </button>
-            
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-blue-50 to-blue-200 py-3">
+      <div className="relative w-full px-3">
+        {/* Compact Page Header */}
+        <div className="mb-4">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 animate-pulse" />
+              <button
+                onClick={handleCancel}
+                className="p-2 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white rounded-lg transition-all duration-200 shadow-md"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <div className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg">
+                <User className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-800">Edit Resource Manager</h1>
+                <p className="text-gray-600 text-sm">Update resource manager information and settings</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 overflow-hidden">
+          {/* Compact Header */}
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 text-white relative overflow-hidden">
+            <div className="absolute inset-0 bg-black/5"></div>
+            <div className="relative flex items-center space-x-3">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white text-lg font-bold border-2 border-white/30">
+                {formData.firstName && formData.lastName ? 
+                  `${formData.firstName.charAt(0)}${formData.lastName.charAt(0)}` : 
+                  'RM'}
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">Edit Resource Manager Profile</h2>
+                <p className="text-blue-100 text-sm font-medium">
+                  {formData.firstName && formData.lastName ? 
+                    `Update ${formData.firstName} ${formData.lastName}'s information` : 
+                    'Update resource manager information'}
+                </p>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                <User className="w-6 h-6" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold mb-2">Edit Resource Manager</h1>
-                <p className="text-white/80 text-lg">Update resource manager information</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleCancel}
-                className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl transition-all duration-200 backdrop-blur-sm"
-              >
-                <X className="w-4 h-4" />
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex items-center gap-2 px-6 py-2 bg-white text-green-600 hover:bg-gray-100 rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSaving ? (
-                  <>
-                    <FaSpinner className="w-4 h-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Save Changes
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Content Section */}
-      <div className="h-[calc(100%-140px)] p-6 overflow-y-auto">
-        <div className="max-w-4xl mx-auto space-y-8">
-          {/* Avatar Section */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                <Camera className="w-4 h-4 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-800">Manager Photo</h3>
-            </div>
-            
-            <div className="flex flex-col items-center">
-              <Avatar
-                firstName={formData.firstName}
-                lastName={formData.lastName}
-                imageUrl={formData.photo ? URL.createObjectURL(formData.photo) : ''}
-                editable={true}
-                onImageUpload={handleImageUpload}
-                size={128}
-              />
-              <div className="mt-4 text-center">
-                <h4 className="font-semibold text-gray-800 mb-2">Update Profile Photo</h4>
-                <p className="text-gray-600 text-sm mb-3">Add or change the profile photo for easy identification</p>
-                <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-                  <Upload className="w-4 h-4" />
-                  Click on avatar to upload new image
+          {/* Compact Form Content */}
+          <div className="p-4 overflow-y-auto bg-gradient-to-br from-gray-50 to-white">
+            <form onSubmit={handleSave} className="space-y-4">
+              {/* Avatar Section */}
+              <div className="bg-white rounded-lg shadow-md border border-gray-100 p-4">
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                  <div className="p-1.5 bg-blue-100 rounded-lg">
+                    <Camera className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <h3 className="text-base font-bold text-gray-800">Manager Photo</h3>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Personal Information */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                <User className="w-4 h-4 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-800">Personal Information</h3>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <InputField
-                label="First Name"
-                name="firstName"
-                icon={User}
-                error={errors.firstName}
-                placeholder="Enter first name"
-              />
-              <InputField
-                label="Last Name"
-                name="lastName"
-                icon={User}
-                error={errors.lastName}
-                placeholder="Enter last name"
-              />
-            </div>
-            
-            <div className="mt-6">
-              <InputField
-                label="NIC Number"
-                name="nicNo"
-                icon={Hash}
-                error={errors.nicNo}
-                placeholder="Enter NIC number (e.g., 199512345678)"
-              />
-            </div>
-          </div>
-
-          {/* Contact Information */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
-                <Mail className="w-4 h-4 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-800">Contact Information</h3>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <InputField
-                label="Email Address"
-                name="email"
-                type="email"
-                icon={Mail}
-                error={errors.email}
-                placeholder="Enter email address"
-              />
-              <InputField
-                label="Phone Number"
-                name="phone"
-                type="tel"
-                icon={Phone}
-                error={errors.phone}
-                placeholder="Enter phone number"
-              />
-            </div>
-          </div>
-
-          {/* Address Information */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-                <MapPin className="w-4 h-4 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-800">Address Information</h3>
-            </div>
-            
-            <div className="space-y-6">
-              <InputField
-                label="Street Address"
-                name="address"
-                icon={MapPin}
-                error={errors.address}
-                placeholder="Enter street address"
-              />
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <InputField
-                  label="City"
-                  name="city"
-                  icon={Building}
-                  error={errors.city}
-                  placeholder="Enter city"
-                />
-                <InputField
-                  label="State/Province"
-                  name="state"
-                  icon={MapPin}
-                  error={errors.state}
-                  placeholder="Enter state"
-                />
-                <InputField
-                  label="ZIP Code"
-                  name="zipCode"
-                  icon={Hash}
-                  error={errors.zipCode}
-                  placeholder="Enter ZIP code"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Resource Management Information */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
-                <Target className="w-4 h-4 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-800">Resource Management Information</h3>
-            </div>
-            
-            <div className="space-y-6">
-              <InputField
-                label="Resource Area"
-                name="salesRegion"
-                icon={Target}
-                error={errors.salesRegion}
-                placeholder="Enter assigned resource management area"
-              />
-
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                  <Briefcase className="w-4 h-4 text-gray-500" />
-                  Employment Status
-                  <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm bg-white appearance-none"
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                    <option value="Pending">Pending</option>
-                  </select>
-                  <div className={`absolute top-1/2 right-12 transform -translate-y-1/2 px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(formData.status)}`}>
-                    {formData.status}
+                
+                <div className="flex flex-col items-center">
+                  <Avatar
+                    firstName={formData.firstName}
+                    lastName={formData.lastName}
+                    imageUrl={formData.photo ? URL.createObjectURL(formData.photo) : ''}
+                    editable={true}
+                    onImageUpload={handleImageUpload}
+                    size={96}
+                  />
+                  <div className="mt-3 text-center">
+                    <h4 className="text-sm font-semibold text-gray-800 mb-1">Update Profile Photo</h4>
+                    <p className="text-gray-600 text-xs mb-2">Add or change the profile photo for easy identification</p>
+                    <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
+                      <Upload className="w-3 h-3" />
+                      Click on avatar to upload new image
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={handleCancel}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
-              >
-                Cancel Changes
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSaving ? (
-                  <>
-                    <FaSpinner className="w-5 h-5 animate-spin" />
-                    Saving Changes...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-5 h-5" />
-                    Save Changes
-                  </>
+              {/* Personal Information */}
+              <div className="bg-white rounded-lg shadow-md border border-gray-100 p-4">
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                  <div className="p-1.5 bg-blue-100 rounded-lg">
+                    <User className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <h3 className="text-base font-bold text-gray-800">Personal Information</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700" htmlFor="firstName">
+                      <User className="w-3 h-3" />
+                      First Name
+                    </label>
+                    <input
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      id="firstName"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
+                      placeholder="Enter first name"
+                    />
+                    {errors.firstName && (
+                      <p className="text-red-500 text-xs flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {errors.firstName}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700" htmlFor="lastName">
+                      <User className="w-3 h-3" />
+                      Last Name
+                    </label>
+                    <input
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      id="lastName"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      placeholder="Enter last name"
+                    />
+                    {errors.lastName && (
+                      <p className="text-red-500 text-xs flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {errors.lastName}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="mt-4">
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700" htmlFor="nicNo">
+                      <Hash className="w-3 h-3" />
+                      NIC Number
+                    </label>
+                    <input
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      id="nicNo"
+                      name="nicNo"
+                      value={formData.nicNo}
+                      onChange={handleInputChange}
+                      placeholder="Enter NIC number (e.g., 199512345678)"
+                    />
+                    {errors.nicNo && (
+                      <p className="text-red-500 text-xs flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {errors.nicNo}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div className="bg-white rounded-lg shadow-md border border-gray-100 p-4">
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                  <div className="p-1.5 bg-blue-100 rounded-lg">
+                    <Mail className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <h3 className="text-base font-bold text-gray-800">Contact Information</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700" htmlFor="email">
+                      <Mail className="w-3 h-3" />
+                      Email Address
+                    </label>
+                    <input
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="Enter email address"
+                    />
+                    {errors.email && (
+                      <p className="text-red-500 text-xs flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {errors.email}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700" htmlFor="phone">
+                      <Phone className="w-3 h-3" />
+                      Phone Number
+                    </label>
+                    <input
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      placeholder="Enter phone number"
+                    />
+                    {errors.phone && (
+                      <p className="text-red-500 text-xs flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {errors.phone}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Address Information */}
+              <div className="bg-white rounded-lg shadow-md border border-gray-100 p-4">
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                  <div className="p-1.5 bg-blue-100 rounded-lg">
+                    <MapPin className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <h3 className="text-base font-bold text-gray-800">Address Information</h3>
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700" htmlFor="address">
+                    <MapPin className="w-3 h-3" />
+                    Address
+                  </label>
+                  <input
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    id="address"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    placeholder="Enter complete address"
+                  />
+                  {errors.address && (
+                    <p className="text-red-500 text-xs flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {errors.address}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Resource Management Information */}
+              <div className="bg-white rounded-lg shadow-md border border-gray-100 p-4">
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                  <div className="p-1.5 bg-blue-100 rounded-lg">
+                    <Target className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <h3 className="text-base font-bold text-gray-800">Resource Management Information</h3>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700" htmlFor="salesRegion">
+                      <Target className="w-3 h-3" />
+                      Resource Area
+                    </label>
+                    <input
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                      id="salesRegion"
+                      name="salesRegion"
+                      value={formData.salesRegion}
+                      onChange={handleInputChange}
+                      placeholder="Enter assigned resource management area"
+                    />
+                    {errors.salesRegion && (
+                      <p className="text-red-500 text-xs flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {errors.salesRegion}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700" htmlFor="status">
+                      <Briefcase className="w-3 h-3" />
+                      Employment Status
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="status"
+                        name="status"
+                        value={formData.status}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none bg-white"
+                      >
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                        <option value="Pending">Pending</option>
+                      </select>
+                      <div className={`absolute top-1/2 right-8 transform -translate-y-1/2 px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(formData.status)}`}>
+                        {formData.status}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Password Management Section */}
+              <div className="bg-white rounded-lg shadow-md border border-gray-100 p-4">
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                  <div className="p-1.5 bg-blue-100 rounded-lg">
+                    <Lock className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <h3 className="text-base font-bold text-gray-800">Password Management</h3>
+                  <div className="ml-auto">
+                    {passwordChanged && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        Password will be changed
+                      </span>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <div className="flex items-start gap-2">
+                    <div className="w-4 h-4 text-blue-600 mt-0.5">ℹ️</div>
+                    <div>
+                      <h4 className="text-sm font-medium text-blue-800">Optional Password Change</h4>
+                      <p className="text-xs text-blue-700 mt-1">
+                        You can leave the password fields empty to keep the current password. Only fill them if you want to change the resource manager's password.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700" htmlFor="newPassword">
+                      <Lock className="w-3 h-3" />
+                      New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                        id="newPassword"
+                        name="newPassword"
+                        type={showPassword ? "text" : "password"}
+                        value={passwordData.newPassword}
+                        onChange={handlePasswordChange}
+                        placeholder="Enter new password (optional)"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700" htmlFor="confirmPassword">
+                      <Lock className="w-3 h-3" />
+                      Confirm Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={passwordData.confirmPassword}
+                        onChange={handlePasswordChange}
+                        placeholder="Confirm new password (optional)"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                {passwordError && (
+                  <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-700 flex items-center gap-2">
+                      <X className="w-3 h-3" />
+                      {passwordError}
+                    </p>
+                  </div>
                 )}
-              </button>
-            </div>
+                
+                <div className="mt-3 text-xs text-gray-600">
+                  <p>• Password fields are optional - leave blank to keep current password</p>
+                  <p>• If changing password, it must be at least 6 characters long</p>
+                  <p>• Make sure both password fields match when changing password</p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={isSaving}
+                  className={`flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg ${
+                    isSaving ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'
+                  } transition-all duration-200 font-medium text-sm`}
+                >
+                  <X className="w-3 h-3" />
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className={`flex items-center justify-center gap-2 px-4 py-2 ${
+                    isSaving 
+                      ? 'bg-gray-400 cursor-not-allowed' 
+                      : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
+                  } text-white rounded-lg transition-all duration-200 font-medium shadow-lg text-sm`}
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-3 h-3" />
+                      Save Changes
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
+      
+      {/* Custom Password Confirmation Modal */}
+      {showPasswordConfirmModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-gray-200 max-w-md w-full transform transition-all duration-300 scale-100">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-orange-500 to-red-500 p-4 rounded-t-xl text-white">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-white/20 rounded-lg">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold">Confirm Password Change</h3>
+                  <p className="text-orange-100 text-sm">This action requires confirmation</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-4">
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    {formData.firstName && formData.lastName ? 
+                      `${formData.firstName.charAt(0)}${formData.lastName.charAt(0)}` : 
+                      'RM'}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-800 text-sm">
+                      {formData.firstName && formData.lastName ? 
+                        `${formData.firstName} ${formData.lastName}` : 
+                        'Resource Manager'}
+                    </p>
+                    <p className="text-xs text-gray-500">{formData.email}</p>
+                  </div>
+                </div>
+                
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-3">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm">
+                      <p className="font-medium text-orange-800 mb-1">
+                        Are you sure you want to change this resource manager's password?
+                      </p>
+                      <ul className="text-orange-700 space-y-1 text-xs">
+                        <li>• The resource manager will need to use the new password to log in</li>
+                        <li>• This action cannot be undone</li>
+                        <li>• Make sure to inform the resource manager about this change</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="flex items-center gap-2 text-xs text-gray-600 mb-1">
+                    <Lock className="w-3 h-3" />
+                    <span className="font-medium">New Password Length:</span>
+                    <span className="text-gray-800">{passwordData.newPassword.length} characters</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                    <Check className="w-3 h-3" />
+                    <span className="font-medium">Password Confirmation:</span>
+                    <span className={passwordData.newPassword === passwordData.confirmPassword ? "text-green-600" : "text-red-600"}>
+                      {passwordData.newPassword === passwordData.confirmPassword ? "Matched" : "Not matched"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex gap-2">
+                <button
+                  onClick={handlePasswordCancel}
+                  className="flex-1 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 font-medium flex items-center justify-center gap-2 text-sm"
+                >
+                  <X className="w-3 h-3" />
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePasswordConfirm}
+                  className="flex-1 px-3 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 font-medium shadow-lg flex items-center justify-center gap-2 text-sm"
+                >
+                  <Check className="w-3 h-3" />
+                  Confirm Change
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       <ToastContainer 
         position="top-right"

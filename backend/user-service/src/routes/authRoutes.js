@@ -53,5 +53,6 @@ router.post('/login', loginValidation, authController.login);
 router.post('/register', registerValidation, authController.register);
 router.post('/refresh', authController.refreshToken);  // not checked
 router.post('/validate', authController.validateToken); // not checked
+router.get('/check-users', authController.checkUsers); // Public endpoint to check if any users exist
 
 module.exports = router;

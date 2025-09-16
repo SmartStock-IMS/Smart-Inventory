@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { Loader2, AlertCircle, UserPlus, User, Mail, Phone, MapPin, Shield, Lock, CheckCircle, Sparkles, Camera, CreditCard } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { Loader2, AlertCircle, UserPlus, User, Mail, Phone, MapPin, Shield, Lock, CheckCircle, Sparkles, Camera, CreditCard, Users } from "lucide-react";
 import axiosInstance from '../../../../src/utills/axiosinstance.jsx';
 
 const AddUser = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
+    const [isFirstUser, setIsFirstUser] = useState(false);
+    const [checkingUsers, setCheckingUsers] = useState(true);
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -18,6 +20,33 @@ const AddUser = () => {
         password: "",
         confirmPassword: ""
     });
+
+    // Update role to admin for first user
+    useEffect(() => {
+        if (isFirstUser && formData.role === "user") {
+            setFormData(prev => ({ ...prev, role: "admin" }));
+        }
+    }, [isFirstUser, formData.role]);
+
+    // Check if this is the first user
+    useEffect(() => {
+        checkIfFirstUser();
+    }, []);
+
+    const checkIfFirstUser = async () => {
+        try {
+            setCheckingUsers(true);
+            // Try to get users count without authentication
+            const response = await axiosInstance.get('/api/auth/check-users');
+            setIsFirstUser(response.data.userCount === 0);
+        } catch (error) {
+            // If endpoint doesn't exist or fails, assume we need to create first user
+            console.log('No users endpoint available, assuming first user creation');
+            setIsFirstUser(true);
+        } finally {
+            setCheckingUsers(false);
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value, type, files } = e.target;
@@ -130,6 +159,11 @@ const AddUser = () => {
                 password: "",
                 confirmPassword: ""
             });
+
+            // After successful first user creation, update the state
+            if (isFirstUser) {
+                setIsFirstUser(false);
+            }
         } catch (err) {
             setError(
                 err.response?.data?.message ||
@@ -177,21 +211,56 @@ const AddUser = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-100 via-blue-50 to-blue-200 py-3">
             <div className="relative w-full max-w-none px-3">
-                {/* Compact Header Card */}
-                <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 mb-4 overflow-hidden">
-                    <div className="bg-gradient-to-r from-blue-400 to-blue-500 p-4 text-white relative">
-                        <div className="absolute inset-0 bg-black/5"></div>
-                        <div className="relative flex items-center justify-center gap-3">
-                            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                                <UserPlus className="w-6 h-6 text-white" />
-                            </div>
-                            <div className="text-center">
-                                <h2 className="text-xl font-bold">Add New User</h2>
-                                <p className="text-blue-100 text-sm">Create a new team member account</p>
+                {/* Loading Check for Users */}
+                {checkingUsers && (
+                    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 mb-4 overflow-hidden">
+                        <div className="p-6 text-center">
+                            <div className="flex items-center justify-center gap-3 mb-2">
+                                <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+                                <span className="text-gray-600">Checking system status...</span>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
+
+                {!checkingUsers && (
+                    <>
+                        {/* Compact Header Card */}
+                        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 mb-4 overflow-hidden">
+                            <div className={`bg-gradient-to-r ${isFirstUser ? 'from-green-400 to-emerald-500' : 'from-blue-400 to-blue-500'} p-4 text-white relative`}>
+                                <div className="absolute inset-0 bg-black/5"></div>
+                                <div className="relative flex items-center justify-center gap-3">
+                                    <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                        {isFirstUser ? <Users className="w-6 h-6 text-white" /> : <UserPlus className="w-6 h-6 text-white" />}
+                                    </div>
+                                    <div className="text-center">
+                                        <h2 className="text-xl font-bold">
+                                            {isFirstUser ? 'Create First Admin User' : 'Add New User'}
+                                        </h2>
+                                        <p className={`${isFirstUser ? 'text-green-100' : 'text-blue-100'} text-sm`}>
+                                            {isFirstUser ? 'Set up your system administrator account' : 'Create a new team member account'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* First User Notice */}
+                            {isFirstUser && (
+                                <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border-l-4 border-amber-400 p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-amber-100 rounded-lg">
+                                            <Sparkles className="w-5 h-5 text-amber-600" />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-semibold text-amber-800">Welcome to Smart Inventory!</h4>
+                                            <p className="text-sm text-amber-700">
+                                                You're creating the first user account. This will be an administrator account with full system access.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
                 {/* Main Form Card */}
                 <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 overflow-hidden">
@@ -371,13 +440,21 @@ const AddUser = () => {
                                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                                         <Shield className="w-4 h-4 text-blue-500" />
                                         Role
+                                        {isFirstUser && (
+                                            <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                                Admin Required
+                                            </span>
+                                        )}
                                     </label>
                                     <div className="relative">
                                         <select
                                             name="role"
                                             value={formData.role}
                                             onChange={handleChange}
-                                            className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300 appearance-none bg-white"
+                                            disabled={isFirstUser}
+                                            className={`w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300 appearance-none bg-white ${
+                                                isFirstUser ? 'opacity-60 cursor-not-allowed' : ''
+                                            }`}
                                         >
                                             <option value="user">👤 User</option>
                                             <option value="admin">👑 Admin</option>
@@ -385,6 +462,12 @@ const AddUser = () => {
                                         </select>
                                         <div className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-gradient-to-r ${getRoleColor(formData.role)} rounded-full`}></div>
                                     </div>
+                                    {isFirstUser && (
+                                        <p className="text-xs text-green-600 flex items-center gap-1">
+                                            <CheckCircle className="w-3 h-3" />
+                                            First user must be an administrator
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -453,6 +536,8 @@ const AddUser = () => {
                         </div>
                     </div>
                 </div>
+                    </>
+                )}
             </div>
         </div>
     );

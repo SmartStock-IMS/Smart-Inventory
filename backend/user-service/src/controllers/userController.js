@@ -138,6 +138,72 @@ class UserController {
       });
     }
   }
+
+  // Resource Manager specific endpoints
+  async getAllResourceManagers(req, res) {
+    try {
+      const { page = 1, limit = 50 } = req.query;
+      const offset = (page - 1) * parseInt(limit);
+
+      console.log('🔍 Fetching resource managers...');
+      
+      const filters = { role: 'RESOURCE_MANAGER' }; // Use correct enum value
+      const resourceManagers = await prismaUserModel.findAll(parseInt(limit), offset, filters);
+
+      console.log('📥 Found resource managers:', resourceManagers?.length || 0);
+
+      res.status(200).json({
+        success: true,
+        message: 'Resource managers retrieved successfully',
+        data: resourceManagers,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit)
+        }
+      });
+    } catch (error) {
+      console.error('💥 Error fetching resource managers:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  async getResourceManagerById(req, res) {
+    try {
+      const { id } = req.params;
+      console.log(`🔍 Fetching resource manager with ID: ${id}`);
+      
+      const user = await prismaUserModel.findById(id);
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Resource manager not found'
+        });
+      }
+
+      if (user.role !== 'RESOURCE_MANAGER') {
+        return res.status(400).json({
+          success: false,
+          message: 'User is not a resource manager'
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Resource manager retrieved successfully',
+        data: user
+      });
+    } catch (error) {
+      console.error('💥 Error fetching resource manager:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
 }
 
 module.exports = new UserController();

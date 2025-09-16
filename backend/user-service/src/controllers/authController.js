@@ -106,6 +106,23 @@ class AuthController {
       });
     }
   }
+
+  async checkUsers(req, res) {
+    try {
+      const userCount = await authService.getUserCount();
+
+      res.status(200).json({
+        success: true,
+        userCount,
+        isFirstUser: userCount === 0
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
 }
 
 module.exports = new AuthController();

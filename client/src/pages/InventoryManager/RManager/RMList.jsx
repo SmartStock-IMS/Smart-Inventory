@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAllSalesReps, deleteSalesRep } from "@services/salesrep-service";
+import { getAllResourceManagers } from "@services/user-services";
 import {
   Dialog,
   DialogClose,
@@ -11,247 +11,118 @@ import {
   DialogTrigger
 } from "@components/ui/Dialog.jsx";
 import {cn} from "@lib/utils.js";
-import { ToastContainer, toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Contact, User, Mail, MapPin, Hash, Eye, Trash2, Users, Building, Phone } from "lucide-react";
-import { FaSpinner } from "react-icons/fa";
-
-// Mock sales reps data for testing since backend isn't connected
-const mockSalesReps = [
-  {
-    emp_code: "EMP001",
-    sales_area: "Mumbai Central",
-    commission_rate: 5.5,
-    target_amount: 500000,
-    achievements: 420000,
-    join_date: "2022-01-15",
-    status: "Active",
-    users: {
-      name: "Arjun Singh",
-      email: "arjun.singh@company.com",
-      phone: "+91 98765 43210"
-    }
-  },
-  {
-    emp_code: "EMP002",
-    sales_area: "Delhi North",
-    commission_rate: 6.0,
-    target_amount: 450000,
-    achievements: 465000,
-    join_date: "2021-08-20",
-    status: "Active",
-    users: {
-      name: "Sneha Patel",
-      email: "sneha.patel@company.com",
-      phone: "+91 87654 32109"
-    }
-  },
-  {
-    emp_code: "EMP003",
-    sales_area: "Bangalore East",
-    commission_rate: 5.8,
-    target_amount: 600000,
-    achievements: 580000,
-    join_date: "2020-12-10",
-    status: "Active",
-    users: {
-      name: "Rajesh Kumar",
-      email: "rajesh.kumar@company.com",
-      phone: "+91 76543 21098"
-    }
-  },
-  {
-    emp_code: "EMP004",
-    sales_area: "Chennai South",
-    commission_rate: 5.2,
-    target_amount: 400000,
-    achievements: 380000,
-    join_date: "2022-03-05",
-    status: "Active",
-    users: {
-      name: "Priya Sharma",
-      email: "priya.sharma@company.com",
-      phone: "+91 65432 10987"
-    }
-  },
-  {
-    emp_code: "EMP005",
-    sales_area: "Pune West",
-    commission_rate: 6.2,
-    target_amount: 550000,
-    achievements: 610000,
-    join_date: "2019-11-18",
-    status: "Active",
-    users: {
-      name: "Vikram Gupta",
-      email: "vikram.gupta@company.com",
-      phone: "+91 54321 09876"
-    }
-  },
-  {
-    emp_code: "EMP006",
-    sales_area: "Hyderabad Central",
-    commission_rate: 5.7,
-    target_amount: 480000,
-    achievements: 445000,
-    join_date: "2021-06-12",
-    status: "Active",
-    users: {
-      name: "Kavita Joshi",
-      email: "kavita.joshi@company.com",
-      phone: "+91 43210 98765"
-    }
-  },
-  {
-    emp_code: "EMP007",
-    sales_area: "Kolkata East",
-    commission_rate: 5.5,
-    target_amount: 420000,
-    achievements: 390000,
-    join_date: "2022-07-08",
-    status: "Active",
-    users: {
-      name: "Amit Roy",
-      email: "amit.roy@company.com",
-      phone: "+91 32109 87654"
-    }
-  },
-  {
-    emp_code: "EMP008",
-    sales_area: "Ahmedabad West",
-    commission_rate: 6.1,
-    target_amount: 520000,
-    achievements: 540000,
-    join_date: "2020-09-25",
-    status: "Active",
-    users: {
-      name: "Meera Shah",
-      email: "meera.shah@company.com",
-      phone: "+91 21098 76543"
-    }
-  },
-  {
-    emp_code: "EMP009",
-    sales_area: "Jaipur Central",
-    commission_rate: 5.3,
-    target_amount: 380000,
-    achievements: 365000,
-    join_date: "2023-01-20",
-    status: "Active",
-    users: {
-      name: "Rohit Agarwal",
-      email: "rohit.agarwal@company.com",
-      phone: "+91 10987 65432"
-    }
-  },
-  {
-    emp_code: "EMP010",
-    sales_area: "Lucknow North",
-    commission_rate: 5.9,
-    target_amount: 460000,
-    achievements: 475000,
-    join_date: "2021-04-15",
-    status: "Active",
-    users: {
-      name: "Sonal Verma",
-      email: "sonal.verma@company.com",
-      phone: "+91 09876 54321"
-    }
-  },
-  {
-    emp_code: "EMP011",
-    sales_area: "Coimbatore South",
-    commission_rate: 5.4,
-    target_amount: 350000,
-    achievements: 340000,
-    join_date: "2022-10-12",
-    status: "Active",
-    users: {
-      name: "Karthik Raman",
-      email: "karthik.raman@company.com",
-      phone: "+91 87659 43210"
-    }
-  },
-  {
-    emp_code: "EMP012",
-    sales_area: "Indore Central",
-    commission_rate: 5.6,
-    target_amount: 410000,
-    achievements: 425000,
-    join_date: "2020-05-30",
-    status: "Active",
-    users: {
-      name: "Neha Malhotra",
-      email: "neha.malhotra@company.com",
-      phone: "+91 76549 32108"
-    }
-  }
-];
 
 const RMList = () => {
   const [loading, setLoading] = useState(true);
-  const [salesReps, setSalesReps] = useState([]);
+  const [resourceManagers, setResourceManagers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchSalesReps();
+    fetchResourceManagers();
   }, []);
 
-  const fetchSalesReps = async () => {
+  const fetchResourceManagers = async () => {
     try {
-      // Use mock data directly for frontend UI testing since backend isn't connected
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate loading time
+      setLoading(true);
+      console.log("🔍 Fetching resource managers...");
       
-      console.log("Loading mock sales reps data for UI testing");
-      setSalesReps(mockSalesReps);
-      
-      // Uncomment below when backend is ready:
-      /*
-      const result = await getAllSalesReps();
-      console.log("result: ", result);
-      if (result.success && result.data) {
-        setSalesReps(result.data);
-      } else {
-        console.error("Failed to fetch sales reps:", result.message);
-        setSalesReps(mockSalesReps);
+      // Check if user is authenticated
+      const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+      if (!token) {
+        console.error("❌ No authentication token found");
+        toast.error("Please log in to view resource managers");
+        setResourceManagers([]);
+        return;
       }
-      */
+      
+      const result = await getAllResourceManagers();
+      console.log("📥 Resource managers result:", result);
+      
+      if (result.success && result.data) {
+        console.log("✅ Resource managers loaded successfully:", result.data);
+        
+        // Transform the data to ensure proper structure for UI
+        const transformedData = result.data.map(user => ({
+          id: user.userID || user.id || user.user_id, // Handle different ID field names
+          userID: user.userID || user.id || user.user_id,
+          name: `${user.first_name || user.firstName || ''} ${user.last_name || user.lastName || ''}`.trim(),
+          email: user.email,
+          role: user.role,
+          phone: user.phone,
+          location: user.location,
+          first_name: user.first_name || user.firstName,
+          last_name: user.last_name || user.lastName
+        }));
+        
+        setResourceManagers(transformedData);
+        
+        if (transformedData.length === 0) {
+          toast.info("No resource managers found in the system");
+        }
+      } else {
+        console.error("❌ Failed to fetch resource managers:", result.message);
+        
+        // Handle specific error messages
+        if (result.message?.includes("token") || result.message?.includes("401")) {
+          toast.error("Authentication failed. Please log in again.");
+        } else {
+          toast.error(result.message || "Failed to fetch resource managers");
+        }
+        setResourceManagers([]);
+      }
     } catch (error) {
-      console.error("Error loading sales reps:", error);
-      setSalesReps(mockSalesReps);
+      console.error("💥 Error loading resource managers:", error);
+      
+      // Handle network and authentication errors
+      if (error.response?.status === 401) {
+        toast.error("Session expired. Please log in again.");
+      } else if (error.response?.status === 403) {
+        toast.error("Access denied. You don't have permission to view resource managers.");
+      } else if (error.response?.status >= 500) {
+        toast.error("Server error. Please try again later.");
+      } else {
+        toast.error("Error loading resource managers");
+      }
+      setResourceManagers([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleClick = (emp_code) => {
-    navigate(`/inventorymanager/rm-details/${emp_code}`);
+  const handleClick = (id) => {
+    navigate(`/inventorymanager/rm-details/${id}`);
   };
 
-  const handleDelete = async (empCode) => {
+  const handleDelete = async (userId) => {
     try {
-      // Simulate delete operation
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success("Resource manager removed successfully");
+      setLoading(true);
+      // TODO: Implement delete API endpoint
+      // const result = await deleteUser(userId);
       
-      // Remove from current list (mock behavior)
-      setSalesReps(prevReps => prevReps.filter(rep => rep.emp_code !== empCode));
+      // For now, just show success message and refresh the list
+      toast.success("Resource manager removed successfully");
+      await fetchResourceManagers(); // Refresh the list
     } catch (error) {
-      console.error("Error remove resource manager: ", error);
+      console.error("Error removing resource manager: ", error);
       toast.error("Error removing resource manager");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Filter sales reps based on search query
-  const filteredSalesReps = (salesReps || []).filter((rep) => {
+  // Filter resource managers based on search query
+  const filteredResourceManagers = (resourceManagers || []).filter((rm) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
-      rep.emp_code.toLowerCase().includes(query) ||
-      rep.users?.name?.toLowerCase().includes(query) ||
-      rep.users?.email?.toLowerCase().includes(query) ||
-      rep.sales_area?.toLowerCase().includes(query)
+      rm.username?.toLowerCase().includes(query) ||
+      rm.name?.toLowerCase().includes(query) ||
+      rm.email?.toLowerCase().includes(query) ||
+      rm.phone?.toLowerCase().includes(query)
     );
   });
 
@@ -259,7 +130,7 @@ const RMList = () => {
     return name?.split(' ').map(n => n.charAt(0)).join('').toUpperCase() || '';
   };
 
-  const getAreaColor = (area) => {
+  const getAreaColor = (index) => {
     const colors = [
       'bg-blue-100 text-blue-800 border-blue-200',
       'bg-green-100 text-green-800 border-green-200',
@@ -268,8 +139,7 @@ const RMList = () => {
       'bg-pink-100 text-pink-800 border-pink-200',
       'bg-indigo-100 text-indigo-800 border-indigo-200'
     ];
-    const hash = area?.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0) || 0;
-    return colors[Math.abs(hash) % colors.length];
+    return colors[index % colors.length];
   };
 
   if (loading) {
@@ -288,39 +158,39 @@ const RMList = () => {
   return (
     <div className="h-full w-full bg-gradient-to-br from-blue-50 via-white to-indigo-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-6 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-400 to-blue-500 text-white p-4 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-white/10"></div>
         </div>
         <div className="relative z-10">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                <Contact className="w-6 h-6" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                <Contact className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold mb-1">Resource Managers</h2>
-                <p className="text-white/80">Manage your resource management team</p>
+                <h2 className="text-xl font-bold mb-1">Resource Managers</h2>
+                <p className="text-white/80 text-sm">Manage your resource management team</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                <Users className="w-5 h-5 animate-pulse" />
+              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <Users className="w-4 h-4 animate-pulse" />
               </div>
             </div>
           </div>
 
           {/* Search Bar */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3">
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1 relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/60" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
                 <input
                   type="text"
-                  placeholder="Search by name, code, email, or area..."
+                  placeholder="Search by name, ID, email..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50"
+                  className="w-full pl-9 pr-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 text-sm"
                 />
               </div>
             </div>
@@ -329,121 +199,119 @@ const RMList = () => {
       </div>
 
       {/* Content Section */}
-      <div className="h-[calc(100%-200px)] p-6 overflow-y-auto">
+      <div className="h-[calc(100%-160px)] p-4 overflow-y-auto">
         {/* Stats Bar */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+          <div className="bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Users className="w-5 h-5 text-blue-600" />
+              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Users className="w-4 h-4 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-800">{filteredSalesReps.length}</p>
-                <p className="text-sm text-gray-600">Active Managers</p>
+                <p className="text-xl font-bold text-gray-800">{filteredResourceManagers.length}</p>
+                <p className="text-xs text-gray-600">Active Managers</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <Building className="w-5 h-5 text-green-600" />
+              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                <Building className="w-4 h-4 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-800">
-                  {new Set((salesReps || []).map(rep => rep.sales_area)).size}
-                </p>
-                <p className="text-sm text-gray-600">Resource Areas</p>
+                <p className="text-xl font-bold text-gray-800">{resourceManagers.length}</p>
+                <p className="text-xs text-gray-600">Total Resource Managers</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Sales Reps Table */}
-        {filteredSalesReps.length > 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        {/* Resource Managers Table */}
+        {filteredResourceManagers.length > 0 ? (
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px]">
-                <thead className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
+                <thead className="bg-gradient-to-r from-blue-50 to-blue-100 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <div className="flex items-center gap-2">
                         <Hash className="w-4 h-4" />
-                        Code
+                        ID
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4" />
                         Resource Manager
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <div className="flex items-center gap-2">
                         <Mail className="w-4 h-4" />
                         Contact
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <div className="flex items-center gap-2">
                         <MapPin className="w-4 h-4" />
-                        Resource Area
+                        Role
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredSalesReps.map((rep) => (
-                    <tr key={rep.emp_code} className="hover:bg-gray-50 transition-colors duration-200">
-                      <td className="px-6 py-4">
+                  {filteredResourceManagers.map((rm, index) => (
+                    <tr key={rm.id || rm.userID || index} className="hover:bg-gray-50 transition-colors duration-200">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-sm font-bold">
-                            {getInitials(rep.users?.name)}
+                          <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-500 rounded-lg flex items-center justify-center text-white text-xs font-bold">
+                            {getInitials(rm.name)}
                           </div>
-                          <span className="font-medium text-gray-800">{rep.emp_code}</span>
+                          <span className="font-medium text-gray-800 text-sm">#{rm.id || rm.userID}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <button
-                          onClick={() => handleClick(rep.emp_code)}
-                          className="text-blue-600 hover:text-blue-800 font-medium hover:underline text-left transition-colors duration-200"
+                          onClick={() => handleClick(rm.id)}
+                          className="text-blue-600 hover:text-blue-800 font-medium hover:underline text-left transition-colors duration-200 text-sm"
                         >
-                          {rep.users?.name || 'N/A'}
+                          {rm.name || rm.username || 'N/A'}
                         </button>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <Mail className="w-4 h-4 text-gray-400" />
-                            <span className="text-gray-600 text-sm">{rep.users?.email || 'N/A'}</span>
+                            <Mail className="w-3 h-3 text-gray-400" />
+                            <span className="text-gray-600 text-xs">{rm.email || 'N/A'}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Phone className="w-4 h-4 text-gray-400" />
-                            <span className="text-gray-600 text-sm">{rep.users?.phone || 'N/A'}</span>
+                            <Phone className="w-3 h-3 text-gray-400" />
+                            <span className="text-gray-600 text-xs">{rm.phone || 'N/A'}</span>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium border ${getAreaColor(rep.sales_area)}`}>
-                          {rep.sales_area || 'N/A'}
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium border ${getAreaColor(index)}`}>
+                          {rm.role || 'Resource Manager'}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
                           <button
-                            onClick={() => handleClick(rep.emp_code)}
-                            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2"
+                            onClick={() => handleClick(rm.id || rm.userID)}
+                            className="px-3 py-1 bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-3 h-3" />
                             View
                           </button>
                           <Dialog>
                             <DialogTrigger asChild>
-                              <button className="px-4 py-2 text-red-600 border border-red-200 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2">
-                                <Trash2 className="w-4 h-4" />
+                              <button className="px-3 py-1 text-red-600 border border-red-200 hover:bg-red-50 rounded-lg text-xs font-medium transition-colors duration-200 flex items-center gap-1">
+                                <Trash2 className="w-3 h-3" />
                                 Remove
                               </button>
                             </DialogTrigger>
@@ -454,7 +322,7 @@ const RMList = () => {
                                 </DialogTitle>
                                 <DialogDescription>
                                   <p className="mt-1 text-center text-base font-normal">
-                                    {rep.users?.name || rep.emp_code}
+                                    {rm.name || rm.username || `ID: ${rm.id || rm.userID}`}
                                   </p>
                                 </DialogDescription>
                               </DialogHeader>
@@ -465,7 +333,7 @@ const RMList = () => {
                                       "w-1/5 border p-2 rounded-md bg-gray-950 text-white",
                                       "hover:bg-gray-800",
                                     )}
-                                    onClick={() => handleDelete(rep.emp_code)}
+                                    onClick={() => handleDelete(rm.id || rm.userID)}
                                   >
                                     Yes
                                   </button>

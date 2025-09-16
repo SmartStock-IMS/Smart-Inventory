@@ -250,6 +250,235 @@ class PrismaUserModel {
       throw error;
     }
   }
+
+  /**
+   * Get total user count
+   */
+  async getUserCount() {
+    try {
+      return await prisma.user.count();
+    } catch (error) {
+      console.error('Error getting user count:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create sales staff
+   */
+  async createSalesStaff(salesStaffData) {
+    try {
+      const salesStaff = await prisma.salesStaff.create({
+        data: salesStaffData,
+        include: {
+          user: {
+            select: {
+              userID: true,
+              username: true,
+              first_name: true,
+              last_name: true,
+              email: true,
+              phone: true,
+              role: true,
+              branch: true
+            }
+          }
+        }
+      });
+      return salesStaff;
+    } catch (error) {
+      console.error('Error creating sales staff:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Find all sales staff with pagination
+   */
+  async findAllSalesStaff(limit = 10, offset = 0) {
+    try {
+      const salesStaff = await prisma.salesStaff.findMany({
+        skip: offset,
+        take: limit,
+        include: {
+          user: {
+            select: {
+              userID: true,
+              username: true,
+              first_name: true,
+              last_name: true,
+              email: true,
+              phone: true,
+              role: true,
+              branch: true,
+              address: true,
+              nic: true,
+              date_of_employment: true,
+              performance_rating: true
+            }
+          }
+        }
+      });
+      return salesStaff;
+    } catch (error) {
+      console.error('Error finding sales staff:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Find sales staff by ID
+   */
+  async findSalesStaffById(id) {
+    try {
+      const salesStaff = await prisma.salesStaff.findFirst({
+        where: {
+          OR: [
+            { sales_staff_id: id },
+            { userID: id }
+          ]
+        },
+        include: {
+          user: {
+            select: {
+              userID: true,
+              username: true,
+              first_name: true,
+              last_name: true,
+              email: true,
+              phone: true,
+              role: true,
+              branch: true,
+              address: true,
+              nic: true,
+              date_of_employment: true,
+              performance_rating: true
+            }
+          }
+        }
+      });
+      return salesStaff;
+    } catch (error) {
+      console.error('Error finding sales staff by ID:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update sales staff
+   */
+  async updateSalesStaff(id, updateData) {
+    try {
+      // Separate user data from sales staff data
+      const { first_name, last_name, email, phone, address, nic, branch, ...salesStaffData } = updateData;
+      
+      const userData = {};
+      if (first_name) userData.first_name = first_name;
+      if (last_name) userData.last_name = last_name;
+      if (email) userData.email = email;
+      if (phone) userData.phone = phone;
+      if (address) userData.address = address;
+      if (nic) userData.nic = nic;
+      if (branch) userData.branch = branch;
+
+      // Update both user and sales staff data in a transaction
+      const result = await prisma.$transaction(async (tx) => {
+        // Find sales staff first
+        const salesStaff = await tx.salesStaff.findFirst({
+          where: {
+            OR: [
+              { sales_staff_id: id },
+              { userID: id }
+            ]
+          }
+        });
+
+        if (!salesStaff) {
+          throw new Error('Sales staff not found');
+        }
+
+        // Update user data if provided
+        if (Object.keys(userData).length > 0) {
+          await tx.user.update({
+            where: { userID: salesStaff.userID },
+            data: userData
+          });
+        }
+
+        // Update sales staff data if provided
+        if (Object.keys(salesStaffData).length > 0) {
+          await tx.salesStaff.update({
+            where: { sales_staff_id: salesStaff.sales_staff_id },
+            data: salesStaffData
+          });
+        }
+
+        // Return updated sales staff with user data
+        return await tx.salesStaff.findUnique({
+          where: { sales_staff_id: salesStaff.sales_staff_id },
+          include: {
+            user: {
+              select: {
+                userID: true,
+                username: true,
+                first_name: true,
+                last_name: true,
+                email: true,
+                phone: true,
+                role: true,
+                branch: true,
+                address: true,
+                nic: true,
+                date_of_employment: true,
+                performance_rating: true
+              }
+            }
+          }
+        });
+      });
+
+      return result;
+    } catch (error) {
+      console.error('Error updating sales staff:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete sales staff
+   */
+  async deleteSalesStaff(id) {
+    try {
+      await prisma.$transaction(async (tx) => {
+        // Find sales staff first
+        const salesStaff = await tx.salesStaff.findFirst({
+          where: {
+            OR: [
+              { sales_staff_id: id },
+              { userID: id }
+            ]
+          }
+        });
+
+        if (!salesStaff) {
+          throw new Error('Sales staff not found');
+        }
+
+        // Delete sales staff record
+        await tx.salesStaff.delete({
+          where: { sales_staff_id: salesStaff.sales_staff_id }
+        });
+
+        // Delete user record
+        await tx.user.delete({
+          where: { userID: salesStaff.userID }
+        });
+      });
+    } catch (error) {
+      console.error('Error deleting sales staff:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new PrismaUserModel();

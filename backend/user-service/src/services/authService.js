@@ -111,6 +111,14 @@ class AuthService {
       throw new Error('Invalid token');
     }
   }
+
+  async getUserCount() {
+    try {
+      return await prismaUserModel.getUserCount();
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = new AuthService();

@@ -23,6 +23,7 @@ model User {
   phone            String  @db.VarChar(20)
   address          String  @db.VarChar(255)
   branch           String  @db.VarChar(100)
+  nic              String? @db.VarChar(20)
   date_of_employment DateTime @db.Date
   performance_rating Float   @db.DoublePrecision
 
@@ -60,11 +61,28 @@ model SupplierOrder {
   inventory_manager_id String   @db.VarChar(50)
 
   // Relations
-  supplier         Supplier         @relation(fields: [supplier_id], references: [supplier_id])
-  product          Product          @relation(fields: [product_id], references: [product_id])
-  inventoryManager InventoryManager @relation(fields: [inventory_manager_id], references: [inventory_manager_id])
+  supplier         Supplier            @relation(fields: [supplier_id], references: [supplier_id])
+  product          Product             @relation(fields: [product_id], references: [product_id])
+  inventoryManager InventoryManager    @relation(fields: [inventory_manager_id], references: [inventory_manager_id])
+  orderItems       SupplierOrderItem[]
 
   @@map("supplier_orders")
+}
+
+model SupplierOrderItem {
+  order_item_id String   @id @default(uuid()) @db.Uuid
+  order_id      String   @db.VarChar(50)
+  product_id    String   @db.VarChar(50)
+  quantity      Int
+  unit_price    Float    @db.DoublePrecision
+  total_amount  Float    @db.DoublePrecision
+  created_at    DateTime @default(now()) @db.Timestamptz
+
+  // Relations
+  order   SupplierOrder @relation(fields: [order_id], references: [supplier_order_id], onDelete: Cascade)
+  product Product       @relation(fields: [product_id], references: [product_id])
+
+  @@map("supplier_order_items")
 }
 
 model InventoryManager {
@@ -106,11 +124,13 @@ model Product {
   inventory_manager_id String  @db.VarChar(50)
 
   // Relations
-  category          ProductCategory @relation(fields: [category_id], references: [category_id])
-  inventoryManager  InventoryManager @relation(fields: [inventory_manager_id], references: [inventory_manager_id])
-  supplierOrders    SupplierOrder[]
-  inventory         Inventory[]
-  customerOrders    CustomerOrder[]
+  category            ProductCategory     @relation(fields: [category_id], references: [category_id])
+  inventoryManager    InventoryManager    @relation(fields: [inventory_manager_id], references: [inventory_manager_id])
+  supplierOrders      SupplierOrder[]
+  inventory           Inventory[]
+  customerOrders      CustomerOrder[]
+  customerOrderItems  CustomerOrderItem[]
+  supplierOrderItems  SupplierOrderItem[]
 
   @@map("product")
 }
@@ -148,11 +168,28 @@ model CustomerOrder {
   product_id     String      @db.VarChar(50)
 
   // Relations
-  customer   Customer   @relation(fields: [customer_id], references: [customer_id])
-  salesStaff User       @relation(fields: [sales_staff_id], references: [userID])
-  product    Product    @relation(fields: [product_id], references: [product_id])
+  customer     Customer              @relation(fields: [customer_id], references: [customer_id])
+  salesStaff   User                  @relation(fields: [sales_staff_id], references: [userID])
+  product      Product               @relation(fields: [product_id], references: [product_id])
+  orderItems   CustomerOrderItem[]
 
   @@map("customer_orders")
+}
+
+model CustomerOrderItem {
+  order_item_id String   @id @default(uuid()) @db.Uuid
+  order_id      String   @db.VarChar(50)
+  product_id    String   @db.VarChar(50)
+  quantity      Int
+  unit_price    Float    @db.DoublePrecision
+  total_amount  Float    @db.DoublePrecision
+  created_at    DateTime @default(now()) @db.Timestamptz
+
+  // Relations
+  order   CustomerOrder @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
+  product Product       @relation(fields: [product_id], references: [product_id])
+
+  @@map("customer_order_items")
 }
 
 model StockMovements {

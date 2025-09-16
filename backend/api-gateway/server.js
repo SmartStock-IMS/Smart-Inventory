@@ -165,11 +165,14 @@ app.use('/api/auth/login', authProxy);
 app.use('/api/auth/register', authProxy);
 app.use('/api/auth/refresh', authProxy);
 app.use('/api/auth/validate', authProxy);
+app.use('/api/auth/check-users', authProxy); // Public endpoint to check if users exist
 
 // Protected routes
 // user service routes
 app.use('/api/auth', authenticateToken, createProxy(USER_SERVICE_URL, { '^/api/auth': '/auth' }));
 app.use('/api/users', authenticateToken, createProxy(USER_SERVICE_URL, { '^/api/users': '/users' }));
+app.use('/api/salesrep', authenticateToken, createProxy(USER_SERVICE_URL, { '^/api/salesrep': '/salesstaff' }));
+app.use('/api/resource-managers', authenticateToken, createProxy(USER_SERVICE_URL, { '^/api/resource-managers': '/users/resource-managers' }));
 
 // inventory service routes
 app.use('/api/products', authenticateToken, createProxy(INVENTORY_SERVICE_URL, { '^/api/products': '/products' }));
@@ -218,6 +221,8 @@ app.get('/api', (req, res) => {
     endpoints: {
       auth: '/api/auth',
       users: '/api/users',
+      salesrep: '/api/salesrep',
+      'resource-managers': '/api/resource-managers',
       products: '/api/products',
       inventory: '/api/inventory',
       orders: '/api/orders',
