@@ -32,7 +32,7 @@ const SalesRepLogin = () => {
         localStorage.setItem("refreshToken", result.data.refreshToken);
         localStorage.setItem("user", JSON.stringify(result.data.user));
         toast.success("Login successful!");
-        const role = result.data.user.role;
+        const role = result.data.user.role?.toLowerCase();
         if (role === "admin") {
           navigate("/administrator");
         } else if (role === "inventory_manager") {

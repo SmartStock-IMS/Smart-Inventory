@@ -18,7 +18,7 @@ const UserDetails = () => {
         const fetchUsers = async () => {
             try {
                 setLoading(true);
-                let token = localStorage.getItem("accessToken");
+                let token = localStorage.getItem("authToken");
                 if (!token) {
                     token = localStorage.getItem("token");
                 }
@@ -27,27 +27,38 @@ const UserDetails = () => {
                     setLoading(false);
                     return;
                 }
+                
+                // Fetch users with a higher limit to get all administrators and inventory managers
                 const response = await axiosInstance.get('/api/users/', {
+                    params: {
+                        limit: 100 // Get more users to ensure we capture all admins and managers
+                    },
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
                 });
+                
                 if (response.data.success) {
-                    // Transform backend data to match frontend format
-                    const transformedUsers = response.data.data.users.map(user => ({
-                        id: user.userid,
-                        firstName: user.first_name,
-                        lastName: user.last_name,
-                        email: user.email,
-                        phone: user.phone,
-                        address: user.address,
-                        company: user.company || 'Not specified', // Add if available in backend
-                        website: user.website || 'Not specified', // Add if available in backend
-                        role: user.role,
-                        joinDate: user.created_at,
-                        avatarUrl: user.pic_url || `https://api.dicebear.com/7.x/initials/svg?seed=${user.first_name?.charAt(0) || ''}${user.last_name?.charAt(0) || ''}`,
-                        nic: user.nic
-                    }));
+                    // Transform and filter backend data to show only administrators and inventory managers
+                    const transformedUsers = response.data.data.users
+                        .filter(user => {
+                            const userRole = user.role?.toUpperCase();
+                            return userRole === 'ADMIN' || userRole === 'INVENTORY_MANAGER';
+                        })
+                        .map(user => ({
+                            id: user.userID,
+                            firstName: user.first_name,
+                            lastName: user.last_name,
+                            email: user.email,
+                            phone: user.phone,
+                            address: user.address,
+                            company: user.branch || 'Not specified', // Use branch as company
+                            website: 'Not specified', // Not available in current schema
+                            role: user.role,
+                            joinDate: user.date_of_employment,
+                            avatarUrl: user.pic_url || `https://api.dicebear.com/7.x/initials/svg?seed=${user.first_name?.charAt(0) || ''}${user.last_name?.charAt(0) || ''}`,
+                            nic: user.nic
+                        }));
                     setUsers(transformedUsers);
                     if (transformedUsers.length > 0) {
                         setSelectedUser(transformedUsers[0]);
@@ -57,7 +68,11 @@ const UserDetails = () => {
                 }
             } catch (err) {
                 console.error('Error fetching users:', err);
-                setError('Error fetching users. Please try again.');
+                if (err.response?.status === 401) {
+                    setError('Authentication failed. Please log in again.');
+                } else {
+                    setError('Error fetching users. Please try again.');
+                }
             } finally {
                 setLoading(false);
             }
@@ -339,8 +354,8 @@ const UserDetails = () => {
                                 <Users className="w-8 h-8 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-3xl font-bold text-gray-800">User Management</h1>
-                                <p className="text-gray-600 mt-1">Manage and view user information</p>
+                                <h1 className="text-3xl font-bold text-gray-800">Administrative Staff</h1>
+                                <p className="text-gray-600 mt-1">Manage administrators and inventory managers</p>
                             </div>
                         </div>
                     </div>
@@ -355,7 +370,7 @@ const UserDetails = () => {
                                 <div className="relative">
                                     <input
                                         type="text"
-                                        placeholder="Search users..."
+                                        placeholder="Search administrators and managers..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         className="w-full pl-12 pr-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-300 transition-all duration-200"
@@ -400,7 +415,7 @@ const UserDetails = () => {
                                     ))
                                 ) : (
                                     <div className="p-6 text-center text-gray-500">
-                                        No users found
+                                        No administrators or managers found
                                     </div>
                                 )}
                             </div>

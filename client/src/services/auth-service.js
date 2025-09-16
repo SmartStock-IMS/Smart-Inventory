@@ -10,7 +10,9 @@ export const userLogin = async (email, password) => {
     });
 
     if (response.status === 200) {
-      localStorage.setItem("authToken", response.data.auth);
+      // Handle new response structure from updated user service
+      const { data } = response.data;
+      localStorage.setItem("authToken", data.accessToken);
       return {
         success: true,
         user: response.data,
@@ -28,15 +30,22 @@ export const userLogin = async (email, password) => {
 
 export const validateUser = async (token) => {
   try {
-    const response = await axios.get(`${API_URL}/auth/validate`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axios.post(`${API_URL}/auth/validate`, 
+      { token }, 
+      {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+      }
+    );
     if (response.status === 200) {
-      return { success: true, user: response.data.user };
+      return { success: true, user: response.data.data.user };
     } else {
       return { success: false, error: response.statusText };
     }
   } catch (error) {
     console.log("Token validation error: ", error);
+    return { success: false, error: error.message };
   }
 };

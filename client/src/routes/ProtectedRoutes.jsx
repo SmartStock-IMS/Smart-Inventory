@@ -14,8 +14,12 @@ const ProtectedRoutes = ({ allowedRoles }) => {
   }
 
   console.log("protected user: ", user);
+  // Handle both lowercase and uppercase role values
+  const userRole = user.type?.toLowerCase();
+  const normalizedAllowedRoles = allowedRoles.map(role => role.toLowerCase());
+  
   // eslint-disable-next-line react/prop-types
-  if (!allowedRoles.includes(user.type)) {
+  if (!normalizedAllowedRoles.includes(userRole)) {
     return <Navigate to="/unauthorized" />;
   }
 

@@ -28,8 +28,24 @@ const registerValidation = [
     .withMessage('Last name is required'),
   body('role')
     .optional()
-    .isIn(['admin', 'inventory_manager', 'sales_staff', 'resource_manager'])
-    .withMessage('Invalid role')
+    .isIn(['admin', 'inventory_manager', 'sales_staff', 'resource_manager', 'user'])
+    .withMessage('Invalid role'),
+  body('phone')
+    .optional()
+    .isString()
+    .withMessage('Phone must be a string'),
+  body('address')
+    .optional()
+    .isString()
+    .withMessage('Address must be a string'),
+  body('branch')
+    .optional()
+    .isString()
+    .withMessage('Branch must be a string'),
+  body('nic')
+    .optional()
+    .isString()
+    .withMessage('NIC must be a string')
 ];
 
 // Routes

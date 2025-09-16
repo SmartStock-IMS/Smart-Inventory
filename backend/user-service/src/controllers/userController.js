@@ -1,4 +1,4 @@
-const UserModel = require('../models/userModel');
+const prismaUserModel = require('../models/prismaUserModel');
 
 class UserController {
   async getAllUsers(req, res) {
@@ -9,7 +9,7 @@ class UserController {
       const filters = {};
       if (role) filters.role = role;
 
-      const users = await UserModel.findAll(parseInt(limit), offset, filters);
+      const users = await prismaUserModel.findAll(parseInt(limit), offset, filters);
 
       res.status(200).json({
         success: true,
@@ -33,7 +33,7 @@ class UserController {
   async getUserById(req, res) {
     try {
       const { id } = req.params;
-      const user = await UserModel.findById(id);
+      const user = await prismaUserModel.findById(id);
 
       if (!user) {
         return res.status(404).json({
@@ -42,8 +42,6 @@ class UserController {
         });
       }
 
-      // Remove sensitive data
-      delete user.password_hash;
       res.status(200).json({
         success: true,
         message: 'User retrieved successfully',
@@ -66,7 +64,7 @@ class UserController {
       delete updates.password_hash;
       delete updates.id;
 
-      const existingUser = await UserModel.findById(id);
+      const existingUser = await prismaUserModel.findById(id);
       if (!existingUser) {
         return res.status(404).json({
           success: false,
@@ -74,10 +72,8 @@ class UserController {
         });
       }
 
-      const updatedUser = await UserModel.update(id, updates);
+      const updatedUser = await prismaUserModel.update(id, updates);
 
-      // Remove sensitive data
-      delete updatedUser.password_hash;
       res.status(200).json({
         success: true,
         message: 'User updated successfully',
@@ -94,7 +90,7 @@ class UserController {
   async deleteUser(req, res) {
     try {
       const { id } = req.params;
-      const user = await UserModel.findById(id);
+      const user = await prismaUserModel.findById(id);
 
       if (!user) {
         return res.status(404).json({
@@ -103,12 +99,12 @@ class UserController {
         });
       }
 
-      // Soft delete by updating status to inactive
-      await UserModel.update(id, { status: 'inactive' });
+      // Delete user (you might want to implement soft delete instead)
+      await prismaUserModel.delete(id);
 
       res.status(200).json({
         success: true,
-        message: 'User deactivated successfully'
+        message: 'User deleted successfully'
       });
     } catch (error) {
       res.status(500).json({
@@ -121,8 +117,7 @@ class UserController {
   async getUserProfile(req, res) {
     try {
       const userId = req.headers['x-user-id'];
-      const { id } = req.params;
-      const user = await UserModel.findById(id);
+      const user = await prismaUserModel.findById(userId);
 
       if (!user) {
         return res.status(404).json({
@@ -131,8 +126,6 @@ class UserController {
         });
       }
 
-      // Remove sensitive data
-      delete user.password_hash;
       res.status(200).json({
         success: true,
         message: 'Profile retrieved successfully',
