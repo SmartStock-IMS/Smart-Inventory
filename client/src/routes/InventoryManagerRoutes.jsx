@@ -60,8 +60,8 @@ function InventoryManagerRoutes() {
                     {/* item: customers */}
                     <Route path="/addcustomer" element={<AddCustomer />} />
                     <Route path="/customer-list" element={<CustomerList />} />
-                    <Route path="/customer/:user_code" element={<CustomerDetails />} />
-                    <Route path="/customer/edit/:user_code" element={<EditCustomer />} />
+                    <Route path="/customer/:customer_id" element={<CustomerDetails />} />
+                    <Route path="/customer/edit/:customer_id" element={<EditCustomer />} />
                     {/* item: sales-reps */}
                     <Route path="/addrep" element={<AddRep />} />
                     <Route path="/sales-rep" element={<RepsList />} />

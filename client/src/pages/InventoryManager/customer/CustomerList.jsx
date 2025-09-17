@@ -1,409 +1,193 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { BookUser, Search, Trash2, Eye, User, Mail, Phone, MapPin, Hash, Users, Sparkles, AlertCircle, UserCheck, Building, Grid3X3, TableProperties } from "lucide-react";
-import { FaSpinner } from "react-icons/fa";
+import { BookUser, Search, Trash2, Eye, User, Mail, Phone, MapPin, Hash, Users, Building } from "lucide-react";
 
-// Mock customer data for testing since backend isn't connected
-const mockCustomers = [
-  {
-    user_code: "CUST001",
-    first_name: "Rajesh",
-    last_name: "Kumar",
-    contact1: "+91 98765 43210",
-    email: "rajesh.kumar@email.com",
-    city: "Mumbai"
-  },
-  {
-    user_code: "CUST002", 
-    first_name: "Priya",
-    last_name: "Sharma",
-    contact1: "+91 87654 32109",
-    email: "priya.sharma@email.com",
-    city: "Delhi"
-  },
-  {
-    user_code: "CUST003",
-    first_name: "Amit",
-    last_name: "Patel",
-    contact1: "+91 76543 21098",
-    email: "amit.patel@email.com",
-    city: "Ahmedabad"
-  },
-  {
-    user_code: "CUST004",
-    first_name: "Sunita",
-    last_name: "Singh",
-    contact1: "+91 65432 10987",
-    email: "sunita.singh@email.com",
-    city: "Pune"
-  },
-  {
-    user_code: "CUST005",
-    first_name: "Vikram",
-    last_name: "Gupta",
-    contact1: "+91 54321 09876",
-    email: "vikram.gupta@email.com",
-    city: "Bangalore"
-  },
-  {
-    user_code: "CUST006",
-    first_name: "Kavita",
-    last_name: "Joshi",
-    contact1: "+91 43210 98765",
-    email: "kavita.joshi@email.com",
-    city: "Hyderabad"
-  },
-  {
-    user_code: "CUST007",
-    first_name: "Rahul",
-    last_name: "Verma",
-    contact1: "+91 32109 87654",
-    email: "rahul.verma@email.com",
-    city: "Chennai"
-  },
-  {
-    user_code: "CUST008",
-    first_name: "Meera",
-    last_name: "Reddy",
-    contact1: "+91 21098 76543",
-    email: "meera.reddy@email.com",
-    city: "Kolkata"
+// API services
+const API_BASE_URL = 'http://localhost:3000/api'; // API Gateway URL
+
+const getAllCustomers = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/customers`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}` // Add auth token
+      }
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to fetch customers');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error fetching customers:', error);
+    throw error;
   }
-];
-
-// Mock services
-const getAllCustomersNoPage = async () => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return { success: true, data: mockCustomers };
 };
 
-const deleteCustomer = async (userCode) => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return { success: true, data: { message: "Customer removed successfully" } };
+const deleteCustomer = async (customerId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/customers/${customerId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}` // Add auth token
+      }
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to delete customer');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error deleting customer:', error);
+    throw error;
+  }
 };
 
+// Simple toast implementation
 const toast = {
-  success: (message) => console.log(`✅ ${message}`),
-  error: (message) => console.log(`❌ ${message}`)
+  success: (message) => {
+    // You can replace this with a proper toast library like react-hot-toast
+    alert(`✅ ${message}`);
+  },
+  error: (message) => {
+    // You can replace this with a proper toast library like react-hot-toast
+    alert(`❌ ${message}`);
+  }
 };
-
-const cn = (...classes) => classes.filter(Boolean).join(' ');
 
 const CustomerList = () => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchCustomers().then(data => {
-      setCustomers(data || mockCustomers);
-    });
+    loadCustomers();
   }, []);
 
-  const fetchCustomers = async () => {
+  const loadCustomers = async () => {
     try {
-      const result = await getAllCustomersNoPage();
+      setLoading(true);
+      const result = await getAllCustomers();
       if (result.success) {
-        console.log("customers: ", result.data);
-        return result.data;
+        // Handle both direct array and nested data structure
+        const customersData = result.data?.customers || result.data || [];
+        setCustomers(customersData);
       } else {
-        console.error(result.message);
-        console.log("Using mock customer data");
-        return mockCustomers;
+        toast.error(result.message || 'Failed to load customers');
+        setCustomers([]);
       }
     } catch (error) {
-      console.error(error);
-      console.log("Backend error, using mock customer data");
-      return mockCustomers;
+      console.error("Error loading customers:", error);
+      toast.error('Failed to load customers. Please try again.');
+      setCustomers([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleClick = (user_code) => {
-    navigate(`/inventorymanager/customer/${user_code}`);
-  };
-
-  const handleDelete = async (userCode) => {
-    console.log(userCode);
+  const handleDelete = async (customerId) => {
     try {
       setIsLoading(true);
-      const result = await deleteCustomer(userCode);
+      const result = await deleteCustomer(customerId);
       if (result.success) {
-        toast.success(result.data.message);
-        setCustomers(mockCustomers);
+        toast.success(result.message || 'Customer deleted successfully');
+        // Remove customer from local state
+        setCustomers(customers.filter(c => c.customer_id !== customerId));
         setDeleteDialogOpen(false);
         setCustomerToDelete(null);
       } else {
-        toast.error("Error removing customer");
+        toast.error(result.message || "Error removing customer");
       }
     } catch (error) {
-      console.error("Error remove product: ", error);
+      console.error("Error removing customer: ", error);
+      toast.error(error.message || "Error removing customer");
     } finally {
       setIsLoading(false);
     }
   };
-
-  const filteredCustomers = (customers || []).filter((customer) => {
-    return searchQuery
-      ? customer.user_code.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        customer.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.last_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.city.toLowerCase().includes(searchQuery.toLowerCase())
-      : true;
-  });
 
   const openDeleteDialog = (customer) => {
     setCustomerToDelete(customer);
     setDeleteDialogOpen(true);
   };
 
-  const getInitials = (firstName, lastName) => {
-    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
-  };
+  const filteredCustomers = (customers || []).filter((customer) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      customer.customer_id?.toLowerCase().includes(query) || 
+      customer.first_name?.toLowerCase().includes(query) ||
+      customer.last_name?.toLowerCase().includes(query) ||
+      customer.email?.toLowerCase().includes(query) ||
+      customer.address?.toLowerCase().includes(query)
+    );
+  });
 
-  const getCityColor = (city) => {
+  const getAreaColor = (index) => {
     const colors = [
       'bg-blue-100 text-blue-800 border-blue-200',
       'bg-green-100 text-green-800 border-green-200',
       'bg-purple-100 text-purple-800 border-purple-200',
       'bg-yellow-100 text-yellow-800 border-yellow-200',
       'bg-pink-100 text-pink-800 border-pink-200',
-      'bg-indigo-100 text-indigo-800 border-indigo-200',
-      'bg-red-100 text-red-800 border-red-200',
-      'bg-gray-100 text-gray-800 border-gray-200'
+      'bg-indigo-100 text-indigo-800 border-indigo-200'
     ];
-    const hash = city.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
-    return colors[Math.abs(hash) % colors.length];
+    return colors[index % colors.length];
   };
-
-  const GridView = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {filteredCustomers.map((customer) => (
-        <div key={customer.user_code} className="bg-white rounded-2xl border border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group">
-          <div className="p-6">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg">
-                {getInitials(customer.first_name, customer.last_name)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <button
-                  onClick={() => handleClick(customer.user_code)}
-                  className="text-left hover:text-blue-600 transition-colors duration-200"
-                >
-                  <h3 className="font-semibold text-gray-800 truncate">
-                    {customer.first_name} {customer.last_name}
-                  </h3>
-                  <p className="text-sm text-gray-500">{customer.user_code}</p>
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-3 mb-6">
-              <div className="flex items-center gap-3 text-sm text-gray-600">
-                <Phone className="w-4 h-4 text-gray-400" />
-                <span className="truncate">{customer.contact1}</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm text-gray-600">
-                <Mail className="w-4 h-4 text-gray-400" />
-                <span className="truncate">{customer.email}</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <MapPin className="w-4 h-4 text-gray-400" />
-                <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium border ${getCityColor(customer.city)}`}>
-                  {customer.city}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleClick(customer.user_code)}
-                className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
-              >
-                <Eye className="w-4 h-4" />
-                View
-              </button>
-              <button
-                onClick={() => openDeleteDialog(customer)}
-                className="px-4 py-2 text-red-600 border border-red-200 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors duration-200"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
-  const TableView = () => (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px]">
-          <thead className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
-            <tr>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <div className="flex items-center gap-2">
-                  <Hash className="w-4 h-4" />
-                  Code
-                </div>
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  Customer
-                </div>
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  Contact
-                </div>
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  Email
-                </div>
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  City
-                </div>
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {filteredCustomers.map((customer) => (
-              <tr key={customer.user_code} className="hover:bg-gray-50 transition-colors duration-200">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-sm font-bold">
-                      {getInitials(customer.first_name, customer.last_name)}
-                    </div>
-                    <span className="font-medium text-gray-800">{customer.user_code}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <button
-                    onClick={() => handleClick(customer.user_code)}
-                    className="text-blue-600 hover:text-blue-800 font-medium hover:underline text-left transition-colors duration-200"
-                  >
-                    {customer.first_name} {customer.last_name}
-                  </button>
-                </td>
-                <td className="px-6 py-4 text-gray-600">{customer.contact1}</td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-600">{customer.email}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium border ${getCityColor(customer.city)}`}>
-                    {customer.city}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => handleClick(customer.user_code)}
-                      className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2"
-                    >
-                      <Eye className="w-4 h-4" />
-                      View
-                    </button>
-                    <button
-                      onClick={() => openDeleteDialog(customer)}
-                      disabled={isLoading}
-                      className="px-4 py-2 text-red-600 border border-red-200 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Remove
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
 
   return (
     <div className="h-full w-full bg-gradient-to-br from-blue-50 via-white to-indigo-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-6 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-400 to-blue-500 text-white p-4 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-white/10"></div>
         </div>
         <div className="relative z-10">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                <BookUser className="w-6 h-6" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                <BookUser className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold mb-1">Customer Management</h2>
-                <p className="text-white/80">Manage and view all customer information</p>
+                <h2 className="text-xl font-bold mb-1">Customer Management</h2>
+                <p className="text-white/80 text-sm">Manage and track customer information</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 animate-pulse" />
-              </div>
+              <button
+                onClick={() => navigate('/inventorymanager/addcustomer')}
+                className="px-3 py-2 bg-white/20 hover:bg-white/30 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors backdrop-blur-sm"
+              >
+                <BookUser className="w-4 h-4" />
+                Add Customer
+              </button>
             </div>
           </div>
 
-          {/* Search and Controls */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+          {/* Search Bar */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3">
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/60" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
                 <input
                   type="text"
-                  placeholder="Search customers by name, code, email, or city..."
+                  placeholder="Search by name, code, email, or city..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50"
+                  className="w-full pl-9 pr-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 text-sm"
                 />
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setViewMode('table')}
-                  className={cn(
-                    "p-3 rounded-lg transition-colors duration-200",
-                    viewMode === 'table' 
-                      ? "bg-white/30 text-white" 
-                      : "bg-white/10 text-white/70 hover:bg-white/20"
-                  )}
-                >
-                  <TableProperties className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={cn(
-                    "p-3 rounded-lg transition-colors duration-200",
-                    viewMode === 'grid' 
-                      ? "bg-white/30 text-white" 
-                      : "bg-white/10 text-white/70 hover:bg-white/20"
-                  )}
-                >
-                  <Grid3X3 className="w-5 h-5" />
-                </button>
               </div>
             </div>
           </div>
@@ -411,12 +195,12 @@ const CustomerList = () => {
       </div>
 
       {/* Content Section */}
-      <div className="h-[calc(100%-200px)] p-6 overflow-y-auto">
+      <div className="h-[calc(100%-160px)] p-4 overflow-y-auto">
         {loading ? (
-          <div className="h-full flex items-center justify-center">
+          <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                <FaSpinner className="w-8 h-8 text-white animate-spin" />
+                <BookUser className="w-8 h-8 text-white" />
               </div>
               <p className="text-gray-600 font-medium">Loading customers...</p>
             </div>
@@ -424,53 +208,148 @@ const CustomerList = () => {
         ) : (
           <>
             {/* Stats Bar */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+              <div className="bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Users className="w-5 h-5 text-blue-600" />
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Users className="w-4 h-4 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-gray-800">{filteredCustomers.length}</p>
-                    <p className="text-sm text-gray-600">Total Customers</p>
+                    <p className="text-xl font-bold text-gray-800">{filteredCustomers.length}</p>
+                    <p className="text-xs text-gray-600">Active Customers</p>
                   </div>
                 </div>
               </div>
               
-              <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+              <div className="bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <UserCheck className="w-5 h-5 text-green-600" />
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                    <Building className="w-4 h-4 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-gray-800">{customers.length}</p>
-                    <p className="text-sm text-gray-600">Active Customers</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <Building className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-800">
-                      {new Set(customers.map(c => c.city)).size}
-                    </p>
-                    <p className="text-sm text-gray-600">Cities Covered</p>
+                    <p className="text-xl font-bold text-gray-800">{customers.length}</p>
+                    <p className="text-xs text-gray-600">Total Customers</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Customers Display */}
+            {/* Customers Table */}
             {filteredCustomers.length > 0 ? (
-              viewMode === 'table' ? <TableView /> : <GridView />
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[640px]">
+                    <thead className="bg-gradient-to-r from-blue-50 to-blue-100 border-b border-gray-200">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <div className="flex items-center gap-2">
+                            <Hash className="w-4 h-4" />
+                            Code
+                          </div>
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4" />
+                            Customer
+                          </div>
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-4 h-4" />
+                            Contact
+                          </div>
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4" />
+                            Status & Location
+                          </div>
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {filteredCustomers.map((customer, index) => (
+                        <tr key={customer.customer_id || customer.id} className="hover:bg-gray-50 transition-colors duration-200">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-500 rounded-lg flex items-center justify-center text-white text-xs font-bold">
+                                {((customer.first_name?.charAt(0) || '') + (customer.last_name?.charAt(0) || '')).toUpperCase() || 'C'}
+                              </div>
+                              <span className="font-medium text-gray-800 text-sm">#{customer.customer_id}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => navigate(`/inventorymanager/customer/${customer.customer_id}`)}
+                              className="text-blue-600 hover:text-blue-800 font-medium hover:underline text-left transition-colors duration-200 text-sm"
+                            >
+                              {`${customer.first_name || ''} ${customer.last_name || ''}`.trim() || 'N/A'}
+                            </button>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Mail className="w-3 h-3 text-gray-400" />
+                                <span className="text-gray-600 text-xs">{customer.email || 'N/A'}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Phone className="w-3 h-3 text-gray-400" />
+                                <span className="text-gray-600 text-xs">{customer.contact_no || customer.phone || 'N/A'}</span>
+                              </div>
+                              {customer.contact2 && (
+                                <div className="flex items-center gap-2">
+                                  <Phone className="w-3 h-3 text-gray-400" />
+                                  <span className="text-gray-600 text-xs">{customer.contact2}</span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="space-y-1">
+                              <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium border ${getAreaColor(index)}`}>
+                                {customer.status || 'Active'}
+                              </span>
+                              {customer.address && (
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="w-3 h-3 text-gray-400" />
+                                  <span className="text-gray-600 text-xs truncate max-w-32" title={customer.address}>
+                                    {customer.address}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => navigate(`/inventorymanager/customer/${customer.customer_id}`)}
+                                className="px-3 py-1 bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1"
+                              >
+                                <Eye className="w-3 h-3" />
+                                View
+                              </button>
+                              <button
+                                onClick={() => openDeleteDialog(customer)}
+                                className="px-3 py-1 text-red-600 border border-red-200 hover:bg-red-50 rounded-lg text-xs font-medium transition-colors duration-200 flex items-center gap-1"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                Remove
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             ) : (
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
-                  <Users className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                  <BookUser className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                   <p className="text-gray-600 font-medium">No customers found</p>
                   <p className="text-sm text-gray-500 mt-2">Try adjusting your search criteria</p>
                 </div>
@@ -480,68 +359,28 @@ const CustomerList = () => {
         )}
       </div>
 
-      {/* Delete Confirmation Dialog */}
-      {deleteDialogOpen && customerToDelete && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
-            <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-t-2xl">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                  <AlertCircle className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold">Remove Customer</h3>
-                  <p className="text-white/80 text-sm">This action cannot be undone</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="p-6">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold">
-                  {getInitials(customerToDelete.first_name, customerToDelete.last_name)}
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-800 mb-1">
-                    {customerToDelete.first_name} {customerToDelete.last_name}
-                  </h4>
-                  <p className="text-sm text-gray-600">{customerToDelete.user_code}</p>
-                  <p className="text-xs text-gray-500 mt-1">{customerToDelete.email}</p>
-                </div>
-              </div>
-              
-              <p className="text-gray-600 mb-6">
-                Are you sure you want to remove this customer from your database? This will permanently delete all customer information.
-              </p>
-              
-              <div className="flex gap-3">
-                <button
-                  onClick={() => handleDelete(customerToDelete.user_code)}
-                  disabled={isLoading}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {isLoading ? (
-                    <>
-                      <FaSpinner className="w-4 h-4 animate-spin" />
-                      Removing...
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="w-4 h-4" />
-                      Remove Customer
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={() => {
-                    setDeleteDialogOpen(false);
-                    setCustomerToDelete(null);
-                  }}
-                  className="px-6 py-3 border border-gray-300 hover:bg-gray-50 rounded-xl font-semibold transition-colors duration-200"
-                >
-                  Cancel
-                </button>
-              </div>
+      {/* Delete Dialog */}
+      {deleteDialogOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Confirm removing Customer</h3>
+            <p className="text-gray-600 mb-6 text-center text-base font-normal">
+              {customerToDelete?.first_name} {customerToDelete?.last_name}
+            </p>
+            <div className="flex flex-row items-center justify-center gap-4">
+              <button
+                onClick={() => handleDelete(customerToDelete?.customer_id)}
+                disabled={isLoading}
+                className="w-1/5 border p-2 rounded-md bg-gray-950 text-white hover:bg-gray-800 disabled:opacity-50"
+              >
+                {isLoading ? '...' : 'Yes'}
+              </button>
+              <button
+                onClick={() => setDeleteDialogOpen(false)}
+                className="w-1/5 border border-gray-300 p-2 rounded-md hover:border-gray-500"
+              >
+                No
+              </button>
             </div>
           </div>
         </div>

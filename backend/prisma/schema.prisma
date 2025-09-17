@@ -147,11 +147,18 @@ model Inventory {
 }
 
 model Customer {
-  customer_id String @id @db.VarChar(50)
-  name        String @db.VarChar(150)
-  contact_no  String @db.VarChar(20)
-  email       String @db.VarChar(150)
-  address     String @db.VarChar(255)
+  customer_id   String        @id @db.VarChar(50)
+  first_name    String        @db.VarChar(100)
+  last_name     String        @db.VarChar(100)
+  email         String        @db.VarChar(150)
+  contact_no    String        @db.VarChar(20)
+  contact2      String?       @db.VarChar(20)  // Additional phone (optional)
+  address       String        @db.VarChar(255)
+  profile_pic   String?       @db.VarChar(255) // Profile picture URL (optional)
+  status        CustomerStatus @default(ACTIVE)
+  notes         String?       @db.Text         // Notes (optional)
+  created_at    DateTime      @default(now()) @db.Timestamptz
+  updated_at    DateTime      @updatedAt @db.Timestamptz
 
   // Relations
   customerOrders CustomerOrder[]
@@ -300,4 +307,10 @@ enum NotificationStatus {
   READ
   UNREAD
   ARCHIVED
+}
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
 }

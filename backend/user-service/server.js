@@ -14,13 +14,13 @@ const PORT = process.env.PORT || 3001;
 // Security middleware
 app.use(helmet());
 
-// CORS
-app.use(cors({
-  origin: [
-    process.env.GATEWAY_URL // Vite frontend
-  ],
-  credentials: true
-}));
+// CORS is handled by API Gateway - no need for microservice CORS
+// app.use(cors({
+//   origin: [
+//     process.env.GATEWAY_URL // Vite frontend
+//   ],
+//   credentials: true
+// }));
 
 // Logging
 app.use(morgan('combined'));

@@ -1,8 +1,5 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { getCustomer } from "@services/user-services";
-import { getCustomerByUserCode } from "@services/customer-services";
-import {getQuotationsByCustomer} from "@services/quotation-service.js";
 import {
   Dialog,
   DialogContent,
@@ -13,127 +10,20 @@ import {
 } from "@components/ui/Dialog.jsx";
 import OrderDetails from "@components/InventoryManager/orders/OrderDetails.jsx";
 import { ChevronLeft, User, Mail, Phone, MapPin, Edit, Package, Calendar, Hash, DollarSign, FileText } from "lucide-react";
+import { getCustomerByUserCode } from "@services/customer-services";
 
-// Mock customer data matching the CustomerList data
-const mockCustomers = [
-  {
-    user_code: "CUST001",
-    first_name: "Rajesh",
-    last_name: "Kumar",
-    contact1: "+91 98765 43210",
-    email: "rajesh.kumar@email.com",
-    city: "Mumbai",
-    address_line1: "123 Business Street",
-    province: "Maharashtra"
+// Simple toast implementation
+const toast = {
+  success: (message) => {
+    alert(`✅ ${message}`);
   },
-  {
-    user_code: "CUST002", 
-    first_name: "Priya",
-    last_name: "Sharma",
-    contact1: "+91 87654 32109",
-    email: "priya.sharma@email.com",
-    city: "Delhi",
-    address_line1: "456 Market Road",
-    province: "Delhi"
-  },
-  {
-    user_code: "CUST003",
-    first_name: "Amit",
-    last_name: "Patel",
-    contact1: "+91 76543 21098",
-    email: "amit.patel@email.com",
-    city: "Ahmedabad",
-    address_line1: "789 Trade Center",
-    province: "Gujarat"
-  },
-  {
-    user_code: "CUST004",
-    first_name: "Sunita",
-    last_name: "Singh",
-    contact1: "+91 65432 10987",
-    email: "sunita.singh@email.com",
-    city: "Pune",
-    address_line1: "321 Industrial Area",
-    province: "Maharashtra"
-  },
-  {
-    user_code: "CUST005",
-    first_name: "Vikram",
-    last_name: "Gupta",
-    contact1: "+91 54321 09876",
-    email: "vikram.gupta@email.com",
-    city: "Bangalore",
-    address_line1: "654 Tech Park",
-    province: "Karnataka"
-  },
-  {
-    user_code: "CUST006",
-    first_name: "Kavita",
-    last_name: "Joshi",
-    contact1: "+91 43210 98765",
-    email: "kavita.joshi@email.com",
-    city: "Hyderabad",
-    address_line1: "987 Commercial Complex",
-    province: "Telangana"
-  },
-  {
-    user_code: "CUST007",
-    first_name: "Rahul",
-    last_name: "Verma",
-    contact1: "+91 32109 87654",
-    email: "rahul.verma@email.com",
-    city: "Chennai",
-    address_line1: "147 Export Hub",
-    province: "Tamil Nadu"
-  },
-  {
-    user_code: "CUST008",
-    first_name: "Meera",
-    last_name: "Reddy",
-    contact1: "+91 21098 76543",
-    email: "meera.reddy@email.com",
-    city: "Kolkata",
-    address_line1: "258 Wholesale Market",
-    province: "West Bengal"
+  error: (message) => {
+    alert(`❌ ${message}`);
   }
-];
-
-// Mock quotations data
-const mockQuotations = [
-  {
-    id: 1,
-    quotation_id: "QUO001",
-    quotation_date: "2024-01-15",
-    customer_id: "CUST001",
-    sales_rep_id: "REP001",
-    net_total: 15000,
-    no_items: 3,
-    status: "Approved"
-  },
-  {
-    id: 2,
-    quotation_id: "QUO002",
-    quotation_date: "2024-01-20",
-    customer_id: "CUST001",
-    sales_rep_id: "REP002",
-    net_total: 8500,
-    no_items: 2,
-    status: "Pending"
-  },
-  {
-    id: 3,
-    quotation_id: "QUO003",
-    quotation_date: "2024-02-05",
-    customer_id: "CUST002",
-    sales_rep_id: "REP001",
-    net_total: 22000,
-    no_items: 5,
-    status: "Completed"
-  }
-];
+};
 
 const CustomerDetails = () => {
-  const { user_code } = useParams();
+  const { customer_id } = useParams(); // Changed from user_code to customer_id
   const navigate = useNavigate();
   const [customer, setCustomer] = useState(null);
   const [quotations, setQuotations] = useState([]);
@@ -141,37 +31,45 @@ const CustomerDetails = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Use mock data since backend isn't connected
-    const fetchCustomer = async () => {
+    const fetchCustomerData = async () => {
       try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        setLoading(true);
         
-        // Find customer in mock data
-        const foundCustomer = mockCustomers.find(c => c.user_code === user_code);
+        // Fetch customer details using service layer
+        console.log('🔍 Fetching customer with ID:', customer_id);
+        const customerResult = await getCustomerByUserCode(customer_id);
+        console.log('📦 Customer service result:', customerResult);
         
-        if (foundCustomer) {
-          setCustomer(foundCustomer);
+        if (customerResult.success) {
+          const customerData = customerResult.data?.customer || customerResult.data?.data?.customer || customerResult.data;
+          setCustomer(customerData);
           
-          // Filter quotations for this customer
-          const customerQuotations = mockQuotations.filter(q => q.customer_id === user_code);
-          setQuotations(customerQuotations);
+          console.log("✅ Customer found:", customerData);
           
-          console.log("Customer found:", foundCustomer);
-          console.log("Customer quotations:", customerQuotations);
+          // For now, set empty quotations since quotations service might not be ready
+          setQuotations([]);
+          console.log("📋 Quotations set to empty array");
         } else {
-          setError("Customer not found");
+          console.error("❌ Customer fetch failed:", customerResult);
+          setError(customerResult.message || "Customer not found");
         }
       } catch (err) {
-        setError("Error loading customer data");
-        console.error(err);
+        console.error("💥 Error loading customer data:", err);
+        setError(err.message || "Error loading customer data");
       } finally {
         setLoading(false);
+        console.log("🏁 Loading completed");
       }
     };
 
-    fetchCustomer();
-  }, [user_code]);
+    if (customer_id) {
+      console.log("🚀 Starting customer fetch for ID:", customer_id);
+      fetchCustomerData();
+    } else {
+      console.warn("⚠️ No customer_id provided");
+      setLoading(false);
+    }
+  }, [customer_id]);
 
   const getInitials = (firstName, lastName) => {
     return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
@@ -194,12 +92,12 @@ const CustomerDetails = () => {
 
   if (loading) {
     return (
-      <div className="h-full w-full bg-gradient-to-br from-blue-50 via-white to-indigo-50 rounded-3xl border border-gray-200 shadow-xl flex items-center justify-center">
+      <div className="h-full w-full bg-gradient-to-br from-blue-50 via-white to-blue-100 rounded-xl border border-gray-200 shadow-sm flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <User className="w-8 h-8 text-white" />
+          <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg flex items-center justify-center mx-auto mb-3 animate-pulse">
+            <User className="w-6 h-6 text-white" />
           </div>
-          <p className="text-gray-600 font-medium">Loading customer details...</p>
+          <p className="text-gray-600 font-medium text-sm">Loading customer details...</p>
         </div>
       </div>
     );
@@ -207,15 +105,15 @@ const CustomerDetails = () => {
 
   if (error || !customer) {
     return (
-      <div className="h-full w-full bg-gradient-to-br from-red-50 via-white to-red-50 rounded-3xl border border-red-200 shadow-xl flex items-center justify-center">
+      <div className="h-full w-full bg-gradient-to-br from-red-50 via-white to-red-100 rounded-xl border border-red-200 shadow-sm flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <User className="w-8 h-8 text-red-600" />
+          <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+            <User className="w-6 h-6 text-red-600" />
           </div>
-          <p className="text-red-600 font-medium">{error || "Customer not found"}</p>
+          <p className="text-red-600 font-medium text-sm">{error || "Customer not found"}</p>
           <button
             onClick={() => navigate('/inventorymanager/customer-list')}
-            className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
           >
             Back to Customer List
           </button>
@@ -225,20 +123,20 @@ const CustomerDetails = () => {
   }
 
   return (
-    <div className="h-full w-full bg-gradient-to-br from-blue-50 via-white to-indigo-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className="h-full w-full bg-gradient-to-br from-blue-50 via-white to-blue-100 rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-gradient-to-r from-blue-400 to-blue-500 text-white p-4">
+        <div className="flex items-center justify-between mb-3">
           <button
             onClick={() => navigate('/inventorymanager/customer-list')}
-            className="flex items-center gap-2 text-white hover:text-white/80 transition-colors bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm"
+            className="flex items-center gap-2 text-white hover:text-white/80 transition-colors bg-white/10 px-3 py-2 rounded-lg backdrop-blur-sm text-sm"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-4 h-4" />
             Back to Customer List
           </button>
           
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-lg">
               {getInitials(customer.first_name, customer.last_name)}
             </div>
           </div>
@@ -246,79 +144,113 @@ const CustomerDetails = () => {
         
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2">
+            <h1 className="text-2xl font-bold mb-1">
               {customer.first_name} {customer.last_name}
             </h1>
-            <p className="text-white/80 text-lg">Customer ID: {customer.user_code}</p>
+            <p className="text-white/80 text-sm">Customer ID: {customer.customer_id}</p>
           </div>
         </div>
       </div>
 
       {/* Content Section */}
-      <div className="h-[calc(100%-140px)] p-6 overflow-y-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div className="h-[calc(100%-120px)] p-4 overflow-y-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
           {/* Customer Information Card */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <User className="w-5 h-5 text-blue-600" />
+          <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <User className="w-4 h-4 text-blue-500" />
               </div>
-              <h2 className="text-xl font-bold text-gray-800">Customer Information</h2>
+              <h2 className="text-lg font-bold text-gray-800">Customer Information</h2>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <Hash className="w-4 h-4 text-gray-600" />
+                  <div className="w-6 h-6 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <Hash className="w-3 h-3 text-gray-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Customer Code</p>
-                    <p className="font-semibold text-gray-800">{customer.user_code}</p>
+                    <p className="text-xs text-gray-500">Customer Code</p>
+                    <p className="font-semibold text-gray-800 text-sm">{customer.customer_id}</p>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <Mail className="w-4 h-4 text-gray-600" />
+                  <div className="w-6 h-6 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <Mail className="w-3 h-3 text-gray-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Email Address</p>
-                    <p className="font-semibold text-gray-800">{customer.email}</p>
+                    <p className="text-xs text-gray-500">Email Address</p>
+                    <p className="font-semibold text-gray-800 text-sm">{customer.email}</p>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <Phone className="w-4 h-4 text-gray-600" />
+                  <div className="w-6 h-6 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <Phone className="w-3 h-3 text-gray-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Phone Number</p>
-                    <p className="font-semibold text-gray-800">{customer.contact1}</p>
+                    <p className="text-xs text-gray-500">Phone Number</p>
+                    <p className="font-semibold text-gray-800 text-sm">{customer.contact_no}</p>
+                    {customer.contact2 && (
+                      <p className="text-xs text-gray-600">{customer.contact2}</p>
+                    )}
                   </div>
                 </div>
               </div>
               
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <MapPin className="w-4 h-4 text-gray-600" />
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <MapPin className="w-3 h-3 text-gray-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Address</p>
-                    <p className="font-semibold text-gray-800">
-                      {customer.address_line1}<br />
-                      {customer.city}, {customer.province}
+                    <p className="text-xs text-gray-500">Address</p>
+                    <p className="font-semibold text-gray-800 text-sm leading-relaxed">
+                      {customer.address}
                     </p>
                   </div>
                 </div>
+                
+                {customer.status && (
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <User className="w-3 h-3 text-gray-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Status</p>
+                      <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                        customer.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 
+                        customer.status === 'INACTIVE' ? 'bg-red-100 text-red-800' : 
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {customer.status}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
+                {customer.notes && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <FileText className="w-3 h-3 text-gray-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Notes</p>
+                      <p className="font-semibold text-gray-800 text-sm leading-relaxed">
+                        {customer.notes}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             
-            <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="mt-4 pt-4 border-t border-gray-200">
               <button
-                onClick={() => navigate(`/inventorymanager/customer/edit/${customer.user_code}`)}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2"
+                onClick={() => navigate(`/inventorymanager/customer/edit/${customer.customer_id}`)}
+                className="px-4 py-2 bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2 text-sm"
               >
                 <Edit className="w-4 h-4" />
                 Edit Customer Details

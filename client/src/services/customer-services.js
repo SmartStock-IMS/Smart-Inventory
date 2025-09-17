@@ -2,7 +2,8 @@ import api from "@lib/api";
 
 export const createCustomer = async (customerData) => {
   try {
-    const response = await api.post(`/customer/add`, customerData);
+    // Updated to use microservices API endpoint
+    const response = await api.post(`/api/customers`, customerData);
 
     if (response.status === 201) {
       return {
@@ -13,18 +14,22 @@ export const createCustomer = async (customerData) => {
       return { success: false, error: response.statusText };
     }
   } catch (error) {
+    console.error('Error in createCustomer:', error);
     return {
       success: false,
-      message: error,
+      message: error.response?.data?.message || error.message,
     };
   }
 };
 
 export const getCustomerByUserCode = async (userCode) => {
   try {
-    const response = await api.get(`/customer/get/${userCode}`);
+    console.log('Fetching customer by userCode:', userCode);
+    // Updated to use microservices API endpoint
+    const response = await api.get(`/api/customers/${userCode}`);
 
     if (response.status === 200) {
+      console.log('Customer service response:', response.data);
       return {
         success: true,
         data: response.data,
@@ -33,30 +38,33 @@ export const getCustomerByUserCode = async (userCode) => {
       return { success: false, error: response.statusText };
     }
   } catch (error) {
+    console.error('Error in getCustomerByUserCode:', error);
     return {
       success: false,
-      message: error,
+      message: error.response?.data?.message || error.message,
     };
   }
 };
 
 export const getAllCustomers = async (cursor, limit) => {
   try {
-    const response = await api.get(`/customer/get-all-customers?cursor=${cursor}&limit=${limit}`);
+    // Updated to use microservices API endpoint
+    const response = await api.get(`/api/customers?cursor=${cursor}&limit=${limit}`);
 
     if (response.status === 200) {
       return {
         success: true,
-        data: response.data.customers,
+        data: response.data.customers || response.data.data?.customers,
         nextCursor: response.data.nextCursor,
       };
     } else {
       return { success: false, error: response.statusText };
     }
   } catch (error) {
+    console.error('Error in getAllCustomers:', error);
     return {
       success: false,
-      message: error,
+      message: error.response?.data?.message || error.message,
     };
   }
 };
@@ -84,12 +92,15 @@ export const getAllCustomersNoPage = async () => {
 
 export const updateCustomer = async (user_code, customerData) => {
   try {
+    console.log('Updating customer:', user_code, customerData);
+    // Updated to use microservices API endpoint
     const response = await api.put(
-      `/customer/update/${user_code}`,
+      `/api/customers/${user_code}`,
       customerData,
     );
 
     if (response.status === 200) {
+      console.log('Customer update response:', response.data);
       return {
         success: true,
         data: response.data,
@@ -98,9 +109,10 @@ export const updateCustomer = async (user_code, customerData) => {
       return { success: false, error: response.statusText };
     }
   } catch (error) {
+    console.error('Error in updateCustomer:', error);
     return {
       success: false,
-      message: error,
+      message: error.response?.data?.message || error.message,
     };
   }
 };

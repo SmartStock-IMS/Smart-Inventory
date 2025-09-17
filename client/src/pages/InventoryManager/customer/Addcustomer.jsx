@@ -1,105 +1,140 @@
-import { useState } from 'react';
-import { UserRoundCheck, User, Mail, Phone, MapPin, Building, Calendar, FileText, Camera, Upload, Sparkles, CheckCircle, AlertCircle, Hash, Users } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { UserRoundCheck, User, Mail, Phone, MapPin, FileText, Camera, CheckCircle, AlertCircle, Users } from 'lucide-react';
 import { FaSpinner } from "react-icons/fa";
 
-// Mock Avatar component for demo
-const Avatar = ({ firstName, lastName, imageUrl, editable, size, onImageUpload }) => {
-  const fileInputRef = useState(null)[0];
-  
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file && onImageUpload) {
-      onImageUpload(file);
-    }
-  };
+// API services
+const API_BASE_URL = 'http://localhost:3000/api'; // API Gateway URL
 
-  const initials = `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
-  
-  return (
-    <div className="relative group">
-      <div 
-        className={`w-32 h-32 rounded-2xl overflow-hidden shadow-lg border-4 border-white bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold transition-transform duration-300 group-hover:scale-105`}
-        style={{ width: size, height: size }}
-      >
-        {imageUrl ? (
-          <img src={imageUrl} alt="Avatar" className="w-full h-full object-cover" />
-        ) : (
-          <span className="text-3xl">{initials || '👤'}</span>
-        )}
-      </div>
-      
-      {editable && (
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl flex items-center justify-center">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          />
-          <div className="text-white text-center">
-            <Camera className="w-6 h-6 mx-auto mb-1" />
-            <span className="text-xs font-medium">Upload Photo</span>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+const createCustomer = async (payload) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/customers`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}` // Add auth token
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to create customer');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error creating customer:', error);
+    throw error;
+  }
 };
 
-// Mock services for demo
-const createCustomer = async (payload) => {
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  return { success: true, data: { message: "Customer added successfully!" } };
+const getNextCustomerId = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/customers/next-id`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}` // Add auth token
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch next customer ID');
+    }
+
+    const data = await response.json();
+    return data.data.nextCustomerId;
+  } catch (error) {
+    console.error('Error fetching next customer ID:', error);
+    // Fallback to local generation
+    const existingCustomersCount = 8;
+    const nextNumber = existingCustomersCount + 1;
+    return `CUS${nextNumber.toString().padStart(5, '0')}`;
+  }
 };
 
 const toast = {
-  success: (message) => alert(`✅ ${message}`),
-  error: (message) => alert(`❌ ${message}`)
+  success: (message) => {
+    // You can replace this with a proper toast library like react-hot-toast
+    alert(`✅ ${message}`);
+  },
+  error: (message) => {
+    // You can replace this with a proper toast library like react-hot-toast
+    alert(`❌ ${message}`);
+  }
 };
 
 const AddCustomer = () => {
-  const navigate = { // Mock navigate function
-    push: (path) => console.log(`Navigate to: ${path}`)
+  const navigate = useNavigate();
+
+  // Function to generate automatic customer code
+  const generateCustomerCode = async () => {
+    try {
+      return await getNextCustomerId();
+    } catch (error) {
+      console.error('Error generating customer code:', error);
+      // Fallback to local generation
+      const existingCustomersCount = 8;
+      const nextNumber = existingCustomersCount + 1;
+      return `CUS${nextNumber.toString().padStart(5, '0')}`;
+    }
   };
+
+  // Generate customer code when component mounts
+  useEffect(() => {
+    const loadCustomerCode = async () => {
+      const code = await generateCustomerCode();
+      setGeneratedCode(code);
+    };
+    loadCustomerCode();
+  }, []);
   
   const [formData, setFormData] = useState({
-    user_code: '',
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
     contact2: '',
     address: '',
-    district: '',
-    city: '',
-    state: '',
-    zipCode: '',
     status: 'active',
     notes: ''
   });
   const [previewImage, setPreviewImage] = useState(null);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState('');
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    if (errors[name]) {
-      setErrors(prev => ({
+    const { name, value, type, files } = e.target;
+    
+    if (type === 'file') {
+      const file = files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviewImage(reader.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    } else {
+      setFormData(prev => ({
         ...prev,
-        [name]: ''
+        [name]: value
       }));
+      if (errors[name]) {
+        setErrors(prev => ({
+          ...prev,
+          [name]: ''
+        }));
+      }
     }
   };
 
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.user_code.trim()) newErrors.user_code = 'User code is required';
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
     if (!formData.email.trim()) {
@@ -109,13 +144,25 @@ const AddCustomer = () => {
     }
     if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
     if (!formData.address.trim()) newErrors.address = 'Address is required';
-    if (!formData.district.trim()) newErrors.district = 'District is required';
-    if (!formData.city.trim()) newErrors.city = 'City is required';
-    if (!formData.state.trim()) newErrors.state = 'State is required';
-    if (!formData.zipCode.trim()) newErrors.zipCode = 'ZIP code is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const resetForm = () => {
+    setFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      contact2: '',
+      address: '',
+      status: 'active',
+      notes: ''
+    });
+    setPreviewImage(null);
+    setErrors({});
+    setIsLoading(false);
   };
 
   const handleSubmit = async (e) => {
@@ -124,340 +171,305 @@ const AddCustomer = () => {
       setIsLoading(true);
       if (validateForm()) {
         const payload = {
-          user_code: formData.user_code,
+          customer_id: generatedCode,
           first_name: formData.firstName,
           last_name: formData.lastName,
           email: formData.email,
-          contact1: formData.phone,
-          contact2: formData.contact2,
-          address_line1: formData.address,
-          district: formData.district,
-          city: formData.city,
-          province: formData.state,
-          postal_code: formData.zipCode,
-          status: formData.status,
-          note: formData.notes,
-          photo: previewImage
+          contact_no: formData.phone,
+          contact2: formData.contact2 || null,
+          address: formData.address,
+          profile_pic: previewImage || null,
+          status: formData.status.toUpperCase(), // Convert to uppercase for enum
+          notes: formData.notes || null
         };
 
         console.log("customer payload: ", payload);
 
         const res = await createCustomer(payload);
-        console.log("response text: ", res);
+        console.log("response: ", res);
+        
         if (res.success) {
-          toast.success(res.data.message);
+          toast.success(res.message);
+          // Reset form and navigate back to customer list
+          resetForm();
           setTimeout(() => {
-            setIsLoading(false);
-            navigate.push('/dashboard/customer-list');
-          }, 3000);
+            navigate('/inventorymanager/customer-list');
+          }, 2000);
         } else {
-          toast.error(res.message.response.data.error);
+          toast.error(res.message || 'Failed to create customer');
         }
       }
     } catch (error) {
-      console.error("error: ", error);
+      console.error("Error creating customer: ", error);
+      toast.error(error.message || 'Failed to create customer');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const InputField = ({ label, name, type = "text", icon: Icon, error, ...props }) => (
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
-        {Icon && <Icon className="w-4 h-4 text-gray-500" />}
-        {label}
-        <span className="text-red-500">*</span>
-      </label>
-      <div className="relative">
-        <input
-          type={type}
-          name={name}
-          value={formData[name]}
-          onChange={handleInputChange}
-          className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm hover:border-gray-400 ${
-            error ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'
-          }`}
-          {...props}
-        />
-        {error && (
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-            <AlertCircle className="w-4 h-4 text-red-500" />
-          </div>
-        )}
-      </div>
-      {error && <p className="text-red-500 text-sm flex items-center gap-1 mt-1">
-        <AlertCircle className="w-3 h-3" />
-        {error}
-      </p>}
-    </div>
-  );
+  const handleClear = () => {
+    resetForm();
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800 border-green-200';
-      case 'inactive': return 'bg-red-100 text-red-800 border-red-200';
-      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'active': return 'from-green-500 to-emerald-500';
+      case 'inactive': return 'from-red-500 to-pink-500';
+      case 'pending': return 'from-yellow-500 to-orange-500';
+      default: return 'from-green-500 to-emerald-500';
     }
   };
 
   return (
-    <div className="h-full bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
-      {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white p-6 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute inset-0 bg-white/10"></div>
-        </div>
-        <div className="relative z-10 flex items-center gap-4">
-          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-            <UserRoundCheck className="w-6 h-6" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold mb-1">Add New Customer</h2>
-            <p className="text-white/80">Create a new customer profile</p>
-          </div>
-          <div className="ml-auto">
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-5 h-5 animate-pulse" />
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-blue-50 to-blue-200 py-3">
+      <div className="relative w-full max-w-none px-3">
+        {/* Compact Header Card */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 mb-4 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-400 to-blue-500 p-4 text-white relative">
+            <div className="absolute inset-0 bg-black/5"></div>
+            <div className="relative flex items-center justify-center gap-3">
+              <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                <UserRoundCheck className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-center">
+                <h2 className="text-xl font-bold">Add New Customer</h2>
+                <p className="text-blue-100 text-sm">Create a new customer profile</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="h-[calc(100%-96px)] p-6 overflow-y-auto">
-        <div className="max-w-4xl mx-auto">
-          <div className="space-y-8">
-            {/* Avatar Section */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
-                  <Camera className="w-4 h-4 text-white" />
+        {/* Main Form Card */}
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 overflow-hidden">
+          <div className="p-4">
+            {/* Error Alert */}
+            {Object.keys(errors).length > 0 && (
+              <div className="mb-4 p-3 bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-400 rounded-lg shadow-sm">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-red-100 rounded-lg">
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                  </div>
+                  <p className="text-red-700 font-medium text-sm">
+                    {Object.values(errors)[0]}
+                  </p>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-800">Profile Photo</h3>
               </div>
-              
-              <div className="flex items-center gap-6">
-                <Avatar
-                  firstName={formData.firstName}
-                  lastName={formData.lastName}
-                  imageUrl={previewImage}
-                  editable={true}
-                  size={128}
-                  onImageUpload={(file) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      setPreviewImage(reader.result);
-                    };
-                    reader.readAsDataURL(file);
-                  }}
-                />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-800 mb-2">Upload Customer Photo</h4>
-                  <p className="text-gray-600 text-sm mb-3">Add a profile photo for easy identification</p>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Upload className="w-4 h-4" />
-                    Click on avatar to upload image
+            )}
+
+            <div className="space-y-4">
+              {/* Personal Information Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-3 border-b border-gray-200">
+                  <div className="p-1.5 bg-blue-100 rounded-lg">
+                    <User className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <h3 className="text-base font-semibold text-gray-800">Personal Information</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                      First Name
+                    </label>
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
+                      className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300"
+                      placeholder="Enter first name"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300"
+                      placeholder="Enter last name"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <Camera className="w-4 h-4 text-blue-500" />
+                    Profile Picture <span className="text-gray-400 text-xs">(Optional)</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      name="profilePicture"
+                      onChange={handleInputChange}
+                      accept="image/*"
+                      className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    {previewImage && (
+                      <div className="mt-2 flex items-center gap-2 text-xs text-green-600">
+                        <CheckCircle className="w-3 h-3" />
+                        <span>Profile picture uploaded</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Personal Information */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                  <User className="w-4 h-4 text-white" />
+              {/* Contact Information Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-3 border-b border-gray-200">
+                  <div className="p-1.5 bg-blue-100 rounded-lg">
+                    <Mail className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <h3 className="text-base font-semibold text-gray-800">Contact Information</h3>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-800">Personal Information</h3>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputField
-                  label="User Code"
-                  name="user_code"
-                  icon={Hash}
-                  error={errors.user_code}
-                  placeholder="Enter unique user code"
-                />
-                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <InputField
-                    label="First Name"
-                    name="firstName"
-                    icon={User}
-                    error={errors.firstName}
-                    placeholder="Enter first name"
-                  />
-                  <InputField
-                    label="Last Name"
-                    name="lastName"
-                    icon={User}
-                    error={errors.lastName}
-                    placeholder="Enter last name"
-                  />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <Mail className="w-4 h-4 text-blue-500" />
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300"
+                      placeholder="user@example.com"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <Phone className="w-4 h-4 text-blue-500" />
+                      Phone
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300"
+                      placeholder="+1 (555) 123-4567"
+                    />
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Contact Information */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                  <Mail className="w-4 h-4 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-800">Contact Information</h3>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputField
-                  label="Email Address"
-                  name="email"
-                  type="email"
-                  icon={Mail}
-                  error={errors.email}
-                  placeholder="Enter email address"
-                />
-                <InputField
-                  label="Phone Number"
-                  name="phone"
-                  type="tel"
-                  icon={Phone}
-                  error={errors.phone}
-                  placeholder="Enter phone number"
-                />
-                <div className="md:col-span-2">
-                  <InputField
-                    label="Additional Phone Number"
-                    name="contact2"
+                <div className="space-y-1">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <Phone className="w-4 h-4 text-blue-500" />
+                    Additional Phone <span className="text-gray-400 text-xs">(Optional)</span>
+                  </label>
+                  <input
                     type="tel"
-                    icon={Phone}
-                    error={errors.contact2}
-                    placeholder="Enter additional phone number (optional)"
+                    name="contact2"
+                    value={formData.contact2}
+                    onChange={handleInputChange}
+                    className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300"
+                    placeholder="Enter additional phone number"
                   />
                 </div>
-              </div>
-            </div>
 
-            {/* Address Information */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-                  <MapPin className="w-4 h-4 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-800">Address Information</h3>
-              </div>
-              
-              <div className="space-y-6">
-                <InputField
-                  label="Street Address"
-                  name="address"
-                  icon={MapPin}
-                  error={errors.address}
-                  placeholder="Enter street address"
-                />
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <InputField
-                    label="District"
-                    name="district"
-                    icon={Building}
-                    error={errors.district}
-                    placeholder="Enter district"
-                  />
-                  <InputField
-                    label="City"
-                    name="city"
-                    icon={Building}
-                    error={errors.city}
-                    placeholder="Enter city"
-                  />
-                  <InputField
-                    label="ZIP Code"
-                    name="zipCode"
-                    icon={Hash}
-                    error={errors.zipCode}
-                    placeholder="Enter ZIP code"
+                <div className="space-y-1">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <MapPin className="w-4 h-4 text-blue-500" />
+                    Address
+                  </label>
+                  <textarea
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    rows="2"
+                    className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300 resize-none"
+                    placeholder="Enter full address"
                   />
                 </div>
-                
-                <InputField
-                  label="State/Province"
-                  name="state"
-                  icon={MapPin}
-                  error={errors.state}
-                  placeholder="Enter state or province"
-                />
               </div>
-            </div>
 
-            {/* Additional Information */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
-                  <FileText className="w-4 h-4 text-white" />
+
+
+              {/* Additional Information Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-3 border-b border-gray-200">
+                  <div className="p-1.5 bg-blue-100 rounded-lg">
+                    <FileText className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <h3 className="text-base font-semibold text-gray-800">Additional Information</h3>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-800">Additional Information</h3>
-              </div>
-              
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                    <Users className="w-4 h-4 text-gray-500" />
-                    Customer Status
+
+                <div className="space-y-1">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <Users className="w-4 h-4 text-blue-500" />
+                    Status
                   </label>
                   <div className="relative">
                     <select
                       name="status"
                       value={formData.status}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm bg-white appearance-none"
+                      className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300 appearance-none bg-white"
                     >
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                      <option value="pending">Pending</option>
+                      <option value="active">✅ Active</option>
+                      <option value="inactive">❌ Inactive</option>
+                      <option value="pending">⏳ Pending</option>
                     </select>
-                    <div className={`absolute top-1/2 right-12 transform -translate-y-1/2 px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(formData.status)}`}>
-                      {formData.status.charAt(0).toUpperCase() + formData.status.slice(1)}
-                    </div>
+                    <div className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-2 h-2 bg-gradient-to-r ${getStatusColor(formData.status)} rounded-full`}></div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-gray-500" />
-                    Notes
+                <div className="space-y-1">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <FileText className="w-4 h-4 text-blue-500" />
+                    Notes <span className="text-gray-400 text-xs">(Optional)</span>
                   </label>
                   <textarea
                     name="notes"
                     value={formData.notes}
                     onChange={handleInputChange}
-                    rows="4"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none"
+                    rows="3"
+                    className="w-full rounded-lg border-2 border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 hover:border-gray-300 resize-none"
                     placeholder="Add any additional notes about this customer..."
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Submit Button */}
-            <div className="flex justify-end">
-              <button
-                onClick={handleSubmit}
-                className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <FaSpinner className="w-5 h-5 animate-spin" />
-                    Adding Customer...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-5 h-5" />
-                    Add Customer
-                  </>
-                )}
-              </button>
+              {/* Compact Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  className="group px-4 py-2 text-sm font-medium border-2 border-gray-300 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 flex items-center gap-2"
+                  onClick={handleClear}
+                >
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full group-hover:bg-gray-500 transition-colors"></span>
+                  Clear Form
+                </button>
+                <button 
+                  type="submit"
+                  disabled={isLoading}
+                  onClick={handleSubmit}
+                  className="group px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <FaSpinner className="w-4 h-4 animate-spin" />
+                      <span>Adding Customer...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <UserRoundCheck className="w-4 h-4 group-hover:animate-pulse" />
+                      <span>Add Customer</span>
+                    </div>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

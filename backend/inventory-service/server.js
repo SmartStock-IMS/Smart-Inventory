@@ -14,11 +14,11 @@ const PORT = process.env.PORT || 3002;
 // Security middleware
 app.use(helmet());
 
-// CORS
-app.use(cors({
-  origin: process.env.GATEWAY_URL || 'http://localhost:3000',
-  credentials: true
-}));
+// CORS is handled by API Gateway - no need for microservice CORS
+// app.use(cors({
+//   origin: process.env.GATEWAY_URL || 'http://localhost:3000',
+//   credentials: true
+// }));
 
 // Logging
 app.use(morgan('combined'));
