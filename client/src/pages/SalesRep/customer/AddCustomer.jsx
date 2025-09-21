@@ -2,17 +2,36 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { User, Mail, Phone, MessageCircle, MapPin, FileText, UserPlus, Loader2 } from "lucide-react";
 
-// Mock functions for the demo
+// Utility function for classnames
 const cn = (...classes) => classes.filter(Boolean).join(' ');
-const generateId = (prefix) => `${prefix}${Date.now()}`;
+
+// API call function
 const createCustomer = async (data) => {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  return { success: true, data: { message: "Customer created successfully" } };
+  const token = localStorage.getItem('token');
+  
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  const response = await fetch('http://localhost:3000/api/customers', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
 };
 
 const AddCustomerForm = () => {
-  const { register, handleSubmit, reset } = useForm({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -33,45 +52,64 @@ const AddCustomerForm = () => {
 
   const showToast = (message, type) => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 4000);
   };
 
   const onSubmit = async (data) => {
     setIsLoading(true);
 
     try {
-      const customerCode = generateId("C");
-      const formData = {
-        user_code: customerCode,
-        first_name: data.firstName,
-        last_name: data.lastName,
-        email: data.email,
-        contact1: data.contactNumber,
-        contact2: data.whatsappNumber,
-        address_line1: data.addressLine1,
-        address_line2: data.addressLine2,
-        city: data.city,
-        district: data.district,
-        province: data.province,
-        postal_code: data.postalCode,
-        note: data.additionalNote,
-      };
-      const response = await createCustomer(formData);
+      // Combine address fields into a single address string
+      const addressParts = [
+        data.addressLine1,
+        data.addressLine2,
+        data.city,
+      ].filter(Boolean);
 
-      if (!response.success) {
-        console.error("Error creating customer: ", response.message);
-        showToast("Failed to create customer", "error");
+      // Prepare data according to API requirements
+      const apiData = {
+        name: `${data.firstName} ${data.lastName}`.trim(),
+        phone: data.contactNumber || data.whatsappNumber,
+        email: data.email,
+        address: addressParts.join(', '),
+      };
+
+      // Validate required fields
+      if (!apiData.name) {
+        showToast("Please enter at least first name or last name", "error");
         return;
       }
-      console.log("success message: ", response.data.message);
+      if (!apiData.phone) {
+        showToast("Please enter a contact number", "error");
+        return;
+      }
+      if (!apiData.email) {
+        showToast("Please enter an email address", "error");
+        return;
+      }
+      if (!apiData.address) {
+        showToast("Please enter at least one address field", "error");
+        return;
+      }
+
+      const response = await createCustomer(apiData);
+      console.log("Customer created successfully: ", response);
       showToast("Customer added successfully!", "success");
 
+      // Reset form after successful submission
       setTimeout(() => {
         reset();
-      }, 3000);
+      }, 2000);
+      
     } catch (error) {
-      console.error("Error in customer submit: ", error);
-      showToast("Failed to create customer. Try again.", "error");
+      console.error("Error creating customer: ", error);
+      if (error.message.includes('Authentication token not found')) {
+        showToast("Please login to continue", "error");
+      } else if (error.message.includes('401')) {
+        showToast("Session expired. Please login again", "error");
+      } else {
+        showToast(error.message || "Failed to create customer. Please try again.", "error");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -81,29 +119,12 @@ const AddCustomerForm = () => {
     <div className="min-h-screen bg-white pt-20">
       {/* Toast Notification */}
       {toast && (
-        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-md ${
+        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
           toast.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-        }`}>
+        } transition-all duration-300 ease-in-out`}>
           {toast.message}
         </div>
       )}
-
-      {/* Header Section - Hidden */}
-      <div className="bg-slate-50 border-b border-gray-200" style={{display: 'none'}}>
-        <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-slate-800 rounded-lg mb-6">
-              <UserPlus className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-slate-800 mb-4">
-              Add New Customer
-            </h1>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Enter customer details to create a new account in the system
-            </p>
-          </div>
-        </div>
-      </div>
 
       {/* Form Section */}
       <div className="px-4 py-8">
@@ -127,16 +148,24 @@ const AddCustomerForm = () => {
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">First Name</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      First Name <span className="text-red-500">*</span>
+                    </label>
                     <div className="relative">
                       <input
                         type="text"
-                        {...register("firstName")}
+                        {...register("firstName", { required: "First name is required" })}
                         placeholder="Enter first name"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
+                        className={cn(
+                          "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-700",
+                          errors.firstName ? "border-red-300" : "border-gray-300"
+                        )}
                       />
                       <User className="absolute right-3 top-3.5 w-4 h-4 text-gray-400" />
                     </div>
+                    {errors.firstName && (
+                      <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
+                    )}
                   </div>
                   
                   <div>
@@ -153,38 +182,60 @@ const AddCustomerForm = () => {
                   </div>
                   
                   <div className="lg:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Email Address</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Email Address <span className="text-red-500">*</span>
+                    </label>
                     <div className="relative">
                       <input
                         type="email"
-                        {...register("email")}
+                        {...register("email", { 
+                          required: "Email is required",
+                          pattern: {
+                            value: /^\S+@\S+$/i,
+                            message: "Please enter a valid email address"
+                          }
+                        })}
                         placeholder="Enter email address"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
+                        className={cn(
+                          "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-700",
+                          errors.email ? "border-red-300" : "border-gray-300"
+                        )}
                       />
                       <Mail className="absolute right-3 top-3.5 w-4 h-4 text-gray-400" />
                     </div>
+                    {errors.email && (
+                      <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                    )}
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Contact Number</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Contact Number <span className="text-red-500">*</span>
+                    </label>
                     <div className="relative">
                       <input
-                        type="text"
-                        {...register("contactNumber")}
+                        type="tel"
+                        {...register("contactNumber", { required: "Contact number is required" })}
                         placeholder="Enter contact number"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
+                        className={cn(
+                          "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-700",
+                          errors.contactNumber ? "border-red-300" : "border-gray-300"
+                        )}
                       />
                       <Phone className="absolute right-3 top-3.5 w-4 h-4 text-gray-400" />
                     </div>
+                    {errors.contactNumber && (
+                      <p className="mt-1 text-sm text-red-600">{errors.contactNumber.message}</p>
+                    )}
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">WhatsApp Number</label>
                     <div className="relative">
                       <input
-                        type="text"
+                        type="tel"
                         {...register("whatsappNumber")}
-                        placeholder="Enter WhatsApp number"
+                        placeholder="Enter WhatsApp number (optional)"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
                       />
                       <MessageCircle className="absolute right-3 top-3.5 w-4 h-4 text-green-500" />
@@ -207,13 +258,21 @@ const AddCustomerForm = () => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Address Line 1</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Address Line 1 <span className="text-red-500">*</span>
+                    </label>
                     <input
                       type="text"
-                      {...register("addressLine1")}
+                      {...register("addressLine1", { required: "Address line 1 is required" })}
                       placeholder="Enter address line 1"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-slate-700"
+                      className={cn(
+                        "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-slate-700",
+                        errors.addressLine1 ? "border-red-300" : "border-gray-300"
+                      )}
                     />
+                    {errors.addressLine1 && (
+                      <p className="mt-1 text-sm text-red-600">{errors.addressLine1.message}</p>
+                    )}
                   </div>
                   
                   <div>
@@ -239,15 +298,10 @@ const AddCustomerForm = () => {
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">District</label>
                     <select
-                      required={true}
-                      defaultValue=""
                       {...register("district")}
-                      className={cn(
-                        "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-slate-700",
-                        "invalid:text-gray-400",
-                      )}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-slate-700"
                     >
-                      <option value="" disabled>Select District</option>
+                      <option value="">Select District (optional)</option>
                       <option value="Colombo">Colombo</option>
                       <option value="Gampaha">Gampaha</option>
                       <option value="Kalutara">Kalutara</option>
@@ -326,7 +380,7 @@ const AddCustomerForm = () => {
                   className={cn(
                     "inline-flex items-center justify-center px-8 py-3 font-semibold text-white bg-slate-800 rounded-lg shadow-sm",
                     "hover:bg-slate-700 focus:ring-2 focus:ring-slate-500 focus:ring-offset-2",
-                    "disabled:opacity-50 disabled:cursor-not-allowed min-w-[200px]"
+                    "disabled:opacity-50 disabled:cursor-not-allowed min-w-[200px] transition-colors"
                   )}
                   disabled={isLoading}
                 >

@@ -75,7 +75,7 @@ const History = () => {
             </svg>
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">No Orders Found</h3>
-          <p className="text-gray-500">You haven't placed any orders yet.</p>
+          <p className="text-gray-500">No completed orders found.</p>
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">

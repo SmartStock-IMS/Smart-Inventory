@@ -92,7 +92,7 @@ const OrderConfirmationTopBar = () => {
               <div 
                 className="absolute top-6 left-12 h-0.5 bg-blue-600"
                 style={{ 
-                  width: `${Math.max(0, (topbarLinks.findIndex(l => l.route === pathname) / (topbarLinks.length - 1)) * 100 - 24)}%` 
+                  width: `${Math.max(0, (topbarLinks.findIndex(l => l.route === pathname) / (topbarLinks.length - 1)) * 100)}%` 
                 }}
               />
 

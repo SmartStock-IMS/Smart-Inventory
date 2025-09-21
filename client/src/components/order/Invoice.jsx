@@ -288,8 +288,7 @@ const Invoice = ({ cartState = mockCartState, billingDetails = mockBillingDetail
                     <p className="font-semibold text-black">{billingDetails.firstName} {billingDetails.lastName}</p>
                     <p className="text-gray-700">{billingDetails.addressLine1}</p>
                     {billingDetails.addressLine2 && <p className="text-gray-700">{billingDetails.addressLine2}</p>}
-                    <p className="text-gray-700">{billingDetails.city}, {billingDetails.district}</p>
-                    <p className="text-gray-700">{billingDetails.province}, {billingDetails.postalCode}</p>
+                    
                   </div>
                   <div className="space-y-1">
                     <p className="text-gray-700"><span className="font-medium">Tel:</span> {billingDetails.contactNumber}</p>
@@ -360,7 +359,7 @@ const Invoice = ({ cartState = mockCartState, billingDetails = mockBillingDetail
               <div className="bg-gray-50 rounded-lg p-6 border-2 border-gray-300">
                 <p className="font-bold text-black mb-3">Account Details:</p>
                 <div className="space-y-1 text-sm text-gray-700">
-                  <p><span className="font-medium">Account Name:</span> ABC (PVT) LTD.</p>
+                  <p><span className="font-medium">Account Name:</span> SmartStock (PVT) LTD.</p>
                   <p><span className="font-medium">Account Number:</span> 9516</p>
                   <p><span className="font-medium">Bank:</span> Commercial Bank</p>
                   <p><span className="font-medium">Branch:</span> Panadura City Office</p>
@@ -373,7 +372,7 @@ const Invoice = ({ cartState = mockCartState, billingDetails = mockBillingDetail
               <div className="text-center">
                 <div className="border-t-2 border-black pt-4">
                   <p className="font-medium text-black">Approved Signature</p>
-                  <p className="text-gray-700 text-sm mt-1">ABC (PVT) LTD.</p>
+                  <p className="text-gray-700 text-sm mt-1">SmartStock (PVT) LTD.</p>
                 </div>
               </div>
               <div className="text-center">
@@ -391,7 +390,7 @@ const Invoice = ({ cartState = mockCartState, billingDetails = mockBillingDetail
             {/* Footer */}
             <div className="text-center bg-black text-white rounded-lg p-6 border-2 border-black" data-keep-together="true">
               <div className="space-y-1">
-                <p className="font-medium">ABC (PVT) LTD.</p>
+                <p className="font-medium">SmartStock (PVT) LTD.</p>
                 <p>No 123, Katubedda Road,</p>
                 <p>Moratuwa, 12500</p>
                 <p className="font-medium">070 517 1707</p>
