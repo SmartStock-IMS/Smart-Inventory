@@ -12,10 +12,11 @@ import { useForm } from "react-hook-form";
 import { cn } from "@lib/utils.js";
 import generateId from "@lib/generate-id.js";
 import { FaSpinner, FaSearch, FaUser, FaPlus, FaMapMarkerAlt, FaStickyNote, FaArrowRight } from "react-icons/fa";
+import { jwtDecode } from "jwt-decode";
 
 const BillingDetails = () => {
   const navigate = useNavigate();
-  const { setCustomer } = useCart();
+  const { setCustomer, cartState } = useCart();
   
   // Form handling
   const {
@@ -48,64 +49,52 @@ const BillingDetails = () => {
   const [isCustomer, setIsCustomer] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Mock customer data for development
-  const mockCustomers = [
-    {
-      id: 1,
-      user_code: "C001",
-      first_name: "John",
-      last_name: "Doe",
-      email: "john.doe@email.com",
-      contact1: "0771234567",
-      contact2: "0771234567",
-      address_line1: "123 Main Street",
-      address_line2: "Apt 4B",
-      city: "Colombo",
-      district: "Colombo",
-      province: "Western",
-      postal_code: "00100",
-      note: "Regular customer"
-    },
-    {
-      id: 2,
-      user_code: "C002", 
-      first_name: "Jane",
-      last_name: "Smith",
-      email: "jane.smith@email.com",
-      contact1: "0777654321",
-      contact2: "0777654321",
-      address_line1: "456 Oak Avenue",
-      address_line2: "",
-      city: "Kandy",
-      district: "Kandy",
-      province: "Central",
-      postal_code: "20000",
-      note: "Wholesale customer"
-    },
-    {
-      id: 3,
-      user_code: "C003",
-      first_name: "Michael",
-      last_name: "Johnson",
-      email: "michael.j@email.com", 
-      contact1: "0712345678",
-      contact2: "0712345678",
-      address_line1: "789 Pine Road",
-      address_line2: "Unit 12",
-      city: "Galle",
-      district: "Galle", 
-      province: "Southern",
-      postal_code: "80000",
-      note: "VIP customer"
-    }
-  ];
+  // Remove mock customer data and use API
+  // const mockCustomers = [ ... ];
 
-  // Use mock data instead of API call
+  // Fetch customers from API
   useEffect(() => {
-    // Simulate API delay
-    setTimeout(() => {
-      setCustomers(mockCustomers);
-    }, 500);
+    const fetchCustomers = async () => {
+      setIsLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch("http://localhost:3000/api/customers", {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        const result = await response.json();
+        if (result && result.data && Array.isArray(result.data.customers)) {
+          // Map API data to expected structure
+          const mappedCustomers = result.data.customers.map((c, idx) => ({
+            id: c.customer_id,
+            user_code: c.customer_id, 
+            first_name: c.name?.split(" ")[0] || "",
+            last_name: c.name?.split(" ").slice(1).join(" ") || "",
+            email: c.email || "",
+            contact1: c.contact_no || "",
+            contact2: c.contact_no || "",
+            address_line1: c.address || "",
+            address_line2: "",
+            city: "", // Not provided in API
+            district: "",
+            province: "",
+            postal_code: "",
+            note: "",
+          }));
+          setCustomers(mappedCustomers);
+        } else {
+          setCustomers([]);
+        }
+      } catch (error) {
+        console.error("Error fetching customers: ", error);
+        setCustomers([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCustomers();
   }, []);
 
   // Filter customers by search
@@ -155,66 +144,117 @@ const BillingDetails = () => {
       province: customer.province,
       postalCode: customer.postal_code,
       additionalNote: customer.note,
+      user_code: customer.user_code,
+      id: customer.id,
     };
     reset(selectedCustomer);
-    setCustomer({
-      ...selectedCustomer,
-      user_code: customer.user_code,
-    });
+    setCustomer(selectedCustomer);
     setIsCustomer(true);
     setSearchQuery("");
     setFilteredCustomers([]);
     setShowCustomerSearch(false);
   };
 
+  // Helper to decode JWT and extract role_id (sales_staff_id)
+  function getSalesStaffIdFromToken() {
+    const token = localStorage.getItem("token");
+    if (!token) return "SR001";
+    try {
+      const payload = jwtDecode(token);
+      return payload.role_id || "SR001";
+    } catch {
+      return "SR001";
+    }
+  }
+
   // Mock customer creation for development
   const customerSubmit = async (data) => {
     setIsLoading(true);
 
     try {
+      let customerId = "";
+      let salesStaffId = getSalesStaffIdFromToken();
+      let selectedCustomer = null;
+
       if (!isCustomer) {
         // Simulate customer creation without API call
         const newCustomerCode = generateId("C");
-        const newCustomer = {
-          user_code: newCustomerCode,
-          first_name: data.firstName,
-          last_name: data.lastName,
-          email: data.email,
-          contact1: data.contactNumber,
-          contact2: data.whatsappNumber,
-          address_line1: data.addressLine1,
-          address_line2: data.addressLine2,
-          city: data.city,
-          district: data.district,
-          province: data.province,
-          postal_code: data.postalCode,
-          note: data.additionalNote,
-        };
-
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        console.log("Mock customer created: ", newCustomer);
-        toast.success("Customer added successfully!");
-        setIsCustomer(true);
-        setCustomer({
+        customerId = newCustomerCode;
+        selectedCustomer = {
           ...data,
           user_code: newCustomerCode
-        });
+        };
+        toast.success("Customer added successfully!");
+        setIsCustomer(true);
+        setCustomer(selectedCustomer);
+      } else {
+        // If customer was selected from search
+        selectedCustomer = {
+          ...data,
+          user_code: data.user_code
+        };
+        // Prefer user_code, fallback to id
+        customerId = data.user_code || data.id;
+        setCustomer(selectedCustomer);
       }
-      
-      // Navigate to confirmation after short delay
-      setTimeout(() => {
-        reset();
-        navigate("/order/confirmation");
-      }, 2000);
+
+      // Use selected items from cartState
+      const items = (cartState?.selectedItems || []).map(item => ({
+        product_id: item.code,
+        quantity: item.quantity
+      }));
+
+      if (!customerId || !salesStaffId || !items.length) {
+        toast.error("Customer, sales staff, and items are required.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Use today's date + 7 days as delivery_date for demo
+      const deliveryDate = new Date();
+      deliveryDate.setDate(deliveryDate.getDate() + 7);
+      const deliveryDateStr = deliveryDate.toISOString().split("T")[0];
+
+      const orderPayload = {
+        customer_id: customerId,
+        sales_staff_id: salesStaffId,
+        items,
+        order_type: "quotation",
+        delivery_date: deliveryDateStr
+      };
+
+      // Call API endpoint
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:3000/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(orderPayload)
+      });
+
+      const result = await response.json();
+      if (response.ok && result && result.success !== false) {
+        toast.success("Quotation created successfully!");
+        // Proceed to confirmation after short delay
+        setTimeout(() => {
+          reset();
+          navigate("/order/confirmation");
+        }, 1500);
+      } else {
+        throw new Error(result?.message || "Failed to create quotation");
+      }
     } catch (error) {
       console.error("Error in customer submit: ", error);
-      toast.error("Failed to create customer. Try again.");
+      toast.error("Failed to create quotation. Try again.");
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Always show step 2 of 3 for BillingDetails
+  let progress = 2 / 3;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-6 sm:py-8">
@@ -249,33 +289,49 @@ const BillingDetails = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-12 pr-4 py-4 text-base border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                 />
-                
-                {/* Search Results Dropdown */}
-                {filteredCustomers.length > 0 && (
-                  <div className="absolute z-20 w-full mt-2 bg-white border-2 border-slate-200 rounded-xl shadow-xl max-h-64 overflow-y-auto">
-                    {filteredCustomers.map((customer) => (
-                      <button
-                        key={customer.id}
-                        onClick={() => handleCustomerSelect(customer)}
-                        className="w-full px-4 py-4 text-left hover:bg-slate-50 focus:bg-slate-50 focus:outline-none transition-colors border-b border-slate-100 last:border-b-0"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <FaUser className="w-4 h-4 text-blue-600" />
-                          </div>
-                          <div>
-                            <div className="font-semibold text-slate-800">
-                              {customer.first_name} {customer.last_name}
+
+                {/* Customer List */}
+                <div className="relative">
+                  {isLoading ? (
+                    <div className="flex justify-center items-center py-8">
+                      <FaSpinner className="w-6 h-6 animate-spin text-blue-500" />
+                      <span className="ml-2 text-blue-500">Loading customers...</span>
+                    </div>
+                  ) : (
+                    <div className="absolute z-20 w-full mt-2 bg-white border-2 border-slate-200 rounded-xl shadow-xl max-h-64 overflow-y-auto">
+                      {((searchQuery.trim() ? filteredCustomers : customers).length > 0) ? (
+                        (searchQuery.trim() ? filteredCustomers : customers).map((customer) => (
+                          <button
+                            key={customer.id}
+                            onClick={() => handleCustomerSelect(customer)}
+                            className="w-full px-4 py-4 text-left hover:bg-slate-50 focus:bg-slate-50 focus:outline-none transition-colors border-b border-slate-100 last:border-b-0"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <FaUser className="w-4 h-4 text-blue-600" />
+                              </div>
+                              <div>
+                                <div className="font-semibold text-slate-800">
+                                  {customer.first_name} {customer.last_name}
+                                </div>
+                                <div className="text-sm text-slate-600">
+                                  {customer.email}
+                                </div>
+                                <div className="text-xs text-slate-400">
+                                  {customer.contact1}
+                                </div>
+                              </div>
                             </div>
-                            <div className="text-sm text-slate-600">
-                              {customer.email}
-                            </div>
-                          </div>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-6 text-center text-slate-400">
+                          No customers found.
                         </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Add New Customer Button */}
@@ -605,13 +661,11 @@ const BillingDetails = () => {
                   )}
                 </button>
               </div>
-              
               </div>
             </form>
           </div>
         )}
       </div>
-
       <ToastContainer 
         position="top-right"
         autoClose={3000}
@@ -623,6 +677,7 @@ const BillingDetails = () => {
         draggable
         pauseOnHover
         theme="light"
+        progress={progress}
       />
     </div>
   );
