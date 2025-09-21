@@ -2,324 +2,6 @@ import { useEffect, useState } from "react";
 import { BookOpenCheck, Search, Filter, Eye, Calendar, Hash, User, Users, DollarSign, Package, Activity, Sparkles, ChevronDown, RefreshCw, TrendingUp, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import OrderDetails from "@components/InventoryManager/orders/OrderDetails";
 
-// Mock service function for demo
-const getQuotations = async () => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Generate mock data with realistic quotation items and variant details
-  const mockQuotations = [
-    {
-      id: 1,
-      quotation_id: "QT-2024-001",
-      customer_id: "CUST-001",
-      sales_rep_id: "REP-001",
-      quotation_date: "2024-08-10",
-      quotation_due_date: "2024-08-20",
-      net_total: 125000,
-      sub_total: 135000,
-      discount: 7.4,
-      no_items: 5,
-      status: "Pending",
-      payment_term: "Cash",
-      company: "Trollius",
-      quotationItems: [
-        {
-          id: 1,
-          quotation_id: "QT-2024-001",
-          item_code: "TR-LIP-001-RED",
-          description: "Trollius Matte Lipstick - Ruby Red",
-          item_qty: 2,
-          unit_price: 1500,
-          total_amount: 3000,
-          variant_details: {
-            color: "Ruby Red",
-            weight: "3.5g",
-            category: "Lipstick",
-            batch_no: "B2024-001",
-            exp_date: "2025-12-31",
-            image_url: "/products/lipstick-red.jpg"
-          }
-        },
-        {
-          id: 2,
-          quotation_id: "QT-2024-001",
-          item_code: "TR-FOUND-002-FAIR",
-          description: "Trollius Liquid Foundation - Fair Tone",
-          item_qty: 1,
-          unit_price: 2800,
-          total_amount: 2800,
-          variant_details: {
-            color: "Fair Tone",
-            weight: "30ml",
-            category: "Foundation",
-            batch_no: "B2024-002",
-            exp_date: "2025-11-30",
-            image_url: "/products/foundation-fair.jpg"
-          }
-        },
-        {
-          id: 3,
-          quotation_id: "QT-2024-001",
-          item_code: "TR-MASCARA-001-BLK",
-          description: "Trollius Waterproof Mascara - Jet Black",
-          item_qty: 2,
-          unit_price: 1200,
-          total_amount: 2400,
-          variant_details: {
-            color: "Jet Black",
-            weight: "8ml",
-            category: "Mascara",
-            batch_no: "B2024-003",
-            exp_date: "2026-01-15",
-            image_url: "/products/mascara-black.jpg"
-          }
-        }
-      ]
-    },
-    {
-      id: 2,
-      quotation_id: "QT-2024-002",
-      customer_id: "CUST-002",
-      sales_rep_id: "REP-002",
-      quotation_date: "2024-08-09",
-      quotation_due_date: "2024-08-19",
-      net_total: 89750,
-      sub_total: 95000,
-      discount: 5.5,
-      no_items: 3,
-      status: "Approved",
-      payment_term: "Credit",
-      company: "Mehera",
-      quotationItems: [
-        {
-          id: 4,
-          quotation_id: "QT-2024-002",
-          item_code: "MH-CREAM-001-GLOW",
-          description: "Mehera Glow Face Cream - Anti-Aging",
-          item_qty: 1,
-          unit_price: 3500,
-          total_amount: 3500,
-          variant_details: {
-            color: "Natural",
-            weight: "50g",
-            category: "Face Cream",
-            batch_no: "B2024-004",
-            exp_date: "2025-10-30",
-            image_url: "/products/face-cream.jpg"
-          }
-        },
-        {
-          id: 5,
-          quotation_id: "QT-2024-002",
-          item_code: "MH-SERUM-002-VIT",
-          description: "Mehera Vitamin C Serum - Brightening",
-          item_qty: 2,
-          unit_price: 2750,
-          total_amount: 5500,
-          variant_details: {
-            color: "Clear",
-            weight: "20ml",
-            category: "Serum",
-            batch_no: "B2024-005",
-            exp_date: "2025-09-15",
-            image_url: "/products/vitamin-c-serum.jpg"
-          }
-        }
-      ]
-    },
-    {
-      id: 3,
-      quotation_id: "QT-2024-003",
-      customer_id: "CUST-003",
-      sales_rep_id: "REP-001",
-      quotation_date: "2024-08-08",
-      quotation_due_date: "2024-08-18",
-      net_total: 247500,
-      sub_total: 275000,
-      discount: 10,
-      no_items: 8,
-      status: "Rejected",
-      payment_term: "30 Days",
-      company: "Trollius",
-      quotationItems: [
-        {
-          id: 6,
-          quotation_id: "QT-2024-003",
-          item_code: "TR-PALETTE-001-WARM",
-          description: "Trollius Eyeshadow Palette - Warm Tones",
-          item_qty: 1,
-          unit_price: 4500,
-          total_amount: 4500,
-          variant_details: {
-            color: "Warm Tones",
-            weight: "15g",
-            category: "Eyeshadow",
-            batch_no: "B2024-006",
-            exp_date: "2026-02-28",
-            image_url: "/products/eyeshadow-warm.jpg"
-          }
-        },
-        {
-          id: 7,
-          quotation_id: "QT-2024-003",
-          item_code: "TR-BLUSH-001-PINK",
-          description: "Trollius Powder Blush - Rose Pink",
-          item_qty: 3,
-          unit_price: 1800,
-          total_amount: 5400,
-          variant_details: {
-            color: "Rose Pink",
-            weight: "6g",
-            category: "Blush",
-            batch_no: "B2024-007",
-            exp_date: "2025-12-15",
-            image_url: "/products/blush-pink.jpg"
-          }
-        },
-        {
-          id: 8,
-          quotation_id: "QT-2024-003",
-          item_code: "TR-LINER-001-BRN",
-          description: "Trollius Eye Liner - Coffee Brown",
-          item_qty: 4,
-          unit_price: 980,
-          total_amount: 3920,
-          variant_details: {
-            color: "Coffee Brown",
-            weight: "1.2g",
-            category: "Eye Liner",
-            batch_no: "B2024-008",
-            exp_date: "2025-08-30",
-            image_url: "/products/eyeliner-brown.jpg"
-          }
-        }
-      ]
-    },
-    {
-      id: 4,
-      quotation_id: "QT-2024-004",
-      customer_id: "CUST-004",
-      sales_rep_id: "REP-003",
-      quotation_date: "2024-08-07",
-      quotation_due_date: "2024-08-17",
-      net_total: 156890,
-      sub_total: 168000,
-      discount: 6.6,
-      no_items: 6,
-      status: "In Progress",
-      payment_term: "45 Days",
-      company: "Trollius",
-      quotationItems: [
-        {
-          id: 9,
-          quotation_id: "QT-2024-004",
-          item_code: "TR-PRIMER-001-MATTE",
-          description: "Trollius Face Primer - Matte Finish",
-          item_qty: 2,
-          unit_price: 2200,
-          total_amount: 4400,
-          variant_details: {
-            color: "Clear",
-            weight: "25ml",
-            category: "Primer",
-            batch_no: "B2024-009",
-            exp_date: "2025-11-20",
-            image_url: "/products/primer-matte.jpg"
-          }
-        },
-        {
-          id: 10,
-          quotation_id: "QT-2024-004",
-          item_code: "TR-CONCEALER-002-MED",
-          description: "Trollius Liquid Concealer - Medium Shade",
-          item_qty: 2,
-          unit_price: 1650,
-          total_amount: 3300,
-          variant_details: {
-            color: "Medium",
-            weight: "12ml",
-            category: "Concealer",
-            batch_no: "B2024-010",
-            exp_date: "2025-10-10",
-            image_url: "/products/concealer-medium.jpg"
-          }
-        },
-        {
-          id: 11,
-          quotation_id: "QT-2024-004",
-          item_code: "TR-POWDER-001-TRANS",
-          description: "Trollius Setting Powder - Translucent",
-          item_qty: 2,
-          unit_price: 1900,
-          total_amount: 3800,
-          variant_details: {
-            color: "Translucent",
-            weight: "20g",
-            category: "Setting Powder",
-            batch_no: "B2024-011",
-            exp_date: "2026-01-05",
-            image_url: "/products/setting-powder.jpg"
-          }
-        }
-      ]
-    },
-    {
-      id: 5,
-      quotation_id: "QT-2024-005",
-      customer_id: "CUST-005",
-      sales_rep_id: "REP-002",
-      quotation_date: "2024-08-06",
-      quotation_due_date: "2024-08-16",
-      net_total: 98450,
-      sub_total: 105000,
-      discount: 6.2,
-      no_items: 4,
-      status: "Completed",
-      payment_term: "Cash",
-      company: "Mehera",
-      quotationItems: [
-        {
-          id: 12,
-          quotation_id: "QT-2024-005",
-          item_code: "MH-CLEANSER-001-FOAM",
-          description: "Mehera Foaming Face Cleanser - Gentle Formula",
-          item_qty: 2,
-          unit_price: 1850,
-          total_amount: 3700,
-          variant_details: {
-            color: "White",
-            weight: "150ml",
-            category: "Cleanser",
-            batch_no: "B2024-012",
-            exp_date: "2025-12-25",
-            image_url: "/products/cleanser-foam.jpg"
-          }
-        },
-        {
-          id: 13,
-          quotation_id: "QT-2024-005",
-          item_code: "MH-TONER-002-ROSE",
-          description: "Mehera Rose Water Toner - Hydrating",
-          item_qty: 2,
-          unit_price: 1675,
-          total_amount: 3350,
-          variant_details: {
-            color: "Pink",
-            weight: "200ml",
-            category: "Toner",
-            batch_no: "B2024-013",
-            exp_date: "2025-11-11",
-            image_url: "/products/rose-toner.jpg"
-          }
-        }
-      ]
-    }
-  ];
-  
-  return { success: true, data: { data: mockQuotations } };
-};
-
 const OrderSummary = () => {
   const [quotations, setQuotations] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -329,68 +11,111 @@ const OrderSummary = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchQuotations().then((data) => {
-      if (data && Array.isArray(data)) {
-        setQuotations(data);
-      }
-    });
+    fetchQuotations();
   }, []);
 
   const fetchQuotations = async () => {
     try {
       setLoading(true);
-      const response = await getQuotations();
-      if (response.success) {
-        console.log("qt: ", response.data.data);
-        return response.data.data || [];
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found in localStorage');
+        setQuotations([]);
+        return;
+      }
+      const response = await fetch('http://localhost:3000/api/orders/all-data', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const result = await response.json();
+      if (result.success && result.data) {
+        setQuotations(result.data);
       } else {
-        console.error("Error fetching quotations");
-        return [];
+        setQuotations([]);
       }
     } catch (error) {
-      console.error(error);
-      return [];
+      setQuotations([]);
     } finally {
       setLoading(false);
     }
-  }
-
-  const handleOrderView = (orderItem) => {
-    console.log("Order view: ", orderItem);
-    setIsOpen(true);
-    setSelectedItem(orderItem);
   };
 
-  const statusOptions = ["All", ...new Set((quotations || []).map((item) => item.status))];
+  const handleOrderView = (orderItem) => {
+    // Map API data to expected structure for OrderDetails
+    let sub_total = 0;
+    let discount = 0;
+    if (Array.isArray(orderItem.products_json)) {
+      sub_total = orderItem.products_json.reduce((sum, p) => sum + (typeof p.total_amount === 'number' ? p.total_amount : parseFloat(p.total_amount) || 0), 0);
+    }
+    if (typeof orderItem.discount === 'number') {
+      discount = orderItem.discount;
+    } else if (orderItem.discount) {
+      discount = parseFloat(orderItem.discount) || 0;
+    }
+    const mappedOrder = {
+      ...orderItem,
+      quotation_id: orderItem.order_id,
+      customer_id: orderItem.customer_id || orderItem.customer_name,
+      sales_rep_id: orderItem.sales_rep_id || orderItem.sales_rep_name,
+      quotation_date: orderItem.order_date,
+      net_total: parseFloat(orderItem.total_amount),
+      no_items: parseInt(orderItem.no_of_products),
+      status: orderItem.order_status,
+      sub_total,
+      discount,
+      quotationItems: orderItem.products_json?.map(product => ({
+        id: typeof product.product_id === 'number' ? product.product_id : parseInt(product.product_id) || product.product_id,
+        quotation_id: orderItem.order_id,
+        item_code: product.product_id,
+        description: product.product_name,
+        item_qty: product.quantity,
+        unit_price: product.unit_price,
+        total_amount: product.total_amount,
+        variant_details: {
+          color: "N/A",
+          weight: "N/A",
+          category: product.category_name,
+          batch_no: "N/A",
+          exp_date: "N/A",
+          image_url: "/products/default.jpg"
+        }
+      })) || []
+    };
+    setIsOpen(true);
+    setSelectedItem(mappedOrder);
+  };
+
+  const statusOptions = ["All", ...new Set((quotations || []).map((item) => item.order_status))];
 
   const filteredQuotations = (quotations || []).filter((item) => {
     const matchesSearch = searchQuery
-      ? item.quotation_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.customer_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.sales_rep_id.toLowerCase().includes(searchQuery.toLowerCase())
+      ? (item.order_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.customer_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.sales_rep_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.sales_rep_name?.toLowerCase().includes(searchQuery.toLowerCase()))
       : true;
 
-    const matchesStatus = statusFilter === "All" || item.status === statusFilter;
+    const matchesStatus = statusFilter === "All" || item.order_status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
 
   const handleRefresh = () => {
     setIsOpen(false);
-    fetchQuotations().then((data) => {
-      if (data && Array.isArray(data)) {
-        setQuotations(data);
-      }
-    });
-  }
+    fetchQuotations();
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Approved': return 'bg-green-100 text-green-800 border-green-200';
-      case 'Rejected': return 'bg-red-100 text-red-800 border-red-200';
-      case 'In Progress': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'Completed': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'approved': return 'bg-green-100 text-green-800 border-green-200';
+      case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
+      case 'in_progress': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'completed': return 'bg-purple-100 text-purple-800 border-purple-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
@@ -414,23 +139,108 @@ const OrderSummary = () => {
     </div>
   );
 
-  // Hardcoded summary statistics
-  const summaryStats = {
-    totalOrders: 5,
-    totalRevenue: 717590,
-    totalItems: 26,
-    averageOrderValue: 143518,
-    pendingOrders: 1,
-    approvedOrders: 1,
-    inProgressOrders: 1,
-    completedOrders: 1,
-    rejectedOrders: 1,
-    totalCustomers: 5,
-    totalVariants: 13,
-    monthlyGrowth: 15.8,
-    dailyOrders: 1.2,
-    topProduct: "Trollius Matte Lipstick"
+  // Calculate summary statistics from actual orders data
+  const getSummaryStats = () => {
+    if (!quotations || quotations.length === 0) {
+      return {
+        totalOrders: 0,
+        totalRevenue: 0,
+        totalItems: 0,
+        averageOrderValue: 0,
+        pendingOrders: 0,
+        approvedOrders: 0,
+        inProgressOrders: 0,
+        completedOrders: 0,
+        rejectedOrders: 0,
+        totalCustomers: 0,
+        totalVariants: 0,
+        monthlyGrowth: 0,
+        dailyOrders: 0,
+        topProduct: "N/A"
+      };
+    }
+
+    const totalRevenue = quotations.reduce((sum, order) => sum + parseFloat(order.total_amount || 0), 0);
+    const totalItems = quotations.reduce((sum, order) => sum + parseInt(order.no_of_products || 0), 0);
+    const uniqueCustomers = new Set(quotations.map(order => order.customer_id)).size;
+    const statusCounts = quotations.reduce((acc, order) => {
+      acc[order.order_status] = (acc[order.order_status] || 0) + 1;
+      return acc;
+    }, {});
+
+    // Calculate product frequency for top product
+    const productCounts = {};
+    quotations.forEach(order => {
+      if (order.products_json) {
+        order.products_json.forEach(product => {
+          productCounts[product.product_name] = (productCounts[product.product_name] || 0) + product.quantity;
+        });
+      }
+    });
+    const topProduct = Object.keys(productCounts).reduce((a, b) => productCounts[a] > productCounts[b] ? a : b, "N/A");
+
+    return {
+      totalOrders: quotations.length,
+      totalRevenue: totalRevenue,
+      totalItems: totalItems,
+      averageOrderValue: quotations.length > 0 ? Math.round(totalRevenue / quotations.length) : 0,
+      pendingOrders: statusCounts['pending'] || 0,
+      approvedOrders: statusCounts['approved'] || 0,
+      inProgressOrders: statusCounts['in_progress'] || 0,
+      completedOrders: statusCounts['completed'] || 0,
+      rejectedOrders: statusCounts['rejected'] || 0,
+      totalCustomers: uniqueCustomers,
+      totalVariants: Object.keys(productCounts).length,
+      monthlyGrowth: 15.8, // This would need historical data to calculate
+      dailyOrders: quotations.length > 0 ? Math.round((quotations.length / 30) * 10) / 10 : 0, // Rough estimate
+      topProduct: topProduct
+    };
   };
+
+  const summaryStats = getSummaryStats();
+
+  // Map API data to table-ready structure
+  const mappedQuotations = filteredQuotations.map(item => {
+    let sub_total = 0;
+    let discount = 0;
+    if (Array.isArray(item.products_json)) {
+      sub_total = item.products_json.reduce((sum, p) => sum + (typeof p.total_amount === 'number' ? p.total_amount : parseFloat(p.total_amount) || 0), 0);
+    }
+    if (typeof item.discount === 'number') {
+      discount = item.discount;
+    } else if (item.discount) {
+      discount = parseFloat(item.discount) || 0;
+    }
+    return {
+      ...item,
+      quotation_id: item.order_id,
+      customer_id: item.customer_id || item.customer_name,
+      sales_rep_id: item.sales_rep_id || item.sales_rep_name,
+      quotation_date: item.order_date,
+      net_total: parseFloat(item.total_amount) || 0,
+      no_items: parseInt(item.no_of_products) || 0,
+      status: item.order_status,
+      sub_total,
+      discount,
+      quotationItems: item.products_json?.map(product => ({
+        id: typeof product.product_id === 'number' ? product.product_id : parseInt(product.product_id) || product.product_id,
+        quotation_id: item.order_id,
+        item_code: product.product_id,
+        description: product.product_name,
+        item_qty: product.quantity,
+        unit_price: product.unit_price,
+        total_amount: product.total_amount,
+        variant_details: {
+          color: "N/A",
+          weight: "N/A",
+          category: product.category_name,
+          batch_no: "N/A",
+          exp_date: "N/A",
+          image_url: "/products/default.jpg"
+        }
+      })) || []
+    };
+  });
 
   return (
     <div className="w-full h-full bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
@@ -694,8 +504,8 @@ const OrderSummary = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredQuotations.map((item) => (
-                        <tr key={item.id} className="hover:bg-gray-50 transition-colors duration-200">
+                      {mappedQuotations.map((item) => (
+                        <tr key={item.quotation_id} className="hover:bg-gray-50 transition-colors duration-200">
                           <td className="px-4 py-4 text-sm text-gray-900">
                             {new Date(item.quotation_date).toLocaleDateString()}
                           </td>
