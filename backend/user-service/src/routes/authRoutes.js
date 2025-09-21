@@ -35,7 +35,7 @@ const registerValidation = [
 // Routes
 router.post('/login', loginValidation, authController.login);
 router.post('/register', registerValidation, authController.register);
-router.post('/refresh', authController.refreshToken);  // not checked
-router.post('/validate', authController.validateToken); // not checked
+router.post('/refresh', authController.refreshToken);  
+router.post('/validate', authController.validateToken); 
 
 module.exports = router;

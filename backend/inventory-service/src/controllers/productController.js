@@ -211,6 +211,37 @@ class ProductController {
     }
   }
 
+  async getProductByCategoryId(req, res) {
+    try {
+      const { id } = req.params;
+      const product = await Variant.findById(id);
+
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: 'Category not found'
+        });
+      }
+
+
+      // Combine the data
+      const productWithDetails = {
+        ...product
+      };
+
+      res.status(200).json({
+        success: true,
+        message: 'Product retrieved successfully',
+        data: { product: productWithDetails }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
 }
 
 module.exports = new ProductController();

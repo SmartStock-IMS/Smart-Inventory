@@ -28,6 +28,15 @@ class Variant extends BaseModel {
       throw error;
     }
   }
+
+  async findById(id) {
+    try {
+      const result = await this.callFunction('fn_get_products_by_category', [id]);
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
 /*
   async findByProductId(productId) {
     try {
