@@ -48,7 +48,7 @@ const authenticateToken = (req, res, next) => {
     });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET || 'sem5-secret-key', (err, user) => {
+  jwt.verify(token, process.env.JWT_SECRET || 'semester_05_project_jwt_secret', (err, user) => {
     if (err) {
       return res.status(403).json({ 
         success: false, 
