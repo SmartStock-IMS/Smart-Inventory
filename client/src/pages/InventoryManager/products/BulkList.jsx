@@ -2,105 +2,24 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FaSpinner } from "react-icons/fa";
 import { Trash2, Plus, Minus, Save, ArrowLeft, Package, ShoppingCart, CheckCircle, AlertCircle, Truck } from "lucide-react";
+import axios from "axios";
 
-// Comprehensive spice product database that matches AddBulk
-const spiceProductDatabase = [
-  {
-    id: 1,
-    name: "Ceylon Cinnamon Sticks",
-    category: "Whole Spices",
-    main_image: "https://images.unsplash.com/photo-1506976785307-8732e854ad03?w=300&h=300&fit=crop&crop=center",
-    variants: [
-      { product_code: "CCS001-100G", weight: "100g", price: 180, current_stock: 150 },
-      { product_code: "CCS001-250G", weight: "250g", price: 420, current_stock: 80 },
-      { product_code: "CCS001-500G", weight: "500g", price: 800, current_stock: 45 },
-      { product_code: "CCS001-1KG", weight: "1kg", price: 1500, current_stock: 30 }
-    ]
-  },
-  {
-    id: 2,
-    name: "Black Peppercorns",
-    category: "Whole Spices",
-    main_image: "https://images.unsplash.com/photo-1586016404137-96e2e95ad5e1?w=300&h=300&fit=crop&crop=center",
-    variants: [
-      { product_code: "BPP002-50G", weight: "50g", price: 120, current_stock: 200 },
-      { product_code: "BPP002-100G", weight: "100g", price: 220, current_stock: 120 },
-      { product_code: "BPP002-250G", weight: "250g", price: 500, current_stock: 65 },
-      { product_code: "BPP002-500G", weight: "500g", price: 950, current_stock: 35 }
-    ]
-  },
-  {
-    id: 3,
-    name: "Turmeric Powder",
-    category: "Ground Spices",
-    main_image: "https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=300&h=300&fit=crop&crop=center",
-    variants: [
-      { product_code: "TMP003-100G", weight: "100g", price: 45, current_stock: 180 },
-      { product_code: "TMP003-250G", weight: "250g", price: 95, current_stock: 95 },
-      { product_code: "TMP003-500G", weight: "500g", price: 180, current_stock: 55 },
-      { product_code: "TMP003-1KG", weight: "1kg", price: 340, current_stock: 40 }
-    ]
-  },
-  {
-    id: 4,
-    name: "Cardamom Pods",
-    category: "Whole Spices",
-    main_image: "https://images.unsplash.com/photo-1596040033229-a8a1dbd6b69a?w=300&h=300&fit=crop&crop=center",
-    variants: [
-      { product_code: "CDP004-25G", weight: "25g", price: 220, current_stock: 120 },
-      { product_code: "CDP004-50G", weight: "50g", price: 420, current_stock: 85 },
-      { product_code: "CDP004-100G", weight: "100g", price: 800, current_stock: 60 },
-      { product_code: "CDP004-250G", weight: "250g", price: 1900, current_stock: 25 }
-    ]
-  },
-  {
-    id: 5,
-    name: "Garam Masala Blend",
-    category: "Spice Blends",
-    main_image: "https://images.unsplash.com/photo-1596040033229-a8a1dbd6b69a?w=300&h=300&fit=crop&crop=center",
-    variants: [
-      { product_code: "GMB005-100G", weight: "100g", price: 75, current_stock: 140 },
-      { product_code: "GMB005-250G", weight: "250g", price: 140, current_stock: 75 },
-      { product_code: "GMB005-500G", weight: "500g", price: 320, current_stock: 40 }
-    ]
-  },
-  {
-    id: 6,
-    name: "Curry Powder",
-    category: "Spice Blends",
-    main_image: "https://images.unsplash.com/photo-1596040033229-a8a1dbd6b69a?w=300&h=300&fit=crop&crop=center",
-    variants: [
-      { product_code: "CPW006-100G", weight: "100g", price: 65, current_stock: 160 },
-      { product_code: "CPW006-250G", weight: "250g", price: 150, current_stock: 90 },
-      { product_code: "CPW006-500G", weight: "500g", price: 280, current_stock: 50 },
-      { product_code: "CPW006-1KG", weight: "1kg", price: 530, current_stock: 30 }
-    ]
-  },
-  {
-    id: 7,
-    name: "Red Chili Powder",
-    category: "Ground Spices",
-    main_image: "https://images.unsplash.com/photo-1583227264993-7019a5c9838a?w=300&h=300&fit=crop&crop=center",
-    variants: [
-      { product_code: "RCP007-100G", weight: "100g", price: 55, current_stock: 200 },
-      { product_code: "RCP007-250G", weight: "250g", price: 125, current_stock: 110 },
-      { product_code: "RCP007-500G", weight: "500g", price: 230, current_stock: 70 },
-      { product_code: "RCP007-1KG", weight: "1kg", price: 430, current_stock: 45 }
-    ]
-  },
-  {
-    id: 8,
-    name: "Cumin Seeds",
-    category: "Whole Spices",
-    main_image: "https://images.unsplash.com/photo-1596040033229-a8a1dbd6b69a?w=300&h=300&fit=crop&crop=center",
-    variants: [
-      { product_code: "CMS008-100G", weight: "100g", price: 65, current_stock: 175 },
-      { product_code: "CMS008-250G", weight: "250g", price: 150, current_stock: 85 },
-      { product_code: "CMS008-500G", weight: "500g", price: 280, current_stock: 55 },
-      { product_code: "CMS008-1KG", weight: "1kg", price: 520, current_stock: 35 }
-    ]
-  }
-];
+// Resolve a single product/variant by product_id from backend list
+const resolveProductById = (allProducts, productId) => {
+  const p = (allProducts || []).find(x => x.product_id === productId);
+  if (!p) return null;
+  return {
+    id: p.product_id,
+    product_code: p.product_id,
+    name: p.name || p.category_name,
+    image: `https://loremflickr.com/300/300/${encodeURIComponent(p.category_name || 'product')}`,
+    category: p.category_name,
+    weight: p.name,
+    price: parseFloat(p.selling_price || 0),
+    current_stock: p.current_stock || 0,
+    bulk_qty: 1
+  };
+};
 
 // Function to get product details by product code
 const getProductByCode = (productCode) => {
@@ -123,32 +42,62 @@ const getProductByCode = (productCode) => {
   return null;
 };
 
-// Mock service functions
-const getProductVariants = async () => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  // Flatten all variants from the database
-  const allVariants = [];
-  spiceProductDatabase.forEach(product => {
-    product.variants.forEach(variant => {
-      allVariants.push({
-        id: product.id,
-        product_code: variant.product_code,
-        name: product.name,
-        image: product.main_image,
-        category: product.category,
-        weight: variant.weight,
-        price: variant.price,
-        current_stock: variant.current_stock
-      });
+const fetchAllProducts = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const res = await axios.get('http://localhost:3000/api/products', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      params: { page: 1, limit: 500 }
     });
-  });
-  return { success: true, data: allVariants };
+    const data = res.data?.data?.products || [];
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return { success: false, error: error.message };
+  }
 };
 
-const updateProductQuantity = async (data) => {
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  console.log("Updating product quantities:", data);
-  return { success: true, message: "Bulk quantities updated successfully" };
+const updateProductQuantity = async (bulkItems) => {
+  try {
+    const token = localStorage.getItem('token');
+    // fetch current products to get latest stock
+    const listRes = await axios.get('http://localhost:3000/api/products', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      params: { page: 1, limit: 500 }
+    });
+    const all = listRes.data?.data?.products || [];
+    const idToRow = new Map(all.map(p => [p.product_id, p]));
+    const idToCurrent = new Map(all.map(p => [p.product_id, Number(p.current_stock || 0)]));
+
+    // sequentially update by setting quantity = current + delta
+    for (const item of bulkItems) {
+      const current = idToCurrent.get(item.item_code) ?? 0;
+      const nextQty = Number(current) + Number(item.quantity || 0);
+      const base = idToRow.get(item.item_code) || {};
+      const payload = {
+        // preserve existing fields
+        name: base.name,
+        cost_price: base.cost_price !== undefined ? Number(base.cost_price) : undefined,
+        selling_price: base.selling_price !== undefined ? Number(base.selling_price) : undefined,
+        min_stock_level: base.min_stock_level !== undefined ? Number(base.min_stock_level) : undefined,
+        max_stock_level: base.max_stock_level !== undefined ? Number(base.max_stock_level) : undefined,
+        reorder_point: base.reorder_point !== undefined ? Number(base.reorder_point) : undefined,
+        shelf_life: base.shelf_life !== undefined ? Number(base.shelf_life) : undefined,
+        // only change quantity
+        quantity: nextQty
+      };
+      await axios.put(`http://localhost:3000/api/products/${encodeURIComponent(item.item_code)}`,
+        payload,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      );
+      // update map for potential subsequent items with same id
+      idToCurrent.set(item.item_code, nextQty);
+    }
+    return { success: true };
+  } catch (error) {
+    console.error('Bulk update error:', error);
+    return { success: false, error: error.message };
+  }
 };
 
 const toast = {
@@ -166,11 +115,8 @@ const BulkList = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Get bulk list from navigation state or use mock data
-  const initialBulkList = location.state?.bulkList || mockBulkData.map(item => ({
-    item_code: item.product_code,
-    quantity: item.bulk_qty
-  }));
+  // Get bulk list from navigation state
+  const initialBulkList = location.state?.bulkList || [];
 
   const [reqData, setReqData] = useState(initialBulkList);
   const [products, setProducts] = useState([]);
@@ -181,32 +127,19 @@ const BulkList = () => {
     (async () => {
       try {
         setIsLoading(true);
-        console.log("Loading product variants for bulk list:", initialBulkList);
-        
+        const all = await fetchAllProducts();
+        const list = all.success ? all.data : [];
+
         if (initialBulkList && initialBulkList.length > 0) {
-          // Map the bulk list to actual product data
+          // Map navigation list to products resolved from backend list
           const bulkProducts = initialBulkList.map(bulkItem => {
-            const productData = getProductByCode(bulkItem.item_code);
-            if (productData) {
-              return {
-                ...productData,
-                bulk_qty: bulkItem.quantity
-              };
-            }
-            return null;
-          }).filter(Boolean); // Remove null entries
-          
-          console.log("Mapped bulk products:", bulkProducts);
+            const p = resolveProductById(list, bulkItem.item_code);
+            if (!p) return null;
+            return { ...p, bulk_qty: bulkItem.quantity };
+          }).filter(Boolean);
           setProducts(bulkProducts);
         } else {
-          // If no bulk list provided, show some sample products
-          console.log("No bulk list provided, showing sample products");
-          const sampleProducts = [
-            getProductByCode("TMP003-100G"),
-            getProductByCode("BPP002-250G"),
-            getProductByCode("CDP004-50G")
-          ].filter(Boolean).map(product => ({ ...product, bulk_qty: 10 }));
-          setProducts(sampleProducts);
+          setProducts([]);
         }
       } catch (error) {
         console.error("Error loading products:", error);
@@ -266,7 +199,7 @@ const BulkList = () => {
   };
 
   const getTotalValue = () => {
-    return products.reduce((total, item) => total + (item.price * item.bulk_qty), 0);
+    return products.reduce((total, item) => total + (Number(item.price || 0) * Number(item.bulk_qty || 0)), 0);
   };
 
   const getTotalItems = () => {
