@@ -1,42 +1,31 @@
-import { useCallback, useRef, useState } from "react";
-import { Box, Trash2, Upload, Plus, Package, Image, Calendar, Hash, Palette, DollarSign, Archive, Clock, CheckCircle, AlertCircle, Sparkles, Star } from "lucide-react";
+import { useCallback, useRef, useState, useEffect } from "react";
+import { Box, Trash2, Upload, Plus, Package, Image, Calendar, Hash, Palette, DollarSign, Archive, Clock, CheckCircle, AlertCircle, Sparkles, Star, ChevronDown } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
 
-// Mock components for demo
-const FileUpload = ({ onChange, resetFileInput }) => {
-  const fileInputRef = useRef(null);
-  
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      onChange(file);
-    }
-  };
-
-  // Expose reset function to parent
-  if (resetFileInput) {
-    resetFileInput(() => {
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    });
-  }
-
+// Category Dropdown Component
+const CategoryDropdown = ({ categories, selectedCategory, onCategoryChange, register, required = false }) => {
   return (
-    <div className="relative group">
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
-        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-      />
-      <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 hover:bg-blue-50/50 transition-all duration-300 group-hover:scale-105">
-        <Upload className="w-8 h-8 text-gray-400 mx-auto mb-3 group-hover:text-blue-500 transition-colors" />
-        <p className="text-sm text-gray-600 group-hover:text-blue-600 transition-colors">
-          Click to upload or drag and drop
-        </p>
-        <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB</p>
+    <div className="w-full">
+      <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+        <Package className="w-4 h-4" />
+        Category
+        {required && <span className="text-red-500">*</span>}
+      </label>
+      <div className="relative">
+        <select
+          {...register("category_id", { required })}
+          value={selectedCategory}
+          onChange={(e) => onCategoryChange(e.target.value)}
+          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 bg-white shadow-sm appearance-none"
+        >
+          <option value="">Select a category</option>
+          {categories.map((category) => (
+            <option key={category.category_id} value={category.category_id}>
+              {category.category_name}
+            </option>
+          ))}
+        </select>
+        <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
       </div>
     </div>
   );
@@ -44,17 +33,16 @@ const FileUpload = ({ onChange, resetFileInput }) => {
 
 const InputWithLabel = ({ label, inputType, inputId, inputName, className = "", register, required = false, ...props }) => {
   const getIcon = () => {
-    if (inputName.includes('productCode')) return <Hash className="w-4 h-4" />;
-    if (inputName.includes('color')) return <Palette className="w-4 h-4" />;
-    if (inputName.includes('Price')) return <DollarSign className="w-4 h-4" />;
-    if (inputName.includes('Qty') || inputName.includes('Quantity')) return <Archive className="w-4 h-4" />;
-    if (inputName.includes('Date')) return <Calendar className="w-4 h-4" />;
+    if (inputName.includes('cost_price')) return <DollarSign className="w-4 h-4" />;
+    if (inputName.includes('selling_price')) return <DollarSign className="w-4 h-4" />;
+    if (inputName.includes('stock_level') || inputName.includes('reorder_point') || inputName.includes('current_stock')) return <Archive className="w-4 h-4" />;
+    if (inputName.includes('shelf_life')) return <Clock className="w-4 h-4" />;
     return <Package className="w-4 h-4" />;
   };
 
   return (
     <div className={`w-full ${className}`}>
-      <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+      <label htmlFor={inputId} className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
         {getIcon()}
         {label}
         {required && <span className="text-red-500">*</span>}
@@ -72,20 +60,52 @@ const InputWithLabel = ({ label, inputType, inputId, inputName, className = "", 
   );
 };
 
-// Mock services for demo
-const uploadImage = async (formData) => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return { success: true, data: "mock_image_url" };
+// API services
+const fetchCategories = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return [];
+
+    const response = await fetch('http://localhost:3000/api/categories', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const result = await response.json();
+    if (result.success && result.data) {
+      return result.data.categories || [];
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return [];
+  }
 };
 
 const addProduct = async (payload) => {
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  return { success: true, data: { message: "Product added successfully!" } };
-};
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Authentication token not found');
+    }
 
-const removeImage = async (publicId) => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return { success: true };
+    const response = await fetch('http://localhost:3000/api/products', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error("Error adding product:", error);
+    return { success: false, message: error.message };
+  }
 };
 
 const toast = {
@@ -98,20 +118,17 @@ const cn = (...classes) => classes.filter(Boolean).join(' ');
 const AddProduct = () => {
   // init form default values
   const variantDefaultValues = {
-    productCode: "",
-    color: "",
-    unitPrice: 0,
-    totalQty: 0,
-    minQty: 0,
-    mfdDate: "",
-    expDate: "",
-    productImage: "",
+    name: "",
+    cost_price: 0,
+    selling_price: 0,
+    min_stock_level: 0,
+    max_stock_level: null,
+    reorder_point: 0,
+    shelf_life: null,
+    current_stock: 0,
   };
   const productDefaultValues = {
-    productName: "",
-    category: "",
-    noVariants: 0,
-    mainImage: "",
+    category_id: "",
   };
 
   // Mock useForm hook
@@ -148,54 +165,37 @@ const AddProduct = () => {
   } = createMockForm(variantDefaultValues);
 
   // init local-state-variables
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [variantDetails, setVariantDetails] = useState([]);
-  const [variantImage, setVariantImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [uploadedImages, setUploadedImages] = useState([]);
-  const resetFileInputRef = useRef(null);
-  const resetVariantFileInputRef = useRef(null);
 
-  const handleVariantImageUpload = async (file) => {
-    setVariantImage(file);
-  };
+  // Fetch categories on component mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      const categoriesData = await fetchCategories();
+      setCategories(categoriesData);
+    };
+    loadCategories();
+  }, []);
 
-  const uploadImageToStorage = async (file, category) => {
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-      formData.append("folder_name", category);
-      const response = await uploadImage(formData);
-      if (!response.success) {
-        console.log("file upload error: ", response.error);
-        return null;
-      } else {
-        setUploadedImages((prev) => [...prev, response.data]);
-        return response.data;
-      }
-    } catch (error) {
-      console.log("Error uploading main image: ", error);
-      return null;
-    }
+  const handleCategoryChange = (categoryId) => {
+    setSelectedCategory(categoryId);
   };
 
   const onSubmitVariant = (variantData) => {
-    const variantWithImage = {
+    const variantWithCategory = {
       ...variantData,
-      productImage: variantImage,
+      category_id: selectedCategory,
     };
 
-    setVariantDetails((prevVariants) => [...prevVariants, variantWithImage]);
-
+    setVariantDetails((prevVariants) => [...prevVariants, variantWithCategory]);
     resetVariant();
-    if (resetVariantFileInputRef.current) {
-      resetVariantFileInputRef.current();
-    }
-    setVariantImage(null);
   };
 
-  const removeVariant = (productCode) => {
+  const removeVariant = (index) => {
     setVariantDetails((prevVariants) =>
-      prevVariants.filter((variant) => variant.productCode !== productCode),
+      prevVariants.filter((_, i) => i !== index),
     );
   };
 
@@ -203,76 +203,42 @@ const AddProduct = () => {
     try {
       setIsLoading(true);
 
-      const variantData = await Promise.all(
-        variantDetails.map(async (variant) => {
-          let variantImageURL =
-            "https://res.cloudinary.com/dbdbn416o/image/upload/v1739968044/logo_cnekfn.png";
-          if (variant.productImage) {
-            const uploadedVariantImage = await uploadImageToStorage(
-              variant.productImage,
-              productData.category,
-            );
-            if (uploadedVariantImage) {
-              variantImageURL = uploadedVariantImage;
-            }
-          }
+      // Add all variants as separate products
+      const promises = variantDetails.map(async (variant) => {
+        const productPayload = {
+          name: variant.name,
+          category_name: categories.find(cat => cat.category_id === variant.category_id)?.category_name || '',
+          cost_price: parseFloat(variant.cost_price) || 0,
+          selling_price: parseFloat(variant.selling_price) || 0,
+          min_stock_level: parseInt(variant.min_stock_level) || 0,
+          max_stock_level: variant.max_stock_level ? parseInt(variant.max_stock_level) : null,
+          reorder_point: parseInt(variant.reorder_point) || 0,
+          shelf_life: variant.shelf_life ? parseInt(variant.shelf_life) : null,
+          initial_quantity: parseInt(variant.current_stock) || 0 // Current stock as initial quantity
+        };
 
-          return {
-            product_code: variant.productCode,
-            color: variant.color,
-            price: parseFloat(variant.unitPrice),
-            image: variantImageURL,
-            quantity: parseInt(variant.totalQty),
-            min_qty: parseInt(variant.minQty),
-            mfd_date: variant.mfdDate,
-            exp_date: variant.expDate,
-          };
-        }),
-      );
+        return await addProduct(productPayload);
+      });
 
-      const productPayload = {
-        name: productData.productName,
-        category: productData.category,
-        main_image: variantData[0].image,
-        no_variants: parseInt(productData.noVariants),
-        variants: variantData,
-      };
+      const results = await Promise.all(promises);
+      const allSuccessful = results.every(result => result.success);
 
-      const response = await addProduct(productPayload);
-      if (response.success) {
-        toast.success(response.data.message);
+      if (allSuccessful) {
+        toast.success(`${variantDetails.length} product(s) added successfully!`);
         resetProduct();
-        if (resetFileInputRef.current) {
-          resetFileInputRef.current();
-        }
+        resetVariant();
+        setSelectedCategory("");
         setVariantDetails([]);
       } else {
-        await removeUploadedImages();
-        toast.error("Failed to add product");
+        toast.error("Some products failed to add");
       }
     } catch (error) {
-      console.log("Error adding product: ", error);
-      toast.error("Failed to add product");
-      await removeUploadedImages();
+      console.log("Error adding products: ", error);
+      toast.error("Failed to add products");
     } finally {
       setIsLoading(false);
     }
   };
-
-  const removeUploadedImages = async () => {
-    if (uploadedImages.length > 0) {
-      await Promise.all(
-        uploadedImages.map(async (publicId) => {
-          await removeImage(publicId);
-        }),
-      );
-      setUploadedImages([]);
-    }
-  }
-
-  const setVariantResetFileInputFn = useCallback((resetFn) => {
-    resetVariantFileInputRef.current = resetFn;
-  }, []);
 
   return (
     <div className="h-full bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
@@ -286,8 +252,8 @@ const AddProduct = () => {
             <Box className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold mb-1">Add New Product</h2>
-            <p className="text-white/80">Create and manage product variants</p>
+            <h2 className="text-2xl font-bold mb-1">Add Product Variants</h2>
+            <p className="text-white/80">Create multiple product variants from one category</p>
           </div>
           <div className="ml-auto">
             <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
@@ -301,263 +267,243 @@ const AddProduct = () => {
       <div className="h-[calc(100%-96px)] p-6 overflow-y-auto">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <form onSubmit={handleSubmitProduct(onSubmitProduct)}>
-            {/* Product Details Section */}
+            {/* Category Selection Section */}
             <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
                   <Package className="w-4 h-4 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-800">Product Information</h3>
+                <h3 className="text-lg font-semibold text-gray-800">Select Category</h3>
               </div>
               
               <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="md:col-span-2">
-                    <InputWithLabel
-                      label={"Product Name"}
-                      inputType={"text"}
-                      inputId={"productName"}
-                      inputName={"productName"}
-                      register={registerProduct}
-                      required={true}
-                    />
-                  </div>
-                  <div>
-                    <InputWithLabel
-                      label={"Category"}
-                      inputType={"text"}
-                      inputId={"category"}
-                      inputName={"category"}
-                      register={registerProduct}
-                      required={true}
-                    />
-                  </div>
-                </div>
-                <div className="mt-6">
-                  <InputWithLabel
-                    label={"Number of Variants"}
-                    inputType={"number"}
-                    inputId={"noVariants"}
-                    inputName={"noVariants"}
-                    register={registerProduct}
-                    required={true}
-                  />
-                </div>
+                <CategoryDropdown
+                  categories={categories}
+                  selectedCategory={selectedCategory}
+                  onCategoryChange={handleCategoryChange}
+                  register={registerProduct}
+                  required={true}
+                />
               </div>
             </div>
           </form>
 
           {/* Variant Details Section */}
-          <div className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
-                <Star className="w-4 h-4 text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-800">Add Product Variant</h3>
-            </div>
-
-            {/* Variant Form */}
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100 mb-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Variant Image Upload */}
-                <div className="lg:col-span-1">
-                  <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                    <Image className="w-4 h-4" />
-                    Variant Image
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <div className="bg-white rounded-xl p-4 border border-gray-200">
-                    <FileUpload
-                      onChange={handleVariantImageUpload}
-                      resetFileInput={setVariantResetFileInputFn}
-                    />
-                  </div>
+          {selectedCategory && (
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                  <Star className="w-4 h-4 text-white" />
                 </div>
+                <h3 className="text-lg font-semibold text-gray-800">Add Product Variant</h3>
+              </div>
 
-                {/* Variant Details Form */}
-                <div className="lg:col-span-2">
-                  <form onSubmit={handleSubmitVariant(onSubmitVariant)} className="h-full">
-                    <div className="bg-white rounded-xl p-6 border border-gray-200 h-full flex flex-col">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <InputWithLabel
-                          label={"Product Code"}
-                          inputType={"text"}
-                          inputId={"productCode"}
-                          inputName={"productCode"}
-                          register={registerVariant}
-                          required={true}
-                        />
-                        <InputWithLabel
-                          label={"Product Weight"}
-                          inputType={"text"}
-                          inputId={"productWeight"}
-                          inputName={"color"}
-                          register={registerVariant}
-                          required={true}
-                        />
-                        <InputWithLabel
-                          label={"Unit Price"}
-                          inputType={"number"}
-                          inputId={"productPrice"}
-                          inputName={"unitPrice"}
-                          register={registerVariant}
-                          required={true}
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <InputWithLabel
-                          label={"Total Quantity"}
-                          inputType={"number"}
-                          inputId={"productQuantity"}
-                          inputName={"totalQty"}
-                          register={registerVariant}
-                          required={true}
-                        />
-                        <InputWithLabel
-                          label={"Minimum Quantity"}
-                          inputType={"number"}
-                          inputId={"productMinQuantity"}
-                          inputName={"minQty"}
-                          register={registerVariant}
-                          required={true}
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        <InputWithLabel
-                          label={"Manufacturer Date"}
-                          inputType={"date"}
-                          inputId={"mfdDate"}
-                          inputName={"mfdDate"}
-                          register={registerVariant}
-                          required={true}
-                        />
-                        <InputWithLabel
-                          label={"Expiration Date"}
-                          inputType={"date"}
-                          inputId={"expDate"}
-                          inputName={"expDate"}
-                          register={registerVariant}
-                          required={true}
-                        />
-                      </div>
-                      
-                      <div className="flex justify-end mt-auto">
-                        <button
-                          type="submit"
-                          className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
-                        >
-                          <Plus className="w-4 h-4" />
-                          Add to List
-                        </button>
-                      </div>
+              {/* Variant Form */}
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100 mb-6">
+                <form onSubmit={handleSubmitVariant(onSubmitVariant)} className="h-full">
+                  <div className="bg-white rounded-xl p-6 border border-gray-200 h-full flex flex-col">
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mb-6">
+                      <InputWithLabel
+                        label={"Product Name"}
+                        inputType={"text"}
+                        inputId={"variantName"}
+                        inputName={"name"}
+                        register={registerVariant}
+                        required={true}
+                      />
                     </div>
-                  </form>
-                </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <InputWithLabel
+                        label={"Cost Price"}
+                        inputType={"number"}
+                        inputId={"variantCostPrice"}
+                        inputName={"cost_price"}
+                        register={registerVariant}
+                        required={true}
+                        step="0.01"
+                        min="0"
+                      />
+                      <InputWithLabel
+                        label={"Selling Price"}
+                        inputType={"number"}
+                        inputId={"variantSellingPrice"}
+                        inputName={"selling_price"}
+                        register={registerVariant}
+                        required={true}
+                        step="0.01"
+                        min="0"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <InputWithLabel
+                        label={"Current Stock"}
+                        inputType={"number"}
+                        inputId={"variantCurrentStock"}
+                        inputName={"current_stock"}
+                        register={registerVariant}
+                        required={true}
+                        min="0"
+                      />
+                      <InputWithLabel
+                        label={"Shelf Life (days)"}
+                        inputType={"number"}
+                        inputId={"variantShelfLife"}
+                        inputName={"shelf_life"}
+                        register={registerVariant}
+                        required={false}
+                        min="0"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                      <InputWithLabel
+                        label={"Minimum Stock Level"}
+                        inputType={"number"}
+                        inputId={"variantMinStock"}
+                        inputName={"min_stock_level"}
+                        register={registerVariant}
+                        required={true}
+                        min="0"
+                      />
+                      <InputWithLabel
+                        label={"Maximum Stock Level"}
+                        inputType={"number"}
+                        inputId={"variantMaxStock"}
+                        inputName={"max_stock_level"}
+                        register={registerVariant}
+                        required={false}
+                        min="0"
+                      />
+                      <InputWithLabel
+                        label={"Reorder Point"}
+                        inputType={"number"}
+                        inputId={"variantReorderPoint"}
+                        inputName={"reorder_point"}
+                        register={registerVariant}
+                        required={true}
+                        min="0"
+                      />
+                    </div>
+                    
+                    <div className="flex justify-end mt-auto">
+                      <button
+                        type="submit"
+                        className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add to List
+                      </button>
+                    </div>
+                  </div>
+                </form>
               </div>
-            </div>
 
-            {/* Variants Table */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
-                <h4 className="font-semibold text-gray-800 flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  Added Variants ({variantDetails.length})
-                </h4>
-              </div>
-              
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min Qty</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MFD Date</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">EXP Date</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {variantDetails.length > 0 ? (
-                      variantDetails.map((variant, index) => (
-                        <tr key={index} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-4 py-4">
-                            <div className="w-16 h-16 rounded-lg overflow-hidden shadow-md">
-                              <img
-                                src={URL.createObjectURL(variant.productImage)}
-                                alt="product-image"
-                                className="w-full h-full object-cover"
-                              />
+              {/* Variants Table */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+                  <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    Added Variants ({variantDetails.length})
+                  </h4>
+                </div>
+                
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Name</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Stock</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost Price</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Selling Price</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min Stock</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Max Stock</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reorder Point</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shelf Life</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {variantDetails.length > 0 ? (
+                        variantDetails.map((variant, index) => (
+                          <tr key={index} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-4 text-sm font-medium text-gray-900">{variant.name}</td>
+                            <td className="px-4 py-4 text-sm text-gray-900 font-semibold">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                variant.current_stock <= variant.min_stock_level 
+                                  ? 'bg-red-100 text-red-800' 
+                                  : variant.current_stock <= variant.reorder_point 
+                                    ? 'bg-yellow-100 text-yellow-800' 
+                                    : 'bg-green-100 text-green-800'
+                              }`}>
+                                {variant.current_stock}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 text-sm text-gray-900 font-semibold">Rs. {variant.cost_price}</td>
+                            <td className="px-4 py-4 text-sm text-gray-900 font-semibold">Rs. {variant.selling_price}</td>
+                            <td className="px-4 py-4 text-sm text-gray-500">{variant.min_stock_level}</td>
+                            <td className="px-4 py-4 text-sm text-gray-500">{variant.max_stock_level || '-'}</td>
+                            <td className="px-4 py-4 text-sm text-gray-500">{variant.reorder_point}</td>
+                            <td className="px-4 py-4 text-sm text-gray-500">{variant.shelf_life ? `${variant.shelf_life} days` : '-'}</td>
+                            <td className="px-4 py-4">
+                              <button
+                                onClick={() => removeVariant(index)}
+                                className="p-2 rounded-lg hover:bg-red-100 hover:text-red-600 transition-all duration-300 group"
+                              >
+                                <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="9" className="px-4 py-12 text-center">
+                            <div className="flex flex-col items-center gap-3">
+                              <AlertCircle className="w-12 h-12 text-gray-400" />
+                              <p className="text-gray-500 font-medium">No variants added yet</p>
+                              <p className="text-sm text-gray-400">Add product variants using the form above</p>
                             </div>
                           </td>
-                          <td className="px-4 py-4 text-sm font-medium text-gray-900">{variant.productCode}</td>
-                          <td className="px-4 py-4 text-sm text-gray-500">
-                            {variant.color}
-                          </td>
-                          <td className="px-4 py-4 text-sm text-gray-900 font-semibold">Rs. {variant.unitPrice}</td>
-                          <td className="px-4 py-4 text-sm text-gray-500">{variant.totalQty}</td>
-                          <td className="px-4 py-4 text-sm text-gray-500">{variant.minQty}</td>
-                          <td className="px-4 py-4 text-sm text-gray-500">{variant.mfdDate}</td>
-                          <td className="px-4 py-4 text-sm text-gray-500">{variant.expDate}</td>
-                          <td className="px-4 py-4">
-                            <button
-                              onClick={() => removeVariant(variant.productCode)}
-                              className="p-2 rounded-lg hover:bg-red-100 hover:text-red-600 transition-all duration-300 group"
-                            >
-                              <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                            </button>
-                          </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="9" className="px-4 py-12 text-center">
-                          <div className="flex flex-col items-center gap-3">
-                            <AlertCircle className="w-12 h-12 text-gray-400" />
-                            <p className="text-gray-500 font-medium">No variants added yet</p>
-                            <p className="text-sm text-gray-400">Add product variants using the form above</p>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-          </div>
+          )}
+
         </div>
 
         {/* Submit Button */}
-        <div className="mt-6 flex justify-end">
-          <button
-            type="submit"
-            onClick={handleSubmitProduct(onSubmitProduct)}
-            className={cn(
-              "py-3 px-8 flex items-center gap-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300",
-              variantDetails.length > 0
-                ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            )}
-            disabled={isLoading || variantDetails.length === 0}
-          >
-            {isLoading ? (
-              <>
-                <FaSpinner className="w-5 h-5 animate-spin" />
-                Adding Product...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-5 h-5" />
-                Add Product
-              </>
-            )}
-          </button>
-        </div>
+        {selectedCategory && (
+          <div className="mt-6 flex justify-end">
+            <button
+              type="submit"
+              onClick={handleSubmitProduct(onSubmitProduct)}
+              className={cn(
+                "py-3 px-8 flex items-center gap-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300",
+                variantDetails.length > 0
+                  ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              )}
+              disabled={isLoading || variantDetails.length === 0}
+            >
+              {isLoading ? (
+                <>
+                  <FaSpinner className="w-5 h-5 animate-spin" />
+                  Adding Products...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-5 h-5" />
+                  Add All Products ({variantDetails.length})
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

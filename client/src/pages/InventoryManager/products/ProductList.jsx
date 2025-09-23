@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, ExternalLink, Trash2, List, Sparkles, Package, Scale, Eye, AlertCircle, CheckCircle, Filter, Grid3X3, TableProperties } from "lucide-react";
+import { Search, ExternalLink, Trash2, List, Sparkles, Package, Scale, Eye, AlertCircle, CheckCircle, Filter, Grid3X3, TableProperties, Edit3 } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
 import axios from "axios";
 
@@ -204,6 +204,7 @@ const getAllProducts = async (page = 1, limit = 15) => {
   }
 };
 
+
 const deleteProductsByCategory = async (categoryName) => {
   try {
     const token = localStorage.getItem("token");
@@ -263,14 +264,30 @@ const ProductList = () => {
     try {
       const response = await getProducts();
       const apiProducts = response.data.data.products || [];
+      
+      // Debug log to see the actual API response
+      console.log('API Products Response:', apiProducts);
+      if (apiProducts.length > 0) {
+        console.log('Sample Product:', apiProducts[0]);
+        console.log('Available fields:', Object.keys(apiProducts[0]));
+        console.log('Stock fields:', {
+          current_stock: apiProducts[0].current_stock,
+          quantity: apiProducts[0].quantity,
+          stock: apiProducts[0].stock,
+          inventory_quantity: apiProducts[0].inventory_quantity
+        });
+      }
+      
       // Find least stocked product per category
       const leastStockedByCategory = {};
       for (const product of apiProducts) {
         const cat = product.category_name;
-        if (
-          !leastStockedByCategory[cat] ||
-          product.current_stock < leastStockedByCategory[cat].current_stock
-        ) {
+        const currentStock = product.current_stock || product.quantity || 0;
+        const existingStock = leastStockedByCategory[cat] ? 
+          (leastStockedByCategory[cat].current_stock || leastStockedByCategory[cat].quantity || 0) : 
+          Infinity;
+        
+        if (!leastStockedByCategory[cat] || currentStock < existingStock) {
           leastStockedByCategory[cat] = product;
         }
       }
@@ -300,26 +317,44 @@ const ProductList = () => {
           }}
 
 
-      // Use only the least stocked product per category for display
+      // Group products by category and show one representative per category
       if (response.success && response.data && response.data.data && Array.isArray(response.data.data.products)) {
-        const mapped = Object.values(leastStockedByCategory).map(product => ({
-          id: product.product_id,
-          name: product.category_name,
-          main_image: categoryImage(product.category_name),
-          no_variants: categoryCounts[product.category_name] || 1,
-          variants: [],
-          description: `${product.category_name} | Cost: ₹${product.cost_price} | Sell: ₹${product.selling_price}`,
-          //stock_quantity: product.current_stock,
-          current_stock: product.current_stock,
-          min_stock_level: product.min_stock_level,
-          max_stock_level: product.max_stock_level,
+        const categoryGroups = {};
+        
+        // Group products by category
+        apiProducts.forEach(product => {
+          const categoryName = product.category_name;
+          if (!categoryGroups[categoryName]) {
+            categoryGroups[categoryName] = [];
+          }
+          categoryGroups[categoryName].push(product);
+        });
+        
+        // Create one representative product per category
+        const mapped = Object.keys(categoryGroups).map(categoryName => {
+          const products = categoryGroups[categoryName];
+          const representativeProduct = products[0]; // Use first product as representative
           
-        }));
+          return {
+            id: `category_${categoryName}`,
+            name: categoryName,
+            main_image: categoryImage(categoryName),
+            no_variants: products.length,
+            variants: [],
+            description: `${categoryName} category with ${products.length} products`,
+            category_name: categoryName,
+            product_count: products.length
+          };
+        });
+        
+        console.log('Mapped categories:', mapped);
         setAllProducts(mapped);
       } else {
         setAllProducts(mockSpiceProducts);
       }
     } catch (error) {
+      console.error('Error fetching products:', error);
+      console.log('Using mock data as fallback');
       setAllProducts(mockSpiceProducts);
     }
   })();
@@ -381,10 +416,12 @@ const ProductList = () => {
       const leastStockedByCategory = {};
       for (const product of apiProducts) {
         const cat = product.category_name;
-        if (
-          !leastStockedByCategory[cat] ||
-          product.current_stock < leastStockedByCategory[cat].current_stock
-        ) {
+        const currentStock = product.current_stock || product.quantity || 0;
+        const existingStock = leastStockedByCategory[cat] ? 
+          (leastStockedByCategory[cat].current_stock || leastStockedByCategory[cat].quantity || 0) : 
+          Infinity;
+        
+        if (!leastStockedByCategory[cat] || currentStock < existingStock) {
           leastStockedByCategory[cat] = product;
         }
       }
@@ -395,17 +432,32 @@ const ProductList = () => {
         return acc;
       }, {});
       
-      const mapped = Object.values(leastStockedByCategory).map(product => ({
-        id: product.product_id,
-        name: product.category_name,
-        main_image: `https://loremflickr.com/400/400/${product.category_name}`,
-        no_variants: categoryCounts[product.category_name] || 1,
-        variants: [],
-        description: `${product.category_name} | Cost: ₹${product.cost_price} | Sell: ₹${product.selling_price}`,
-        current_stock: product.current_stock,
-        min_stock_level: product.min_stock_level,
-        max_stock_level: product.max_stock_level,
-      }));
+      // Rebuild category groups
+      const categoryGroups = {};
+      
+      apiProducts.forEach(product => {
+        const categoryName = product.category_name;
+        if (!categoryGroups[categoryName]) {
+          categoryGroups[categoryName] = [];
+        }
+        categoryGroups[categoryName].push(product);
+      });
+      
+      const mapped = Object.keys(categoryGroups).map(categoryName => {
+        const products = categoryGroups[categoryName];
+        const representativeProduct = products[0];
+        
+        return {
+          id: `category_${categoryName}`,
+          name: categoryName,
+          main_image: categoryImage(categoryName),
+          no_variants: products.length,
+          variants: [],
+          description: `${categoryName} category with ${products.length} products`,
+          category_name: categoryName,
+          product_count: products.length
+        };
+      });
       
       setAllProducts(mapped);
       setDeleteDialogOpen(false);
@@ -434,27 +486,45 @@ const ProductList = () => {
     );
   });
 
-  const getStockStatusColor = (current_stock, min_stock_level, max_stock_level) => {
-    if (current_stock > max_stock_level) return 'bg-green-100 text-green-800';
-    if (current_stock < min_stock_level) return 'bg-red-100 text-red-800';
-    return 'bg-yellow-100 text-yellow-800';
-  };
-
-  const getStockStatus = (current_stock, min_stock_level, max_stock_level) => {
-    if (current_stock > max_stock_level) return 'High Stock';
-    if (current_stock < min_stock_level) return 'Low Stock';
-    return 'Medium Stock';
-  };
  
   const openDeleteDialog = (product) => {
     setProductToDelete(product);
     setDeleteDialogOpen(true);
   };
 
-  const handleViewProduct = (product) => {
-    // Navigate to product detail page with product data
-    navigate(`/inventorymanager/product/${product.id}`, { state: {...product} });
+  const handleViewProduct = async (category) => {
+    try {
+      setIsLoading(true);
+      
+      // Fetch all products in this category
+      const response = await getProducts();
+      const apiProducts = response.data.data.products || [];
+      
+      // Filter products by category
+      const categoryProducts = apiProducts.filter(product => 
+        product.category_name === category.category_name
+      );
+      
+      console.log('Category products:', categoryProducts);
+      
+      // Navigate to a detail view with all products in this category
+      // Navigate to existing route: /inventorymanager/product/:id
+      // Use category name as the id segment since detail page relies on state
+      navigate(`/inventorymanager/product/${encodeURIComponent(category.category_name)}`, { 
+        state: {
+          categoryName: category.category_name,
+          products: categoryProducts,
+          categoryImage: category.main_image
+        } 
+      });
+    } catch (error) {
+      console.error('Error fetching category products:', error);
+      toast.error('Error loading category details');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
 
   const GridView = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -470,8 +540,10 @@ const ProductList = () => {
           
           <div className="p-6">
             <div className="flex items-center justify-between mb-3">
-              <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStockStatusColor(product.current_stock, product.min_stock_level, product.max_stock_level)}`}>
-                {product.current_stock}
+              <div className="flex items-center gap-2">
+                <div className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {product.product_count || product.no_variants} products
+                </div>
               </div>
             </div>
             
@@ -481,10 +553,10 @@ const ProductList = () => {
             <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
               <div className="flex items-center gap-1">
                 <Scale className="w-4 h-4" />
-                <span>{product.no_variants} sizes</span>
+                <span>{product.product_count || product.no_variants} products</span>
               </div>
-              <span className={`px-2 py-1 rounded-full text-xs ${getStockStatusColor(product.current_stock, product.min_stock_level, product.max_stock_level)}`}>
-                {getStockStatus(product.current_stock, product.min_stock_level, product.max_stock_level)}
+              <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
+                Category
               </span>
             </div>
             
@@ -516,13 +588,10 @@ const ProductList = () => {
           <thead className="bg-gradient-to-r from-orange-50 to-red-50 border-b border-gray-200">
             <tr>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Product
+                Category
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Stock
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Variants
+                Products Count
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
@@ -553,18 +622,10 @@ const ProductList = () => {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex flex-col gap-1">
-                    <span className="font-semibold text-gray-800">{product.current_stock}</span>
-                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStockStatusColor(product.current_stock, product.min_stock_level, product.max_stock_level)}`}>
-                      {getStockStatus(product.current_stock, product.min_stock_level, product.max_stock_level)}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
                     <Scale className="w-4 h-4 text-gray-400" />
-                    <span className="font-medium text-gray-800">{product.no_variants}</span>
-                    <span className="text-sm text-gray-500">sizes</span>
+                    <span className="font-medium text-gray-800">{product.product_count || product.no_variants}</span>
+                    <span className="text-sm text-gray-500">products</span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
@@ -608,8 +669,8 @@ const ProductList = () => {
                 <List className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold mb-1">Spices Inventory</h2>
-                <p className="text-white/80">Manage your spice products and stock levels</p>
+                <h2 className="text-2xl font-bold mb-1">Product Categories</h2>
+                <p className="text-white/80">Manage your product categories and inventory</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -626,7 +687,7 @@ const ProductList = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/60" />
                 <input
                   type="text"
-                  placeholder="Search spices by name or product code..."
+                  placeholder="Search categories by name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50"
@@ -634,6 +695,13 @@ const ProductList = () => {
               </div>
               
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="p-3 rounded-lg bg-white/10 text-white/70 hover:bg-white/20 transition-colors duration-200"
+                  title="Refresh Data"
+                >
+                  <Search className="w-5 h-5" />
+                </button>
                 <button
                   onClick={() => setViewMode('table')}
                   className={cn(
@@ -667,7 +735,7 @@ const ProductList = () => {
         {filteredProducts.length > 0 ? (
           <>
             {/* Stats Bar */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -675,7 +743,7 @@ const ProductList = () => {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-800">{filteredProducts.length}</p>
-                    <p className="text-sm text-gray-600">Total Products</p>
+                    <p className="text-sm text-gray-600">Total Categories</p>
                   </div>
                 </div>
               </div>
@@ -687,37 +755,9 @@ const ProductList = () => {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-800">
-                      {filteredProducts.filter(p => p.current_stock > p.min_stock_level).length}
+                      {filteredProducts.reduce((total, category) => total + (category.product_count || category.no_variants), 0)}
                     </p>
-                    <p className="text-sm text-gray-600">High Stock</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <AlertCircle className="w-5 h-5 text-yellow-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-800">
-                      {filteredProducts.filter(p => p.current_stock >= p.min_stock_level && p.current_stock <= p.max_stock_level).length}
-                    </p>
-                    <p className="text-sm text-gray-600">Medium Stock</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                    <AlertCircle className="w-5 h-5 text-red-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-800">
-                      {filteredProducts.filter(p => p.current_stock < p.min_stock_level).length}
-                    </p>
-                    <p className="text-sm text-gray-600">Low Stock</p>
+                    <p className="text-sm text-gray-600">Total Products</p>
                   </div>
                 </div>
               </div>
@@ -733,12 +773,12 @@ const ProductList = () => {
                 <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
                   <FaSpinner className="w-8 h-8 text-white animate-spin" />
                 </div>
-                <p className="text-gray-600 font-medium">Loading spices inventory...</p>
+                <p className="text-gray-600 font-medium">Loading categories...</p>
               </div>
             ) : (
               <div className="text-center">
                 <Package className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-600 font-medium">No spices found</p>
+                <p className="text-gray-600 font-medium">No categories found</p>
                 <p className="text-sm text-gray-500 mt-2">Try adjusting your search criteria</p>
               </div>
             )}
@@ -773,12 +813,12 @@ const ProductList = () => {
                 </div>
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-800 mb-1">{productToDelete.name}</h4>
-                  <p className="text-xs text-gray-500 mt-1">Stock: {productToDelete.current_stock} units</p>
+                  <p className="text-xs text-gray-500 mt-1">Products: {productToDelete.product_count || productToDelete.no_variants} items</p>
                 </div>
               </div>
               
               <p className="text-gray-600 mb-6">
-                Are you sure you want to delete this spice product? This will permanently remove it from your inventory.
+                Are you sure you want to delete this category? This will permanently remove all products in this category from your inventory.
               </p>
               
               <div className="flex gap-3">
@@ -795,7 +835,7 @@ const ProductList = () => {
                   ) : (
                     <>
                       <Trash2 className="w-4 h-4" />
-                      Delete All Variants
+                      Delete Category
                     </>
                   )}
                 </button>
