@@ -394,9 +394,9 @@ const ProductPage = () => {
   // };
 
   return (
-    <div className="h-full w-full bg-gradient-to-br from-orange-50 via-white to-yellow-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className="h-full w-full bg-gradient-to-br from-blue-50 via-white to-blue-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-6 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-5 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-white/10"></div>
         </div>
@@ -467,7 +467,7 @@ const ProductPage = () => {
       </div>
 
       {/* Content Section */}
-      <div className="h-[calc(100%-120px)] p-6 overflow-y-auto">
+      <div className="h-[calc(100%-110px)] p-5 overflow-y-auto">
         <div className="space-y-8">
           {/* Product Information Section */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

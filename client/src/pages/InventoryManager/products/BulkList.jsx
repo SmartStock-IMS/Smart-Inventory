@@ -207,14 +207,14 @@ const BulkList = () => {
   };
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-green-50 via-white to-emerald-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className="w-full h-full bg-gradient-to-br from-blue-50 via-white to-blue-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-6 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-5 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-white/10"></div>
         </div>
         <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => navigate("/inventorymanager/bulk")}
@@ -228,13 +228,13 @@ const BulkList = () => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl px-3 py-1.5">
                 <div className="text-center">
                   <p className="text-2xl font-bold">{products.length}</p>
                   <p className="text-sm text-white/80">Items</p>
                 </div>
               </div>
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl px-3 py-1.5">
                 <div className="text-center">
                   <p className="text-2xl font-bold">{getTotalItems()}</p>
                   <p className="text-sm text-white/80">Total Qty</p>
@@ -273,7 +273,7 @@ const BulkList = () => {
       </div>
 
       {/* Content Section */}
-      <div className="h-[calc(100%-240px)] p-6 overflow-y-auto">
+      <div className="h-[calc(100%-180px)] p-5 overflow-y-auto">
         {isLoading ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center">

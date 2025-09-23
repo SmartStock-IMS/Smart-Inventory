@@ -261,14 +261,14 @@ const AddBulk = () => {
   };
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-orange-50 via-white to-yellow-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className="w-full h-full bg-gradient-to-br from-blue-50 via-white to-blue-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-orange-600 via-red-600 to-yellow-600 text-white p-6 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-5 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-white/10"></div>
         </div>
         <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                 <Layers className="w-6 h-6" />
@@ -299,7 +299,7 @@ const AddBulk = () => {
           </div>
 
           {/* Search and Filter Controls */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3">
             <div className="flex items-center gap-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/60" />
@@ -338,7 +338,7 @@ const AddBulk = () => {
       </div>
 
       {/* Main Content */}
-      <div className="h-[calc(100%-200px)] p-6 overflow-y-auto">
+      <div className="h-[calc(100%-170px)] p-5 overflow-y-auto">
         {isProcessed ? (
           <BulkList bulkList={productBulk} isProcessed={setIsProcessed} setBulk={setProductBulk} />
         ) : (

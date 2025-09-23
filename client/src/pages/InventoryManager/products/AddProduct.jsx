@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { Box, Trash2, Upload, Plus, Package, Image, Calendar, Hash, Palette, DollarSign, Archive, Clock, CheckCircle, AlertCircle, Sparkles, Star, ChevronDown } from "lucide-react";
-import { FaSpinner } from "react-icons/fa";
 
 // Category Dropdown Component
 const CategoryDropdown = ({ categories, selectedCategory, onCategoryChange, register, required = false }) => {
@@ -118,7 +117,7 @@ const cn = (...classes) => classes.filter(Boolean).join(' ');
 const AddProduct = () => {
   // init form default values
   const variantDefaultValues = {
-    name: "",
+    weight: "",
     cost_price: 0,
     selling_price: 0,
     min_stock_level: 0,
@@ -184,8 +183,35 @@ const AddProduct = () => {
   };
 
   const onSubmitVariant = (variantData) => {
+    const category = categories.find(cat => cat.category_id === selectedCategory);
+    const categoryName = category?.category_name || "";
+
+    // validations
+    if (!selectedCategory) {
+      return toast.error("Please select a category first");
+    }
+    if (!variantData.weight || String(variantData.weight).trim() === "") {
+      return toast.error("Please enter weight/size (e.g., 50g, 100g)");
+    }
+    if (!variantData.cost_price || parseFloat(variantData.cost_price) <= 0) {
+      return toast.error("Cost price must be greater than 0");
+    }
+    if (!variantData.selling_price || parseFloat(variantData.selling_price) <= 0) {
+      return toast.error("Selling price must be greater than 0");
+    }
+    if (parseFloat(variantData.selling_price) < parseFloat(variantData.cost_price)) {
+      return toast.error("Selling price cannot be less than cost price");
+    }
+    if (!variantData.current_stock || parseInt(variantData.current_stock) < 0) {
+      return toast.error("Current stock must be 0 or more");
+    }
+
+    // enforce name format: "<CategoryName> <Weight>"
+    const computedName = `${categoryName} ${variantData.weight}`.trim();
+
     const variantWithCategory = {
       ...variantData,
+      name: computedName,
       category_id: selectedCategory,
     };
 
@@ -241,9 +267,9 @@ const AddProduct = () => {
   };
 
   return (
-    <div className="h-full bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className="h-full bg-gradient-to-br from-blue-50 via-white to-blue-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white p-6 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-5 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-white/10"></div>
         </div>
@@ -266,7 +292,6 @@ const AddProduct = () => {
       {/* Main Content */}
       <div className="h-[calc(100%-96px)] p-6 overflow-y-auto">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <form onSubmit={handleSubmitProduct(onSubmitProduct)}>
             {/* Category Selection Section */}
             <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
               <div className="flex items-center gap-3 mb-4">
@@ -286,7 +311,6 @@ const AddProduct = () => {
                 />
               </div>
             </div>
-          </form>
 
           {/* Variant Details Section */}
           {selectedCategory && (
@@ -300,16 +324,17 @@ const AddProduct = () => {
 
               {/* Variant Form */}
               <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100 mb-6">
-                <form onSubmit={handleSubmitVariant(onSubmitVariant)} className="h-full">
+                <div className="h-full">
                   <div className="bg-white rounded-xl p-6 border border-gray-200 h-full flex flex-col">
-                    <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mb-6">
+                    <div className="grid grid-cols-1 gap-6 mb-6">
                       <InputWithLabel
-                        label={"Product Name"}
+                        label={"Weight / Size (e.g., 50g, 1kg)"}
                         inputType={"text"}
-                        inputId={"variantName"}
-                        inputName={"name"}
+                        inputId={"variantWeight"}
+                        inputName={"weight"}
                         register={registerVariant}
                         required={true}
+                        placeholder="Enter product weight or size"
                       />
                     </div>
                     
@@ -389,7 +414,20 @@ const AddProduct = () => {
                     
                     <div className="flex justify-end mt-auto">
                       <button
-                        type="submit"
+                        type="button"
+                        onClick={() => {
+                          const variantData = {
+                            weight: document.getElementById('variantWeight').value,
+                            cost_price: document.getElementById('variantCostPrice').value,
+                            selling_price: document.getElementById('variantSellingPrice').value,
+                            current_stock: document.getElementById('variantCurrentStock').value,
+                            shelf_life: document.getElementById('variantShelfLife').value,
+                            min_stock_level: document.getElementById('variantMinStock').value,
+                            max_stock_level: document.getElementById('variantMaxStock').value,
+                            reorder_point: document.getElementById('variantReorderPoint').value,
+                          };
+                          onSubmitVariant(variantData);
+                        }}
                         className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
                       >
                         <Plus className="w-4 h-4" />
@@ -397,7 +435,7 @@ const AddProduct = () => {
                       </button>
                     </div>
                   </div>
-                </form>
+                </div>
               </div>
 
               {/* Variants Table */}
@@ -414,6 +452,7 @@ const AddProduct = () => {
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Name</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Stock</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost Price</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Selling Price</th>
@@ -429,6 +468,7 @@ const AddProduct = () => {
                         variantDetails.map((variant, index) => (
                           <tr key={index} className="hover:bg-gray-50 transition-colors">
                             <td className="px-4 py-4 text-sm font-medium text-gray-900">{variant.name}</td>
+                            <td className="px-4 py-4 text-sm text-gray-500">{variant.weight}</td>
                             <td className="px-4 py-4 text-sm text-gray-900 font-semibold">
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 variant.current_stock <= variant.min_stock_level 
@@ -458,7 +498,7 @@ const AddProduct = () => {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="9" className="px-4 py-12 text-center">
+                          <td colSpan="10" className="px-4 py-12 text-center">
                             <div className="flex flex-col items-center gap-3">
                               <AlertCircle className="w-12 h-12 text-gray-400" />
                               <p className="text-gray-500 font-medium">No variants added yet</p>
@@ -492,7 +532,7 @@ const AddProduct = () => {
             >
               {isLoading ? (
                 <>
-                  <FaSpinner className="w-5 h-5 animate-spin" />
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   Adding Products...
                 </>
               ) : (
