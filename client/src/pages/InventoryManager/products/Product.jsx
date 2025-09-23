@@ -44,7 +44,7 @@ const InputWithLabel = ({
     <div className="space-y-2">
       <label
         htmlFor={inputId}
-        className="block text-sm font-medium text-gray-700 flex items-center gap-2"
+        className="text-sm font-medium text-gray-700 flex items-center gap-2"
       >
         {getIcon()}
         {label}
@@ -174,91 +174,71 @@ const mockProduct = {
 
 
 const ProductPage = () => {
-  // Mock location state - in real app this would come from useLocation
-  const initProduct = mockProduct;
   const location = useLocation();
-  const id = location.state?.id;
+  const navigate = useNavigate();
+  
+  // Get category data from navigation state
+  const categoryData = location.state;
+  const categoryName = categoryData?.categoryName;
+  const categoryProducts = categoryData?.products || [];
+  const categoryImage = categoryData?.categoryImage;
 
   const [isEditing, setIsEditing] = useState(false);
-  const [updatedProduct, setUpdatedProduct] = useState(initProduct);
-  const [updatedVariants, setUpdatedVariants] = useState(
-    initProduct.variants || []
-  );
+  // Initialize a minimal product object so header and image render
+  const [updatedProduct, setUpdatedProduct] = useState({
+    name: categoryName || "",
+    no_variants: categoryProducts?.length || 0,
+    main_image: categoryImage || "https://images.unsplash.com/photo-1532336414038-cf19250c5757?w=800",
+    category: categoryName || ""
+  });
+  const [updatedVariants, setUpdatedVariants] = useState(categoryProducts);
   const [isLoading, setIsLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [variantToDelete, setVariantToDelete] = useState(null);
   const [details, setDetails] = useState(null);
   
   useEffect(() => {
-    (async () => {
-      try {
-        const response = await getDetails();
-
-        const category = response.data.data.products.find(
-          (cat) => cat.product_id === id
-        );
-        const categoryName = category ? category.category_name : null;
-        
-        const product = response.data.data.products.filter(
-          (prod) => prod.category_name === categoryName
-        );     
-        
-        const noOfVariants = product && Array.isArray(product) ? product.length : 0;
-
-        const categoryImage = (name) => {
-          switch (name) {
-            case "Black Pepper":
-              return "https://images.unsplash.com/photo-1591801058986-9e28e68670f7?q=80&w=1228&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-            case "Herbs":
-              return "https://plus.unsplash.com/premium_photo-1693266635481-37de41003239?q=80&w=688&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-            case "Cinnamon":
-              return "https://images.unsplash.com/photo-1601379758962-cadba22b1e3a?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-            case "Cardamom":
-              return "https://images.unsplash.com/photo-1701190588800-67a7007492ad?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-            case "White Pepper":
-              return "https://media.istockphoto.com/id/2159774748/photo/white-pepper-or-peppercorns-in-wooden-spoon-with-bowl.jpg?s=2048x2048&w=is&k=20&c=8E_80C-Xsj_iCRfzfJSwlTKUqmxrGKy5-puKqfc8glc=";
-            case "Blends":
-              return "https://media.istockphoto.com/id/2195466084/photo/curry-powder.jpg?s=2048x2048&w=is&k=20&c=BMSyanE-Q-2Sja8JrSeATaaEHW_R_V_4icRo0H0ioXs=";
-            case "Spices":
-              return "https://images.unsplash.com/photo-1532336414038-cf19250c5757?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-          }}
-
-        setUpdatedProduct(prev => ({
-          ...prev,
-          id: id,
-          name: categoryName,
-          no_variants: noOfVariants,
-          main_image: categoryImage(categoryName)
-        }));
-        setUpdatedVariants(product);
-
-        if (response.success) {
-          setDetails(response.data);
-        }
-        console.log("Fetched details:", details);
-      } catch (error) {
-        console.error("Error fetching details", error);
-      }
-    })();
-  }, [id]);
+    if (categoryProducts && categoryProducts.length > 0) {
+      console.log("Category products loaded:", categoryProducts);
+      setUpdatedVariants(categoryProducts);
+      setUpdatedProduct(prev => ({
+        ...prev,
+        name: categoryName || prev.name,
+        no_variants: categoryProducts.length,
+        main_image: categoryImage || prev.main_image,
+        category: categoryName || prev.category
+      }));
+      setDetails({
+        categoryName: categoryName,
+        products: categoryProducts,
+        totalProducts: categoryProducts.length
+      });
+    }
+  }, [categoryProducts, categoryName]);
 
   useEffect(() => {
   console.log('updatedProduct after set:', updatedProduct );
   console.log('updatedVariants after set:', updatedVariants );
 }, [updatedProduct, updatedVariants]);
 
-  // handle if product is missing
-  if (!initProduct || Object.keys(initProduct).length === 0) {
+  // handle if category data is missing
+  if (!categoryData || !categoryProducts || categoryProducts.length === 0) {
     return (
       <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-red-50 to-red-100 rounded-3xl">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-500" />
           <h3 className="text-xl font-bold text-red-700 mb-2">
-            Product Not Found
+            Category Not Found
           </h3>
           <p className="text-red-600">
-            The requested product could not be loaded
+            The requested category could not be loaded
           </p>
+          <button
+            onClick={() => navigate('/inventorymanager/productlist')}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Back to Categories
+          </button>
         </div>
       </div>
     );
@@ -288,14 +268,30 @@ const ProductPage = () => {
     const updatePromises = updatedVariants.map(async (variant) => {
       const updateData = {
         name: variant.name,
-        cost_price: variant.cost_price,
-        selling_price: variant.selling_price,
-        min_stock_level: variant.min_stock_level,
-        max_stock_level: variant.max_stock_level,
-        reorder_point: variant.reorder_point,
-        shelf_life: variant.shelf_life
+        cost_price: variant.cost_price !== undefined && variant.cost_price !== null
+          ? parseFloat(variant.cost_price)
+          : undefined,
+        selling_price: variant.selling_price !== undefined && variant.selling_price !== null
+          ? parseFloat(variant.selling_price)
+          : undefined,
+        // Backend expects quantity for inventory; map current_stock -> quantity
+        quantity: variant.current_stock !== undefined && variant.current_stock !== null
+          ? parseInt(variant.current_stock)
+          : undefined,
+        min_stock_level: variant.min_stock_level !== undefined && variant.min_stock_level !== null
+          ? parseInt(variant.min_stock_level)
+          : undefined,
+        max_stock_level: variant.max_stock_level !== undefined && variant.max_stock_level !== null
+          ? parseInt(variant.max_stock_level)
+          : undefined,
+        reorder_point: variant.reorder_point !== undefined && variant.reorder_point !== null
+          ? parseInt(variant.reorder_point)
+          : undefined,
+        shelf_life: variant.shelf_life !== undefined && variant.shelf_life !== null
+          ? parseInt(variant.shelf_life)
+          : undefined
       };
-      
+
       return updateProduct(variant.product_id, updateData);
     });
 
@@ -398,9 +394,9 @@ const ProductPage = () => {
   // };
 
   return (
-    <div className="h-full w-full bg-gradient-to-br from-orange-50 via-white to-yellow-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className="h-full w-full bg-gradient-to-br from-blue-50 via-white to-blue-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-6 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-5 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-white/10"></div>
         </div>
@@ -410,13 +406,19 @@ const ProductPage = () => {
               <Package className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold mb-1">Product Details</h2>
+              <h2 className="text-2xl font-bold mb-1">{categoryName} - Product Variants</h2>
               <p className="text-white/80">
-                View and manage spice product information
+                View and manage {categoryProducts?.length || 0} product variants in this category
               </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/inventorymanager/productlist')}
+              className="px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors flex items-center gap-2"
+            >
+              ← Back to Categories
+            </button>
             <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
               <Sparkles className="w-5 h-5 animate-pulse" />
             </div>
@@ -465,7 +467,7 @@ const ProductPage = () => {
       </div>
 
       {/* Content Section */}
-      <div className="h-[calc(100%-120px)] p-6 overflow-y-auto">
+      <div className="h-[calc(100%-110px)] p-5 overflow-y-auto">
         <div className="space-y-8">
           {/* Product Information Section */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -480,7 +482,7 @@ const ProductPage = () => {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Product Image */}
                 <div className="lg:col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
                     <Image className="w-4 h-4" />
                     Product Image
                   </label>

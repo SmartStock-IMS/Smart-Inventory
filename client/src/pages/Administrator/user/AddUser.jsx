@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Loader2, AlertCircle, UserPlus, User, Mail, Phone, MapPin, Shield, Lock, CheckCircle, Sparkles, Camera, CreditCard } from "lucide-react";
-import axiosInstance from '../../../../src/utills/axiosinstance.jsx';
+import axiosInstance from '../../../utills/axiosinstance';
 
 const AddUser = () => {
     const [loading, setLoading] = useState(false);

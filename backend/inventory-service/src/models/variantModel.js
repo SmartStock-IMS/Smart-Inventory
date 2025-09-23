@@ -1,5 +1,6 @@
 const BaseModel = require('./baseModel');
 
+// Updated at: 2025-09-22
 class Variant extends BaseModel {
   constructor() {
     super('product_category');
@@ -76,7 +77,49 @@ class Variant extends BaseModel {
       throw error;
     }
   }
+  */
 
+  // Category-specific methods
+  async updateCategory(id, categoryData) {
+    try {
+      const result = await this.query(
+        `UPDATE product_category 
+         SET category_name = $1, description = $2, pic_url = $3 
+         WHERE category_id = $4 
+         RETURNING *`,
+        [
+          categoryData.category_name || null,
+          categoryData.description || null,
+          categoryData.pic_url || null,
+          id
+        ]
+      );
+
+      if (result.length === 0) {
+        throw new Error(`Category with id ${id} not found or no changes made`);
+      }
+
+      return result[0];
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deleteCategory(id) {
+    try {
+      const result = await this.query(
+        `DELETE FROM product_category 
+         WHERE category_id = $1 
+         RETURNING *`,
+        [id]
+      );
+      return result[0];
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Original variant methods
   async update(id, updateData) {
     try {
       const result = await this.callProcedure('sp_update_variant', [
@@ -114,8 +157,21 @@ class Variant extends BaseModel {
       throw error;
     }
   }
-  */
 
+  async deleteCategory(id) {
+    try {
+      // Use the query method from BaseModel to execute raw SQL
+      const result = await this.query(
+        `DELETE FROM product_category 
+         WHERE category_id = $1
+         RETURNING *`,
+        [id]
+      );
+      return result[0];
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = Variant;
