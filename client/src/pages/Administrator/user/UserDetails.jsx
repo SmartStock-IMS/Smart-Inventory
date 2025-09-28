@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Phone, MapPin, Building, Globe, User, Search, ArrowLeft, Calendar, Edit3, Star, Users } from 'lucide-react';
-import axiosInstance from '../../../../src/utills/axiosinstance.jsx';
+import axiosInstance from '../../../utills/axiosInstance';
 
 const UserDetails = () => {
     const navigate = useNavigate();

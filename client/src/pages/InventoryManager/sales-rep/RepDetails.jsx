@@ -4,6 +4,7 @@ import { ChevronLeft, User, Mail, Phone, MapPin, Hash, Edit, Target, TrendingUp,
 import { FaSpinner } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
 
 // Mock Avatar component for demo
 const Avatar = ({ name, size = "lg", className = "" }) => {
@@ -21,78 +22,23 @@ const Avatar = ({ name, size = "lg", className = "" }) => {
   );
 };
 
-// Mock sales reps data matching SalesRepList
-const mockSalesReps = [
-  {
-    emp_code: "EMP001",
-    sales_area: "Mumbai Central",
-    commission_rate: 5.5,
-    target_amount: 500000,
-    achievements: 420000,
-    join_date: "2022-01-15",
-    status: "Active",
-    is_active: true,
-    monthly_performance: [45000, 52000, 48000, 55000, 42000, 47000],
-    total_clients: 25,
-    active_deals: 8,
-    closed_deals: 17,
-    users: {
-      name: "Arjun Singh",
-      email: "arjun.singh@company.com",
-      phone: "+91 98765 43210",
-      contact: "+91 98765 43210",
-      address: "Plot 123, Sector 15, Navi Mumbai, Maharashtra 400614"
-    }
-  },
-  {
-    emp_code: "EMP002",
-    sales_area: "Delhi North",
-    commission_rate: 6.0,
-    target_amount: 450000,
-    achievements: 465000,
-    join_date: "2021-08-20",
-    status: "Active",
-    is_active: true,
-    monthly_performance: [38000, 42000, 51000, 48000, 55000, 61000],
-    total_clients: 32,
-    active_deals: 12,
-    closed_deals: 28,
-    users: {
-      name: "Sneha Patel",
-      email: "sneha.patel@company.com",
-      phone: "+91 87654 32109",
-      contact: "+91 87654 32109",
-      address: "House 456, Block A, Rohini, New Delhi 110085"
-    }
-  },
-  {
-    emp_code: "EMP003",
-    sales_area: "Bangalore East",
-    commission_rate: 5.8,
-    target_amount: 600000,
-    achievements: 580000,
-    join_date: "2020-12-10",
-    status: "Active",
-    is_active: true,
-    monthly_performance: [62000, 58000, 65000, 72000, 68000, 75000],
-    total_clients: 40,
-    active_deals: 15,
-    closed_deals: 35,
-    users: {
-      name: "Rajesh Kumar",
-      email: "rajesh.kumar@company.com",
-      phone: "+91 76543 21098",
-      contact: "+91 76543 21098",
-      address: "Flat 789, Whitefield, Bangalore, Karnataka 560066"
-    }
-  }
-];
 
-// Mock services
-// const toast = {
-//   success: (message) => console.log(`✅ ${message}`),
-//   error: (message) => console.log(`❌ ${message}`)
-// };
+
+const getSalesRepDetails = async () => {  
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(
+      "http://localhost:3000/api/users/sales-staff",
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("API error:", error.response?.data || error.message);
+    return { success: false, message: error.response?.data?.message || error.message };
+  }
+};
 
 const RepDetails = () => {
   const { repCode } = useParams();
@@ -104,31 +50,63 @@ const RepDetails = () => {
   const [editForm, setEditForm] = useState({});
 
   useEffect(() => {
-    const fetchSalesRep = () => {
-      try {
-        const foundRep = mockSalesReps.find(r => r.emp_code === repCode);
-        if (foundRep) {
-          setRep(foundRep);
-          setEditForm({
-            name: foundRep.users.name,
-            email: foundRep.users.email,
-            phone: foundRep.users.phone,
-            address: foundRep.users.address,
-            sales_area: foundRep.sales_area,
-            commission_rate: foundRep.commission_rate,
-            target_amount: foundRep.target_amount
-          });
-        } else {
-          toast.error("Sales representative not found");
-          navigate("/inventorymanager/sales-rep");
+    const fetchSalesRep = async () => {
+  try {
+    const result = await getSalesRepDetails();
+    
+    if (result.success && result.data) {
+      // Map the API data to match your component structure
+      const salesRepsData = result.data.data.users.map((user) => ({
+        emp_code: user.sales_staff_id,
+        commission_rate: parseFloat(user.performance_rating) || 0,
+        target_amount: parseFloat(user.target) || 0,
+        achievements: parseFloat(user.achieved) || 0,
+        join_date: user.join_date || new Date().toISOString(),
+        status: user.status || "Active",
+        is_active: true,
+        monthly_performance: [0, 0, 0, 0, 0, 0], // Default values or calculate from API
+        total_clients: 0, // Add from API if available
+        active_deals: 0, // Add from API if available  
+        closed_deals: 0, // Add from API if available
+        users: {
+          name: user.full_name,
+          email: user.email,
+          phone: user.phone,
+          contact: user.phone,
+          address: user.address || "No address available"  // Add from API if available
         }
-      } catch (error) {
-        console.error("Error fetching sales rep:", error);
-        toast.error("Error loading sales representative details");
-      } finally {
-        setIsLoading(false);
+      }));
+
+      // Find the specific rep using the repCode parameter
+      const foundRep = salesRepsData.find(r => r.emp_code === repCode);
+      
+      if (foundRep) {
+        setRep(foundRep);
+        setEditForm({
+          name: foundRep.users.name,
+          email: foundRep.users.email,
+          phone: foundRep.users.phone,
+          address: foundRep.users.address,
+          commission_rate: foundRep.commission_rate,
+          target_amount: foundRep.target_amount
+        });
+      } else {
+        toast.error("Sales representative not found");
+        navigate("/inventorymanager/sales-rep");
       }
-    };
+    } else {
+      console.error("Failed to fetch sales reps:", result.message);
+      toast.error("Error loading sales representative details");
+      navigate("/inventorymanager/sales-rep");
+    }
+  } catch (error) {
+    console.error("Error fetching sales rep:", error);
+    toast.error("Error loading sales representative details");
+    navigate("/inventorymanager/sales-rep");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
     setTimeout(fetchSalesRep, 1200);
   }, [repCode]);
@@ -150,7 +128,6 @@ const RepDetails = () => {
         phone: editForm.phone,
         address: editForm.address
       },
-      sales_area: editForm.sales_area,
       commission_rate: editForm.commission_rate,
       target_amount: editForm.target_amount
     }));
@@ -162,7 +139,6 @@ const RepDetails = () => {
       email: rep.users.email,
       phone: rep.users.phone,
       address: rep.users.address,
-      sales_area: rep.sales_area,
       commission_rate: rep.commission_rate,
       target_amount: rep.target_amount
     });
@@ -221,7 +197,7 @@ const RepDetails = () => {
   return (
     <div className="h-full w-full bg-gradient-to-br from-green-50 via-white to-emerald-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-6 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-6 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-white/10"></div>
         </div>
@@ -279,7 +255,6 @@ const RepDetails = () => {
                   className="mx-auto mb-4"
                 />
                 <h2 className="text-xl font-bold text-gray-900">{rep.users.name}</h2>
-                <p className="text-gray-600 font-medium">{rep.sales_area}</p>
                 <div className="flex items-center justify-center gap-2 mt-3">
                   <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                     rep.is_active 
@@ -489,7 +464,7 @@ const RepDetails = () => {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+                {/* <div>
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-600 mb-3">
                     <MapPin className="w-4 h-4" />
                     Sales Area
@@ -509,7 +484,7 @@ const RepDetails = () => {
                       <p className="text-gray-900 font-semibold">{rep.sales_area}</p>
                     </div>
                   )}
-                </div>
+                </div> */}
                 
                 <div>
                   <label className="flex items-center gap-2 text-sm font-medium text-gray-600 mb-3">

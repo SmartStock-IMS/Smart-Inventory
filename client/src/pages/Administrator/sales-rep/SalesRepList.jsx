@@ -15,178 +15,23 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Contact, User, Mail, MapPin, Hash, Eye, Trash2, Users, Building, Phone } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
+import axios from "axios";
 
-// Mock sales reps data for testing since backend isn't connected
-const mockSalesReps = [
-  {
-    emp_code: "EMP001",
-    sales_area: "Mumbai Central",
-    commission_rate: 5.5,
-    target_amount: 500000,
-    achievements: 420000,
-    join_date: "2022-01-15",
-    status: "Active",
-    users: {
-      name: "Arjun Singh",
-      email: "arjun.singh@company.com",
-      phone: "+91 98765 43210"
-    }
-  },
-  {
-    emp_code: "EMP002",
-    sales_area: "Delhi North",
-    commission_rate: 6.0,
-    target_amount: 450000,
-    achievements: 465000,
-    join_date: "2021-08-20",
-    status: "Active",
-    users: {
-      name: "Sneha Patel",
-      email: "sneha.patel@company.com",
-      phone: "+91 87654 32109"
-    }
-  },
-  {
-    emp_code: "EMP003",
-    sales_area: "Bangalore East",
-    commission_rate: 5.8,
-    target_amount: 600000,
-    achievements: 580000,
-    join_date: "2020-12-10",
-    status: "Active",
-    users: {
-      name: "Rajesh Kumar",
-      email: "rajesh.kumar@company.com",
-      phone: "+91 76543 21098"
-    }
-  },
-  {
-    emp_code: "EMP004",
-    sales_area: "Chennai South",
-    commission_rate: 5.2,
-    target_amount: 400000,
-    achievements: 380000,
-    join_date: "2022-03-05",
-    status: "Active",
-    users: {
-      name: "Priya Sharma",
-      email: "priya.sharma@company.com",
-      phone: "+91 65432 10987"
-    }
-  },
-  {
-    emp_code: "EMP005",
-    sales_area: "Pune West",
-    commission_rate: 6.2,
-    target_amount: 550000,
-    achievements: 610000,
-    join_date: "2019-11-18",
-    status: "Active",
-    users: {
-      name: "Vikram Gupta",
-      email: "vikram.gupta@company.com",
-      phone: "+91 54321 09876"
-    }
-  },
-  {
-    emp_code: "EMP006",
-    sales_area: "Hyderabad Central",
-    commission_rate: 5.7,
-    target_amount: 480000,
-    achievements: 445000,
-    join_date: "2021-06-12",
-    status: "Active",
-    users: {
-      name: "Kavita Joshi",
-      email: "kavita.joshi@company.com",
-      phone: "+91 43210 98765"
-    }
-  },
-  {
-    emp_code: "EMP007",
-    sales_area: "Kolkata East",
-    commission_rate: 5.5,
-    target_amount: 420000,
-    achievements: 390000,
-    join_date: "2022-07-08",
-    status: "Active",
-    users: {
-      name: "Amit Roy",
-      email: "amit.roy@company.com",
-      phone: "+91 32109 87654"
-    }
-  },
-  {
-    emp_code: "EMP008",
-    sales_area: "Ahmedabad West",
-    commission_rate: 6.1,
-    target_amount: 520000,
-    achievements: 540000,
-    join_date: "2020-09-25",
-    status: "Active",
-    users: {
-      name: "Meera Shah",
-      email: "meera.shah@company.com",
-      phone: "+91 21098 76543"
-    }
-  },
-  {
-    emp_code: "EMP009",
-    sales_area: "Jaipur Central",
-    commission_rate: 5.3,
-    target_amount: 380000,
-    achievements: 365000,
-    join_date: "2023-01-20",
-    status: "Active",
-    users: {
-      name: "Rohit Agarwal",
-      email: "rohit.agarwal@company.com",
-      phone: "+91 10987 65432"
-    }
-  },
-  {
-    emp_code: "EMP010",
-    sales_area: "Lucknow North",
-    commission_rate: 5.9,
-    target_amount: 460000,
-    achievements: 475000,
-    join_date: "2021-04-15",
-    status: "Active",
-    users: {
-      name: "Sonal Verma",
-      email: "sonal.verma@company.com",
-      phone: "+91 09876 54321"
-    }
-  },
-  {
-    emp_code: "EMP011",
-    sales_area: "Coimbatore South",
-    commission_rate: 5.4,
-    target_amount: 350000,
-    achievements: 340000,
-    join_date: "2022-10-12",
-    status: "Active",
-    users: {
-      name: "Karthik Raman",
-      email: "karthik.raman@company.com",
-      phone: "+91 87659 43210"
-    }
-  },
-  {
-    emp_code: "EMP012",
-    sales_area: "Indore Central",
-    commission_rate: 5.6,
-    target_amount: 410000,
-    achievements: 425000,
-    join_date: "2020-05-30",
-    status: "Active",
-    users: {
-      name: "Neha Malhotra",
-      email: "neha.malhotra@company.com",
-      phone: "+91 76549 32108"
-    }
+const getSalesRepDetails= async()=>{  
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(
+      "http://localhost:3000/api/users/sales-staff",
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("API error:", error.response?.data || error.message);
+    return { success: false, message: error.response?.data?.message || error.message };
   }
-];
+};
 
 const SalesRepList = () => {
   const [loading, setLoading] = useState(true);
@@ -200,26 +45,32 @@ const SalesRepList = () => {
 
   const fetchSalesReps = async () => {
     try {
-      // Use mock data directly for frontend UI testing since backend isn't connected
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate loading time
-      
-      console.log("Loading mock sales reps data for UI testing");
-      setSalesReps(mockSalesReps);
-      
-      // Uncomment below when backend is ready:
-      /*
-      const result = await getAllSalesReps();
-      console.log("result: ", result);
+
+      const result = await getSalesRepDetails();
+
+      console.log("result: ", result.data.data.users);
+      const data =result.data.data.users.map((user)=>({
+        emp_code:user.sales_staff_id,
+        commission_rate: parseFloat(user.performance_rating),
+        target_amount:user.target,
+        achievements:user.achieved,
+        join_date:user.join_date,
+        status:user.status,
+        users:{
+          name:user.full_name,
+          email:user.email,
+          phone:user.phone
+        }
+      }))
+      setSalesReps(data); 
       if (result.success && result.data) {
-        setSalesReps(result.data);
+        //tSalesReps(result.data);
       } else {
         console.error("Failed to fetch sales reps:", result.message);
-        setSalesReps(mockSalesReps);
       }
-      */
+      
     } catch (error) {
       console.error("Error loading sales reps:", error);
-      setSalesReps(mockSalesReps);
     } finally {
       setLoading(false);
     }
@@ -229,19 +80,19 @@ const SalesRepList = () => {
     navigate(`/administrator/sales-rep/${emp_code}`);
   };
 
-//   const handleDelete = async (empCode) => {
-//     try {
-//       // Simulate delete operation
-//       await new Promise(resolve => setTimeout(resolve, 1000));
-//       toast.success("Sales representative removed successfully");
+  const handleDelete = async (empCode) => {
+    try {
+      // Simulate delete operation
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success("Sales representative removed successfully");
       
-//       // Remove from current list (mock behavior)
-//       setSalesReps(prevReps => prevReps.filter(rep => rep.emp_code !== empCode));
-//     } catch (error) {
-//       console.error("Error remove sales rep: ", error);
-//       toast.error("Error removing sales representative");
-//     }
-//   };
+      // Remove from current list (mock behavior)
+      setSalesReps(prevReps => prevReps.filter(rep => rep.emp_code !== empCode));
+    } catch (error) {
+      console.error("Error remove sales rep: ", error);
+      toast.error("Error removing sales representative");
+    }
+  };
 
   // Filter sales reps based on search query
   const filteredSalesReps = (salesReps || []).filter((rep) => {
@@ -250,8 +101,7 @@ const SalesRepList = () => {
     return (
       rep.emp_code.toLowerCase().includes(query) ||
       rep.users?.name?.toLowerCase().includes(query) ||
-      rep.users?.email?.toLowerCase().includes(query) ||
-      rep.sales_area?.toLowerCase().includes(query)
+      rep.users?.email?.toLowerCase().includes(query)
     );
   });
 
@@ -259,18 +109,7 @@ const SalesRepList = () => {
     return name?.split(' ').map(n => n.charAt(0)).join('').toUpperCase() || '';
   };
 
-  const getAreaColor = (area) => {
-    const colors = [
-      'bg-blue-100 text-blue-800 border-blue-200',
-      'bg-green-100 text-green-800 border-green-200',
-      'bg-purple-100 text-purple-800 border-purple-200',
-      'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'bg-pink-100 text-pink-800 border-pink-200',
-      'bg-indigo-100 text-indigo-800 border-indigo-200'
-    ];
-    const hash = area?.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0) || 0;
-    return colors[Math.abs(hash) % colors.length];
-  };
+  
 
   if (loading) {
     return (
@@ -317,7 +156,7 @@ const SalesRepList = () => {
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/60" />
                 <input
                   type="text"
-                  placeholder="Search by name, code, email, or area..."
+                  placeholder="Search by name, code or email..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50"
@@ -331,7 +170,7 @@ const SalesRepList = () => {
       {/* Content Section */}
       <div className="h-[calc(100%-200px)] p-6 overflow-y-auto">
         {/* Stats Bar */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-xl p-4 border-2 border-blue-500 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -343,21 +182,7 @@ const SalesRepList = () => {
               </div>
             </div>
           </div>
-          
-          <div className="bg-white rounded-xl p-4 border-2 border-blue-500 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Building className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800">
-                  {new Set((salesReps || []).map(rep => rep.sales_area)).size}
-                </p>
-                <p className="text-sm text-gray-600">Sales Areas</p>
-              </div>
-            </div>
-          </div>
-          
+        
           <div className="bg-white rounded-xl p-4 border-2 border-blue-500 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -365,7 +190,14 @@ const SalesRepList = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-800">
-                  Rs {(salesReps || []).reduce((sum, rep) => sum + (rep.target_amount || 0), 0).toLocaleString()}
+                  Rs {new Intl.NumberFormat('en', { notation: 'compact' }).format(
+                    (salesReps || []).reduce(
+                      (sum, rep) => sum + Number(rep.target_amount || 0),
+                      0
+                    )
+                  )}
+
+
                 </p>
                 <p className="text-sm text-gray-600">Total Targets</p>
               </div>
@@ -379,7 +211,13 @@ const SalesRepList = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-800">
-                  Rs {(salesReps || []).reduce((sum, rep) => sum + (rep.achievements || 0), 0).toLocaleString()}
+                  Rs {new Intl.NumberFormat('en', { notation: 'compact' }).format(
+                    (salesReps || []).reduce(
+                      (sum, rep) => sum + Number(rep.achievements || 0),
+                      0
+                    )
+                  )}
+
                 </p>
                 <p className="text-sm text-gray-600">Total Achieved</p>
               </div>
@@ -412,12 +250,12 @@ const SalesRepList = () => {
                         Contact
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {/* <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <div className="flex items-center gap-2">
                         <MapPin className="w-4 h-4" />
                         Sales Area
                       </div>
-                    </th>
+                    </th> */}
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Target & Achievement
                     </th>
@@ -460,11 +298,11 @@ const SalesRepList = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      {/* <td className="px-6 py-4">
                         <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium border ${getAreaColor(rep.sales_area)}`}>
                           {rep.sales_area || 'N/A'}
                         </span>
-                      </td>
+                      </td> */}
                       <td className="px-6 py-4">
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
@@ -520,7 +358,7 @@ const SalesRepList = () => {
                             <Eye className="w-4 h-4" />
                             View
                           </button>
-                          {/* <Dialog>
+                          <Dialog>
                             <DialogTrigger asChild>
                               <button className="px-4 py-2 text-red-600 border border-red-200 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2">
                                 <Trash2 className="w-4 h-4" />
@@ -557,7 +395,7 @@ const SalesRepList = () => {
                                 </DialogClose>
                               </div>
                             </DialogContent>
-                          </Dialog> */}
+                          </Dialog>
                         </div>
                       </td>
                     </tr>

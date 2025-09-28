@@ -170,21 +170,15 @@ const ProductList = () => {
         setDataSource('api');
         return true;
       } else {
-        console.log('No API data available, check API response structure');
-        return false;
-      }
+        setAllProducts([]);}
     } catch (error) {
-      console.error('Error fetching products from API:', error);
-      return false;
-    } finally {
-      setIsLoading(false);
+      console.error("Error fetching products:", error);
+      setAllProducts([]);
     }
-  };
+  })();
 
-  // Initialize data on component mount
-  useEffect(() => {
-    fetchAndProcessProducts();
-  }, []);
+}, []);
+
 
   const handleRemoveProduct = async (categoryName) => {
     // Prevent deletion if not using API data
