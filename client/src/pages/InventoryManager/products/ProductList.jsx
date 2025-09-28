@@ -4,163 +4,6 @@ import { Search, ExternalLink, Trash2, List, Sparkles, Package, Scale, Eye, Aler
 import { FaSpinner } from "react-icons/fa";
 import axios from "axios";
 
-
-// Mock spice products data
-const mockSpiceProducts = [
-  {
-    id: "SP001",
-    name: "Premium Turmeric Powder",
-    main_image: "https://images.unsplash.com/photo-1615485925600-97237c4fc1ec?w=400",
-    no_variants: 3,
-    variants: [
-      { product_code: "TUR-100G", weight: "100g", price: 45 },
-      { product_code: "TUR-250G", weight: "250g", price: 95 },
-      { product_code: "TUR-500G", weight: "500g", price: 180 }
-    ],
-    description: "Premium quality turmeric powder with high curcumin content",
-    stock_quantity: 250
-  },
-  {
-    id: "SP002",
-    name: "Organic Black Pepper",
-    main_image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400",
-    no_variants: 4,
-    variants: [
-      { product_code: "BP-50G", weight: "50g", price: 120 },
-      { product_code: "BP-100G", weight: "100g", price: 220 },
-      { product_code: "BP-250G", weight: "250g", price: 500 },
-      { product_code: "BP-500G", weight: "500g", price: 950 }
-    ],
-    description: "Organic black pepper from Kerala plantations",
-    stock_quantity: 180
-  },
-  {
-    id: "SP003",
-    name: "Kashmiri Red Chili Powder",
-    main_image: "https://images.unsplash.com/photo-1583479964730-28532b684e3d?w=400",
-    no_variants: 2,
-    variants: [
-      { product_code: "KRC-200G", weight: "200g", price: 85 },
-      { product_code: "KRC-500G", weight: "500g", price: 200 }
-    ],
-    description: "Mild heat Kashmiri red chili powder for vibrant color",
-    stock_quantity: 320
-  },
-  {
-    id: "SP004",
-    name: "Garam Masala Blend",
-    main_image: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400",
-    no_variants: 3,
-    variants: [
-      { product_code: "GM-100G", weight: "100g", price: 75 },
-      { product_code: "GM-200G", weight: "200g", price: 140 },
-      { product_code: "GM-500G", weight: "500g", price: 320 }
-    ],
-    description: "Traditional blend of aromatic whole spices",
-    stock_quantity: 150
-  },
-  {
-    id: "SP005",
-    name: "Whole Cumin Seeds",
-    main_image: "https://images.unsplash.com/photo-1596040033676-ba0e24eb5e0d?w=400",
-    no_variants: 3,
-    variants: [
-      { product_code: "CUM-100G", weight: "100g", price: 65 },
-      { product_code: "CUM-250G", weight: "250g", price: 150 },
-      { product_code: "CUM-500G", weight: "500g", price: 280 }
-    ],
-    description: "Premium quality whole cumin seeds",
-    stock_quantity: 200
-  },
-  {
-    id: "SP006",
-    name: "Coriander Seeds",
-    main_image: "https://images.unsplash.com/photo-1585742244019-7e1e6a502106?w=400",
-    no_variants: 2,
-    variants: [
-      { product_code: "COR-200G", weight: "200g", price: 55 },
-      { product_code: "COR-500G", weight: "500g", price: 130 }
-    ],
-    description: "Fresh aromatic coriander seeds",
-    stock_quantity: 175
-  },
-  {
-    id: "SP007",
-    name: "Cinnamon Sticks",
-    main_image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400",
-    no_variants: 2,
-    variants: [
-      { product_code: "CIN-50G", weight: "50g", price: 180 },
-      { product_code: "CIN-100G", weight: "100g", price: 340 }
-    ],
-    description: "Premium Ceylon cinnamon sticks",
-    stock_quantity: 95
-  },
-  {
-    id: "SP008",
-    name: "Star Anise",
-    main_image: "https://images.unsplash.com/photo-1571091655789-405eb7a3a3a8?w=400",
-    no_variants: 2,
-    variants: [
-      { product_code: "SA-25G", weight: "25g", price: 90 },
-      { product_code: "SA-50G", weight: "50g", price: 170 }
-    ],
-    description: "Premium star anise for aromatic cooking",
-    stock_quantity: 60
-  },
-  {
-    id: "SP009",
-    name: "Cardamom Pods (Green)",
-    main_image: "https://images.unsplash.com/photo-1609501676725-7186f734d4c5?w=400",
-    no_variants: 3,
-    variants: [
-      { product_code: "CAR-25G", weight: "25g", price: 220 },
-      { product_code: "CAR-50G", weight: "50g", price: 420 },
-      { product_code: "CAR-100G", weight: "100g", price: 800 }
-    ],
-    description: "Premium green cardamom pods from Western Ghats",
-    stock_quantity: 80
-  },
-  {
-    id: "SP010",
-    name: "Biryani Masala",
-    main_image: "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=400",
-    no_variants: 2,
-    variants: [
-      { product_code: "BM-100G", weight: "100g", price: 85 },
-      { product_code: "BM-250G", weight: "250g", price: 200 }
-    ],
-    description: "Authentic biryani masala blend",
-    stock_quantity: 130
-  },
-  {
-    id: "SP011",
-    name: "Mustard Seeds (Yellow)",
-    main_image: "https://images.unsplash.com/photo-1471195653727-34409dfca46a?w=400",
-    no_variants: 2,
-    variants: [
-      { product_code: "MS-100G", weight: "100g", price: 45 },
-      { product_code: "MS-250G", weight: "250g", price: 105 }
-    ],
-    description: "Fresh yellow mustard seeds",
-    stock_quantity: 220
-  },
-  {
-    id: "SP012",
-    name: "Fenugreek Seeds",
-    main_image: "https://images.unsplash.com/photo-1596735886653-ac2327c39d12?w=400",
-    no_variants: 2,
-    variants: [
-      { product_code: "FEN-100G", weight: "100g", price: 55 },
-      { product_code: "FEN-250G", weight: "250g", price: 125 }
-    ],
-    description: "Premium quality fenugreek seeds",
-    stock_quantity: 140
-  }
-];
-
-
-
 const getProducts = async () => {
   try {
     const token = localStorage.getItem("token");
@@ -317,52 +160,14 @@ const ProductList = () => {
         }));
         setAllProducts(mapped);
       } else {
-        setAllProducts(mockSpiceProducts);
-      }
+        setAllProducts([]);}
     } catch (error) {
-      setAllProducts(mockSpiceProducts);
+      console.error("Error fetching products:", error);
+      setAllProducts([]);
     }
   })();
 
-  // (async () => {
-  //   try {
-  //     const response = await getAllProducts(cursor, limit);
-  //     if (response.data && response.data.products) {
-  //       // Map API products to frontend format
-  //       const mapped = response.data.products.map(mapProductsToFrontend,categoryCounts);
-  //       setProducts(mapped);
-  //       setHasMore(false); // Set according to your pagination logic
-  //     } else {
-  //       setProducts(mockSpiceProducts.slice(0, limit));
-  //       setHasMore(mockSpiceProducts.length > limit);
-  //     }
-  //   } catch (error) {
-  //     setProducts(mockSpiceProducts.slice(0, limit));
-  //     setHasMore(mockSpiceProducts.length > limit);
-  //   }
-  // })();
 }, []);
-
-  // const fetchProducts = async (cursor, limit) => {
-  //   try {
-  //     const response = await getAllProducts(cursor, limit);
-  //     if (response.data && response.data.length > 0) {
-  //       setProducts(response.data);
-  //       setHasMore(response.nextCursor !== null);
-  //     } else {
-  //       const startIndex = cursor;
-  //       const endIndex = cursor + limit;
-  //       setProducts(mockSpiceProducts.slice(startIndex, endIndex));
-  //       setHasMore(endIndex < mockSpiceProducts.length);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching products, using mock data:", error);
-  //     const startIndex = cursor;
-  //     const endIndex = cursor + limit;
-  //     setProducts(mockSpiceProducts.slice(startIndex, endIndex));
-  //     setHasMore(endIndex < mockSpiceProducts.length);
-  //   }
-  // };
 
   const handleRemoveProduct = async (categoryName) => {
   try {

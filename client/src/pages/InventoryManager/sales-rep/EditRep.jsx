@@ -90,6 +90,22 @@ const mockSalesReps = [
   }
 ];
 
+const getSalesRepDetails = async () => {  
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(
+      "http://localhost:3000/api/users/sales-staff",
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("API error:", error.response?.data || error.message);
+    return { success: false, message: error.response?.data?.message || error.message };
+  }
+};
+
 // Mock Avatar component
 const Avatar = ({ firstName, lastName, imageUrl, editable, size, onImageUpload }) => {
   const initials = `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
@@ -156,36 +172,77 @@ const EditRep = () => {
   });
 
   useEffect(() => {
-    const fetchSalesRep = () => {
-      try {
-        const foundRep = mockSalesReps.find(r => r.emp_code === repCode);
-        if (foundRep) {
-          setRep(foundRep);
-          setFormData({
-            firstName: foundRep.users.first_name || foundRep.users.name.split(' ')[0] || '',
-            lastName: foundRep.users.last_name || foundRep.users.name.split(' ').slice(1).join(' ') || '',
-            nicNo: foundRep.users.nic_no || '',
-            email: foundRep.users.email || '',
-            phone: foundRep.users.phone || foundRep.users.contact || '',
-            address: foundRep.users.address || '',
-            city: foundRep.users.city || '',
-            state: foundRep.users.state || '',
-            zipCode: foundRep.users.zip_code || '',
-            salesRegion: foundRep.sales_area || '',
-            status: foundRep.status || 'Active',
-            photo: null
-          });
-        } else {
-          toast.error("Sales representative not found");
-          navigate("/inventorymanager/sales-rep");
+    const fetchSalesRep = async () => {
+  try {
+    // Get data from API instead of using mockSalesReps
+    const result = await getSalesRepDetails();
+    
+    if (result.success && result.data) {
+      // Map the API data to match your component structure
+      const salesRepsData = result.data.data.users.map((user) => ({
+        emp_code: user.sales_staff_id,
+        sales_area: "N/A", // Add default or get from API if available
+        commission_rate: parseFloat(user.performance_rating) || 0,
+        target_amount: parseFloat(user.target) || 0,
+        achievements: parseFloat(user.achieved) || 0,
+        join_date: user.join_date || new Date().toISOString(),
+        status: user.status || "Active",
+        is_active: true,
+        monthly_performance: [0, 0, 0, 0, 0, 0], // Default values or calculate from API
+        total_clients: 0, // Add from API if available
+        active_deals: 0, // Add from API if available  
+        closed_deals: 0, // Add from API if available
+        users: {
+          name: user.full_name,
+          email: user.email,
+          phone: user.phone,
+          contact: user.phone,
+          address: "N/A", // Add from API if available
+          first_name: user.full_name?.split(' ')[0] || '',
+          last_name: user.full_name?.split(' ').slice(1).join(' ') || '',
+          nic_no: "N/A", // Add from API if available
+          city: "N/A", // Add from API if available
+          state: "N/A", // Add from API if available
+          zip_code: "N/A" // Add from API if available
         }
-      } catch (error) {
-        console.error("Error fetching sales rep:", error);
-        toast.error("Error loading sales representative details");
-      } finally {
-        setIsLoading(false);
+      }));
+
+      // Find the specific rep using the repCode parameter
+      const foundRep = salesRepsData.find(r => r.emp_code === repCode);
+      
+      if (foundRep) {
+        setRep(foundRep);
+        setFormData({
+          firstName: foundRep.users.first_name || foundRep.users.name.split(' ')[0] || '',
+          lastName: foundRep.users.last_name || foundRep.users.name.split(' ').slice(1).join(' ') || '',
+          nicNo: foundRep.users.nic_no || '',
+          email: foundRep.users.email || '',
+          phone: foundRep.users.phone || foundRep.users.contact || '',
+          address: foundRep.users.address || '',
+          city: foundRep.users.city || '',
+          state: foundRep.users.state || '',
+          zipCode: foundRep.users.zip_code || '',
+          salesRegion: foundRep.sales_area || '',
+          status: foundRep.status || 'Active',
+          photo: null
+        });
+      } else {
+        toast.error("Sales representative not found");
+        navigate("/inventorymanager/sales-rep");
       }
-    };
+    } else {
+      console.error("Failed to fetch sales reps:", result.message);
+      toast.error("Error loading sales representative details");
+      navigate("/inventorymanager/sales-rep");
+    }
+  } catch (error) {
+    console.error("Error fetching sales rep:", error);
+    toast.error("Error loading sales representative details");
+    navigate("/inventorymanager/sales-rep");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
     setTimeout(fetchSalesRep, 1200);
   }, [repCode]);

@@ -80,7 +80,6 @@ const getDetails = async () => {
   }
 };
 
-// Mock services
 const updateProduct = async (productCode, data) => {
   try {
     const token = localStorage.getItem("token");
@@ -115,66 +114,16 @@ const toast = {
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
 
-// Mock product data for demo
 const mockProduct = {
-  id: "SP001",
-  name: "Black Pepper test",
-  no_variants: 3,
+  id: null,
+  name: null,
+  no_variants: null,
   main_image:
-    "https://images.unsplash.com/photo-1615485925600-97237c4fc1ec?w=400",
-  variants: [
-    {
-      category_id: "0b75c495-750d-46fd-a99c-ba4d43c83cb1",
-      category_name: "Black Pepper test",
-      cost_price: "3.00",
-      created_at: "2025-09-03T07:20:57.352Z",
-      current_stock: 60,
-      max_stock_level: 100,
-      min_stock_level: 50,
-      name: "Black Peppercorns 60g",
-      product_id: "5e932ff4-7ee0-4910-b16c-d7d756395d68",
-      reorder_point: 60,
-      selling_price: "6.00",
-      shelf_life: 730,
-      updated_at: "2025-09-03T08:04:35.133Z"
-    },
-    {
-      category_id: "0b75c495-750d-46fd-a99c-ba4d43c83cb1",
-      category_name: "Black Pepper test",
-      cost_price: "3.00",
-      created_at: "2025-09-03T07:20:57.352Z",
-      current_stock: 60,
-      max_stock_level: 100,
-      min_stock_level: 50,
-      name: "Black Peppercorns 60g",
-      product_id: "5e932ff4-7ee0-4910-b16c-d7d756395d68",
-      reorder_point: 60,
-      selling_price: "6.00",
-      shelf_life: 730,
-      updated_at: "2025-09-03T08:04:35.133Z"
-    },
-    {
-      category_id: "0b75c495-750d-46fd-a99c-ba4d43c83cb1",
-      category_name: "Black Pepper test",
-      cost_price: "3.00",
-      created_at: "2025-09-03T07:20:57.352Z",
-      current_stock: 60,
-      max_stock_level: 100,
-      min_stock_level: 50,
-      name: "Black Peppercorns 60g",
-      product_id: "5e932ff4-7ee0-4910-b16c-d7d756395d68",
-      reorder_point: 60,
-      selling_price: "6.00",
-      shelf_life: 730,
-      updated_at: "2025-09-03T08:04:35.133Z"
-    },
-  ],
+    null,
+  variants: []
 };
 
-
-
 const ProductPage = () => {
-  // Mock location state - in real app this would come from useLocation
   const initProduct = mockProduct;
   const location = useLocation();
   const id = location.state?.id;

@@ -3,12 +3,12 @@ import { Link } from "react-router-dom";
 import { FaSpinner } from "react-icons/fa";
 import {
   PackageSearch,
-  TrendingUp,
+  Package,
+  Scale,
   Star,
   ArrowRight,
   Trophy,
   Sparkles,
-  ShoppingBag,
 } from "lucide-react";
 import axios from "axios";
 
@@ -64,14 +64,25 @@ const getPopularProductsDataOriginal = async () => {
     );
     console.log('getPopularProductsOriginal',response.data.data.products);
 
-    const [nameOnly, quantity] = "Black Peppercorns 100g".match(/^(.*)\s(\d+\s?[a-zA-Z]+)$/).slice(1);
+    const dataToFrontend = response.data.data.products.map((product) => {
+      // Apply regex per product
+      let nameOnly = product.product_name;
+      let quantity = "";
 
-    const dataToFrontend = response.data.data.products.map((product) => ({
-      name: nameOnly,
-      category: quantity,
-      totalSold: product.total_quantity || 0,
-      
-    }));
+      const match = product.product_name.match(/^(.*)\s(\d+\s?[a-zA-Z]+)$/);
+      if (match) {
+        nameOnly = match[1];
+        quantity = match[2];
+      }
+
+      return {
+        name: nameOnly,
+        category: quantity,
+        totalSold: product.total_quantity || 0,
+      };
+    });
+
+    console.log("dataToFrontend: ", dataToFrontend);
 
     return { success: true, data: dataToFrontend };
   } catch (error) {
@@ -180,7 +191,7 @@ export default function PopularProducts() {
                 {product.name}
               </h3>
               <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                <ShoppingBag className="w-3 h-3" />
+                <Scale className="w-3 h-3" />
                 {product.category}
               </p>
             </div>
@@ -188,7 +199,7 @@ export default function PopularProducts() {
             {/* Sales Count */}
             <div className="flex-shrink-0 text-right">
               <div className="flex items-center gap-1 text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                <TrendingUp className="w-3 h-3" />
+                <Package className="w-3 h-3" />
                 <span className="font-bold text-sm">{product.totalSold}</span>
               </div>
             </div>
