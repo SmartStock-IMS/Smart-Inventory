@@ -70,7 +70,8 @@ class Product extends BaseModel {
         productData.min_stock_level || 0,      
         productData.max_stock_level || null,   
         productData.reorder_point || 0,        
-        productData.shelf_life || null 
+        productData.shelf_life || null,
+        productData.quantity || 0
       ]);
       return result[0];
     } catch (error) {

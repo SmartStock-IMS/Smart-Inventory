@@ -211,6 +211,77 @@ class ProductController {
     }
   }
 
+  async getProductByCategoryId(req, res) {
+    try {
+      const { id } = req.params;
+      const product = await Variant.findById(id);
+
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: 'Category not found'
+        });
+      }
+
+
+      // Combine the data
+      const productWithDetails = {
+        ...product
+      };
+
+      res.status(200).json({
+        success: true,
+        message: 'Product retrieved successfully',
+        data: { product: productWithDetails }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  async updateProductCategory(req, res) {
+    try {
+      const { id } = req.params;
+      const categoryData = req.body;
+
+      const category = await Variant.updateCategory(id, categoryData);
+
+      res.status(200).json({
+        success: true,
+        message: 'Product category updated successfully',
+        data: { category }
+      });
+    } catch (error) {
+      console.error('CONTROLLER UPDATE ERROR:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  async deleteProductCategory(req, res) {
+    try {
+      const { id } = req.params;
+
+      const result = await Variant.deleteCategory(id);
+
+      res.status(200).json({
+        success: true,
+        message: 'Product category deleted successfully',
+        data: { result }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
 }
 
 module.exports = new ProductController();

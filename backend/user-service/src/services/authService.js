@@ -10,7 +10,8 @@ class AuthService {
       id: userId,
       username: user.username,
       email: user.email,
-      role: user.role
+      role: user.role,
+      role_id: user.role_id
     };
 
     const accessToken = jwt.sign(

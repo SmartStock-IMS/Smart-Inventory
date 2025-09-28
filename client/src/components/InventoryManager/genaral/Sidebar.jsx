@@ -71,6 +71,7 @@ const Sidebar = () => {
       lucideIcon: Package,
       hasSubmenu: true,
       submenu: [
+        { label: "Add Category", path: "/inventorymanager/addcategory" },
         { label: "Add Product", path: "/inventorymanager/addproduct" },
         { label: "Add Bulk", path: "/inventorymanager/bulk" },
         { label: "Product List", path: "/inventorymanager/productlist" }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, ExternalLink, Trash2, List, Sparkles, Package, Scale, Eye, AlertCircle, CheckCircle, Filter, Grid3X3, TableProperties } from "lucide-react";
+import { Search, ExternalLink, Trash2, List, Sparkles, Package, Scale, Eye, AlertCircle, CheckCircle, Filter, Grid3X3, TableProperties, Edit3 } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
 import axios from "axios";
 
@@ -60,6 +60,10 @@ const deleteProductsByCategory = async (categoryName) => {
         product => product.category_name === categoryName
       );
       
+      if (productsInCategory.length === 0) {
+        return { success: false, error: `No products found in category "${categoryName}"` };
+      }
+      
       // Delete each product in the category
       const deletePromises = productsInCategory.map(product => 
         axios.delete(`http://localhost:3000/api/products/${product.product_id}`, {
@@ -76,7 +80,7 @@ const deleteProductsByCategory = async (categoryName) => {
       };
     }
     
-    return { success: false, error: "No products found in category" };
+    return { success: false, error: "No products found" };
   } catch (error) {
     console.error('Error deleting products by category:', error);
     return { success: false, error: error.message };
@@ -97,68 +101,74 @@ const ProductList = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [allProducts, setAllProducts] = useState([]);
-  const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
+  const [viewMode, setViewMode] = useState('table');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
+  const [dataSource, setDataSource] = useState('api'); // Track data source
 
-  useEffect(() => {
-  (async () => {
+  // Helper function to get category image
+  const getCategoryImage = (name) => {
+    switch (name) {
+      case "Black Pepper":
+        return "https://images.unsplash.com/photo-1591801058986-9e28e68670f7?q=80&w=1228&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+      case "Herbs":
+        return "https://plus.unsplash.com/premium_photo-1693266635481-37de41003239?q=80&w=688&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+      case "Cinnamon":
+        return "https://images.unsplash.com/photo-1601379758962-cadba22b1e3a?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+      case "Cardamom":
+        return "https://images.unsplash.com/photo-1701190588800-67a7007492ad?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+      case "White Pepper":
+        return "https://media.istockphoto.com/id/2159774748/photo/white-pepper-or-peppercorns-in-wooden-spoon-with-bowl.jpg?s=2048x2048&w=is&k=20&c=8E_80C-Xsj_iCRfzfJSwlTKUqmxrGKy5-puKqfc8glc=";
+      case "Blends":
+        return "https://media.istockphoto.com/id/2195466084/photo/curry-powder.jpg?s=2048x2048&w=is&k=20&c=BMSyanE-Q-2Sja8JrSeATaaEHW_R_V_4icRo0H0ioXs=";
+      case "Spices":
+        return "https://images.unsplash.com/photo-1532336414038-cf19250c5757?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+      default:
+        return "https://images.unsplash.com/photo-1532336414038-cf19250c5757?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+    }
+  };
+
+  // Function to fetch and process products from API
+  const fetchAndProcessProducts = async () => {
     try {
+      setIsLoading(true);
       const response = await getProducts();
-      const apiProducts = response.data.data.products || [];
-      // Find least stocked product per category
-      const leastStockedByCategory = {};
-      for (const product of apiProducts) {
-        const cat = product.category_name;
-        if (
-          !leastStockedByCategory[cat] ||
-          product.current_stock < leastStockedByCategory[cat].current_stock
-        ) {
-          leastStockedByCategory[cat] = product;
-        }
-      }
-      // Count products per category
-      const categoryCounts = apiProducts.reduce((acc, item) => {
-        const key = item?.category_name || "";
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, {});
-
-      const categoryImage = (name) => {
-          switch (name) {
-            case "Black Pepper":
-              return "https://images.unsplash.com/photo-1591801058986-9e28e68670f7?q=80&w=1228&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-            case "Herbs":
-              return "https://plus.unsplash.com/premium_photo-1693266635481-37de41003239?q=80&w=688&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-            case "Cinnamon":
-              return "https://images.unsplash.com/photo-1601379758962-cadba22b1e3a?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-            case "Cardamom":
-              return "https://images.unsplash.com/photo-1701190588800-67a7007492ad?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-            case "White Pepper":
-              return "https://media.istockphoto.com/id/2159774748/photo/white-pepper-or-peppercorns-in-wooden-spoon-with-bowl.jpg?s=2048x2048&w=is&k=20&c=8E_80C-Xsj_iCRfzfJSwlTKUqmxrGKy5-puKqfc8glc=";
-            case "Blends":
-              return "https://media.istockphoto.com/id/2195466084/photo/curry-powder.jpg?s=2048x2048&w=is&k=20&c=BMSyanE-Q-2Sja8JrSeATaaEHW_R_V_4icRo0H0ioXs=";
-            case "Spices":
-              return "https://images.unsplash.com/photo-1532336414038-cf19250c5757?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-          }}
-
-
-      // Use only the least stocked product per category for display
-      if (response.success && response.data && response.data.data && Array.isArray(response.data.data.products)) {
-        const mapped = Object.values(leastStockedByCategory).map(product => ({
-          id: product.product_id,
-          name: product.category_name,
-          main_image: categoryImage(product.category_name),
-          no_variants: categoryCounts[product.category_name] || 1,
-          variants: [],
-          description: `${product.category_name} | Cost: ₹${product.cost_price} | Sell: ₹${product.selling_price}`,
-          //stock_quantity: product.current_stock,
-          current_stock: product.current_stock,
-          min_stock_level: product.min_stock_level,
-          max_stock_level: product.max_stock_level,
+      
+      if (response.success && response.data?.data?.products) {
+        const apiProducts = response.data.data.products;
+        console.log('API Products Response:', apiProducts);
+        
+        // Group products by category
+        const categoryGroups = {};
+        apiProducts.forEach(product => {
+          const categoryName = product.category_name;
+          if (!categoryGroups[categoryName]) {
+            categoryGroups[categoryName] = [];
+          }
+          categoryGroups[categoryName].push(product);
+        });
+        
+        // Create one representative product per category
+        const mappedCategories = Object.keys(categoryGroups).map(categoryName => {
+          const products = categoryGroups[categoryName];
           
-        }));
-        setAllProducts(mapped);
+          return {
+            id: `category_${categoryName}`,
+            name: categoryName,
+            main_image: getCategoryImage(categoryName),
+            no_variants: products.length,
+            variants: [],
+            description: `${categoryName} category with ${products.length} products`,
+            category_name: categoryName,
+            product_count: products.length,
+            isApiData: true // Flag to identify API data
+          };
+        });
+        
+        console.log('Mapped categories from API:', mappedCategories);
+        setAllProducts(mappedCategories);
+        setDataSource('api');
+        return true;
       } else {
         setAllProducts([]);}
     } catch (error) {
@@ -169,63 +179,41 @@ const ProductList = () => {
 
 }, []);
 
+
   const handleRemoveProduct = async (categoryName) => {
-  try {
-    setIsLoading(true);
-    // Use the new deleteProductsByCategory function
-    const result = await deleteProductsByCategory(categoryName);
-    if (result.success) {
-      console.log(`All products in category "${categoryName}" deleted successfully`);
-      toast.success(`${result.deletedCount} products deleted successfully`);
-      
-      // Refresh the products list after deletion
-      const response = await getProducts();
-      const apiProducts = response.data.data.products || [];
-      
-      // Rebuild the category-based product list
-      const leastStockedByCategory = {};
-      for (const product of apiProducts) {
-        const cat = product.category_name;
-        if (
-          !leastStockedByCategory[cat] ||
-          product.current_stock < leastStockedByCategory[cat].current_stock
-        ) {
-          leastStockedByCategory[cat] = product;
-        }
-      }
-      
-      const categoryCounts = apiProducts.reduce((acc, item) => {
-        const key = item?.category_name || "";
-        acc[key] = (acc[key] || 0) + 1;
-        return acc;
-      }, {});
-      
-      const mapped = Object.values(leastStockedByCategory).map(product => ({
-        id: product.product_id,
-        name: product.category_name,
-        main_image: `https://loremflickr.com/400/400/${product.category_name}`,
-        no_variants: categoryCounts[product.category_name] || 1,
-        variants: [],
-        description: `${product.category_name} | Cost: ₹${product.cost_price} | Sell: ₹${product.selling_price}`,
-        current_stock: product.current_stock,
-        min_stock_level: product.min_stock_level,
-        max_stock_level: product.max_stock_level,
-      }));
-      
-      setAllProducts(mapped);
-      setDeleteDialogOpen(false);
-      setProductToDelete(null);
-    } else {
-      console.log("Error deleting products");
-      toast.error("Error deleting products: " + result.error);
+    // Prevent deletion if not using API data
+    if (dataSource !== 'api') {
+      toast.error("Cannot delete categories when using mock data. Please ensure API is connected.");
+      return;
     }
-  } catch (error) {
-    console.error("Error removing products: ", error);
-    toast.error("Error removing products");
-  } finally {
-    setIsLoading(false);
-  }
-};
+
+    try {
+      setIsLoading(true);
+      console.log(`Attempting to delete category: ${categoryName}`);
+      
+      // Use the deleteProductsByCategory function
+      const result = await deleteProductsByCategory(categoryName);
+      
+      if (result.success) {
+        console.log(`Successfully deleted category "${categoryName}"`);
+        toast.success(`${result.deletedCount} products deleted successfully`);
+        
+        // Refresh the products list after deletion
+        await fetchAndProcessProducts();
+        
+        setDeleteDialogOpen(false);
+        setProductToDelete(null);
+      } else {
+        console.log("Error deleting products:", result.error);
+        toast.error("Error deleting products: " + result.error);
+      }
+    } catch (error) {
+      console.error("Error removing products: ", error);
+      toast.error("Error removing products: " + error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredProducts = (allProducts || []).filter((item) => {
     if (!searchQuery) return true;
@@ -233,32 +221,57 @@ const ProductList = () => {
     const query = searchQuery.toLowerCase();
     return (
       item.name.toLowerCase().includes(query) ||
-      (item.variants || []).some((variant) =>
-        variant.product_code.toLowerCase().includes(query)
-      )
+      item.description.toLowerCase().includes(query)
     );
   });
 
-  const getStockStatusColor = (current_stock, min_stock_level, max_stock_level) => {
-    if (current_stock > max_stock_level) return 'bg-green-100 text-green-800';
-    if (current_stock < min_stock_level) return 'bg-red-100 text-red-800';
-    return 'bg-yellow-100 text-yellow-800';
-  };
-
-  const getStockStatus = (current_stock, min_stock_level, max_stock_level) => {
-    if (current_stock > max_stock_level) return 'High Stock';
-    if (current_stock < min_stock_level) return 'Low Stock';
-    return 'Medium Stock';
-  };
- 
   const openDeleteDialog = (product) => {
+    if (dataSource !== 'api') {
+      toast.error("Cannot delete categories when using mock data. Please ensure API is connected.");
+      return;
+    }
     setProductToDelete(product);
     setDeleteDialogOpen(true);
   };
 
-  const handleViewProduct = (product) => {
-    // Navigate to product detail page with product data
-    navigate(`/inventorymanager/product/${product.id}`, { state: {...product} });
+  const handleViewProduct = async (category) => {
+    try {
+      setIsLoading(true);
+      
+      // Fetch all products in this category
+      const response = await getProducts();
+      if (response.success && response.data?.data?.products) {
+        const apiProducts = response.data.data.products;
+        
+        // Filter products by category
+        const categoryProducts = apiProducts.filter(product => 
+          product.category_name === category.category_name
+        );
+        
+        console.log('Category products:', categoryProducts);
+        
+        // Navigate to detail view with all products in this category
+        navigate(`/inventorymanager/product/${encodeURIComponent(category.category_name)}`, { 
+          state: {
+            categoryName: category.category_name,
+            products: categoryProducts,
+            categoryImage: category.main_image
+          } 
+        });
+      } else {
+        toast.error('Unable to fetch category products');
+      }
+    } catch (error) {
+      console.error('Error fetching category products:', error);
+      toast.error('Error loading category details');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    console.log('Refreshing data...');
+    await fetchAndProcessProducts();
   };
 
   const GridView = () => (
@@ -275,8 +288,15 @@ const ProductList = () => {
           
           <div className="p-6">
             <div className="flex items-center justify-between mb-3">
-              <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStockStatusColor(product.current_stock, product.min_stock_level, product.max_stock_level)}`}>
-                {product.current_stock}
+              <div className="flex items-center gap-2">
+                <div className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {product.product_count || product.no_variants} products
+                </div>
+                {product.isApiData && (
+                  <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Live
+                  </div>
+                )}
               </div>
             </div>
             
@@ -286,10 +306,10 @@ const ProductList = () => {
             <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
               <div className="flex items-center gap-1">
                 <Scale className="w-4 h-4" />
-                <span>{product.no_variants} sizes</span>
+                <span>{product.product_count || product.no_variants} products</span>
               </div>
-              <span className={`px-2 py-1 rounded-full text-xs ${getStockStatusColor(product.current_stock, product.min_stock_level, product.max_stock_level)}`}>
-                {getStockStatus(product.current_stock, product.min_stock_level, product.max_stock_level)}
+              <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
+                Category
               </span>
             </div>
             
@@ -304,6 +324,7 @@ const ProductList = () => {
               <button
                 onClick={() => openDeleteDialog(product)}
                 className="px-4 py-2 text-red-600 border border-red-200 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors duration-200"
+                disabled={!product.isApiData}
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -321,13 +342,13 @@ const ProductList = () => {
           <thead className="bg-gradient-to-r from-orange-50 to-red-50 border-b border-gray-200">
             <tr>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Product
+                Category
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Stock
+                Products Count
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Variants
+                Status
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
@@ -358,19 +379,22 @@ const ProductList = () => {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex flex-col gap-1">
-                    <span className="font-semibold text-gray-800">{product.current_stock}</span>
-                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStockStatusColor(product.current_stock, product.min_stock_level, product.max_stock_level)}`}>
-                      {getStockStatus(product.current_stock, product.min_stock_level, product.max_stock_level)}
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <Scale className="w-4 h-4 text-gray-400" />
+                    <span className="font-medium text-gray-800">{product.product_count || product.no_variants}</span>
+                    <span className="text-sm text-gray-500">products</span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <Scale className="w-4 h-4 text-gray-400" />
-                    <span className="font-medium text-gray-800">{product.no_variants}</span>
-                    <span className="text-sm text-gray-500">sizes</span>
-                  </div>
+                  {product.isApiData ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Live Data
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      Mock Data
+                    </span>
+                  )}
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
@@ -383,8 +407,9 @@ const ProductList = () => {
                     </button>
                     <button
                       onClick={() => openDeleteDialog(product)}
-                      className="px-4 py-2 text-red-600 border border-red-200 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2"
-                      disabled={isLoading}
+                      className="px-4 py-2 text-red-600 border border-red-200 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isLoading || !product.isApiData}
+                      title={!product.isApiData ? "Cannot delete mock data" : "Delete category"}
                     >
                       <Trash2 className="w-4 h-4" />
                       Remove
@@ -400,21 +425,24 @@ const ProductList = () => {
   );
 
   return (
-    <div className="h-full w-full bg-gradient-to-br from-orange-50 via-white to-yellow-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className="h-full w-full bg-gradient-to-br from-blue-50 via-white to-blue-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-6 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-5 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-white/10"></div>
         </div>
         <div className="relative z-10">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                 <List className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold mb-1">Spices Inventory</h2>
-                <p className="text-white/80">Manage your spice products and stock levels</p>
+                <h2 className="text-2xl font-bold mb-1">Product Categories</h2>
+                <p className="text-white/80">Manage your product categories and inventory</p>
+                {dataSource !== 'api' && (
+                  <p className="text-yellow-200 text-sm mt-1">⚠️ Using mock data - API connection needed for full functionality</p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -425,13 +453,13 @@ const ProductList = () => {
           </div>
 
           {/* Search and Controls */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3">
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/60" />
                 <input
                   type="text"
-                  placeholder="Search spices by name or product code..."
+                  placeholder="Search categories by name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50"
@@ -439,6 +467,18 @@ const ProductList = () => {
               </div>
               
               <div className="flex items-center gap-2">
+                <button
+                  onClick={handleRefresh}
+                  disabled={isLoading}
+                  className="p-3 rounded-lg bg-white/10 text-white/70 hover:bg-white/20 transition-colors duration-200 disabled:opacity-50"
+                  title="Refresh Data"
+                >
+                  {isLoading ? (
+                    <FaSpinner className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Search className="w-5 h-5" />
+                  )}
+                </button>
                 <button
                   onClick={() => setViewMode('table')}
                   className={cn(
@@ -468,11 +508,11 @@ const ProductList = () => {
       </div>
 
       {/* Content Section */}
-      <div className="h-[calc(100%-200px)] p-6 overflow-y-auto">
+      <div className="h-[calc(100%-170px)] p-5 overflow-y-auto">
         {filteredProducts.length > 0 ? (
           <>
             {/* Stats Bar */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -480,7 +520,7 @@ const ProductList = () => {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-800">{filteredProducts.length}</p>
-                    <p className="text-sm text-gray-600">Total Products</p>
+                    <p className="text-sm text-gray-600">Total Categories</p>
                   </div>
                 </div>
               </div>
@@ -492,37 +532,21 @@ const ProductList = () => {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-800">
-                      {filteredProducts.filter(p => p.current_stock > p.min_stock_level).length}
+                      {filteredProducts.reduce((total, category) => total + (category.product_count || category.no_variants), 0)}
                     </p>
-                    <p className="text-sm text-gray-600">High Stock</p>
+                    <p className="text-sm text-gray-600">Total Products</p>
                   </div>
                 </div>
               </div>
-              
+
               <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <AlertCircle className="w-5 h-5 text-yellow-600" />
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dataSource === 'api' ? 'bg-green-100' : 'bg-yellow-100'}`}>
+                    <AlertCircle className={`w-5 h-5 ${dataSource === 'api' ? 'text-green-600' : 'text-yellow-600'}`} />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-gray-800">
-                      {filteredProducts.filter(p => p.current_stock >= p.min_stock_level && p.current_stock <= p.max_stock_level).length}
-                    </p>
-                    <p className="text-sm text-gray-600">Medium Stock</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                    <AlertCircle className="w-5 h-5 text-red-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-800">
-                      {filteredProducts.filter(p => p.current_stock < p.min_stock_level).length}
-                    </p>
-                    <p className="text-sm text-gray-600">Low Stock</p>
+                    <p className="text-2xl font-bold text-gray-800">{dataSource === 'api' ? 'Live' : 'Mock'}</p>
+                    <p className="text-sm text-gray-600">Data Source</p>
                   </div>
                 </div>
               </div>
@@ -538,13 +562,19 @@ const ProductList = () => {
                 <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
                   <FaSpinner className="w-8 h-8 text-white animate-spin" />
                 </div>
-                <p className="text-gray-600 font-medium">Loading spices inventory...</p>
+                <p className="text-gray-600 font-medium">Loading categories...</p>
               </div>
             ) : (
               <div className="text-center">
                 <Package className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-600 font-medium">No spices found</p>
-                <p className="text-sm text-gray-500 mt-2">Try adjusting your search criteria</p>
+                <p className="text-gray-600 font-medium">No categories found</p>
+                <p className="text-sm text-gray-500 mt-2">Try adjusting your search criteria or refresh the data</p>
+                <button
+                  onClick={handleRefresh}
+                  className="mt-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors duration-200"
+                >
+                  Refresh Data
+                </button>
               </div>
             )}
           </div>
@@ -578,12 +608,12 @@ const ProductList = () => {
                 </div>
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-800 mb-1">{productToDelete.name}</h4>
-                  <p className="text-xs text-gray-500 mt-1">Stock: {productToDelete.current_stock} units</p>
+                  <p className="text-xs text-gray-500 mt-1">Products: {productToDelete.product_count || productToDelete.no_variants} items</p>
                 </div>
               </div>
               
               <p className="text-gray-600 mb-6">
-                Are you sure you want to delete this spice product? This will permanently remove it from your inventory.
+                Are you sure you want to delete this category? This will permanently remove all products in this category from your inventory.
               </p>
               
               <div className="flex gap-3">
@@ -600,7 +630,7 @@ const ProductList = () => {
                   ) : (
                     <>
                       <Trash2 className="w-4 h-4" />
-                      Delete All Variants
+                      Delete Category
                     </>
                   )}
                 </button>

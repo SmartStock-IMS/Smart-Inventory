@@ -4,7 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 require('dotenv').config();
 
-// const orderRoutes = require('./src/routes/orderRoutes');
+const orderRoutes = require('./src/routes/orderRoutes');
 const customerRoutes = require('./src/routes/customerRoutes');
 // const quotationRoutes = require('./src/routes/quotationRoutes');
 // const reportRoutes = require('./src/routes/reportRoutes');
@@ -17,7 +17,9 @@ app.use(helmet());
 
 // CORS
 app.use(cors({
-  origin: 'http://localhost:5173', // Allow frontend origin
+  origin: [
+    process.env.GATEWAY_URL // Vite frontend
+  ],
   credentials: true
 }));
 
@@ -39,7 +41,7 @@ app.get('/health', (req, res) => {
 });
 
 // Routes
-// app.use('/orders', orderRoutes);
+app.use('/orders', orderRoutes);
 app.use('/customers', customerRoutes);
 // app.use('/quotations', quotationRoutes);
 // app.use('/reports', reportRoutes);

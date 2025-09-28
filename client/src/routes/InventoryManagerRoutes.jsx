@@ -8,6 +8,7 @@ import AddUser from "../pages/InventoryManager/user/AddUser.jsx";
 import UserDetails from "../pages/InventoryManager/user/UserDetails.jsx";
 import ProductList from "../pages/InventoryManager/products/ProductList.jsx";
 import AddProduct from "../pages/InventoryManager/products/AddProduct.jsx";
+import Category from "../pages/InventoryManager/products/Category.jsx";
 import AddBulk from "../pages/InventoryManager/products/AddBulk.jsx";
 import CustomerList from "../pages/InventoryManager/customer/CustomerList.jsx";
 import EditCustomer from "../pages/InventoryManager/customer/EditCustomer.jsx";
@@ -51,6 +52,7 @@ function InventoryManagerRoutes() {
                     <Route path="/orders" element={<OrderSummary />} />
                     {/* item: products */}
                     <Route path="/addproduct" element={<AddProduct />} />
+                    <Route path="/addcategory" element={<Category />} />
                     <Route path="/productlist" element={<ProductList />} />
                     <Route path="/bulk" element={<AddBulk />} />
                     <Route path="/bulklist" element={<BulkList />} />

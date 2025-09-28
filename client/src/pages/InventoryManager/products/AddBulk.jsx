@@ -2,110 +2,22 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaSpinner } from "react-icons/fa";
 import { Search, Minus, Plus, Layers, Sparkles, Package, ShoppingCart, Filter, Grid, Eye, X, CheckCircle, AlertCircle, Scale, Truck } from "lucide-react";
+import axios from "axios";
 
-// Mock services and spices data
-const getProducts = async () => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return {
-    success: true,
-    data: [
-      {
-        id: 1,
-        name: "Ceylon Cinnamon Sticks",
-        category: "Whole Spices",
-        main_image: "https://images.unsplash.com/photo-1506976785307-8732e854ad03?w=300&h=300&fit=crop&crop=center",
-        variants: [
-          { product_code: "CCS001-100G", weight: "100g", quantity: 150 },
-          { product_code: "CCS001-250G", weight: "250g", quantity: 80 },
-          { product_code: "CCS001-500G", weight: "500g", quantity: 45 },
-          { product_code: "CCS001-1KG", weight: "1kg", quantity: 30 }
-        ]
-      },
-      {
-        id: 2,
-        name: "Black Peppercorns",
-        category: "Whole Spices",
-        main_image: "https://images.unsplash.com/photo-1586016404137-96e2e95ad5e1?w=300&h=300&fit=crop&crop=center",
-        variants: [
-          { product_code: "BPP002-50G", weight: "50g", quantity: 200 },
-          { product_code: "BPP002-100G", weight: "100g", quantity: 120 },
-          { product_code: "BPP002-250G", weight: "250g", quantity: 65 },
-          { product_code: "BPP002-500G", weight: "500g", quantity: 35 }
-        ]
-      },
-      {
-        id: 3,
-        name: "Turmeric Powder",
-        category: "Ground Spices",
-        main_image: "https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=300&h=300&fit=crop&crop=center",
-        variants: [
-          { product_code: "TMP003-100G", weight: "100g", quantity: 180 },
-          { product_code: "TMP003-250G", weight: "250g", quantity: 95 },
-          { product_code: "TMP003-500G", weight: "500g", quantity: 55 },
-          { product_code: "TMP003-1KG", weight: "1kg", quantity: 40 }
-        ]
-      },
-      {
-        id: 4,
-        name: "Cardamom Pods",
-        category: "Whole Spices",
-        main_image: "https://images.unsplash.com/photo-1596040033229-a8a1dbd6b69a?w=300&h=300&fit=crop&crop=center",
-        variants: [
-          { product_code: "CDP004-25G", weight: "25g", quantity: 120 },
-          { product_code: "CDP004-50G", weight: "50g", quantity: 85 },
-          { product_code: "CDP004-100G", weight: "100g", quantity: 60 },
-          { product_code: "CDP004-250G", weight: "250g", quantity: 25 }
-        ]
-      },
-      {
-        id: 5,
-        name: "Garam Masala Blend",
-        category: "Spice Blends",
-        main_image: "https://images.unsplash.com/photo-1596040033229-a8a1dbd6b69a?w=300&h=300&fit=crop&crop=center",
-        variants: [
-          { product_code: "GMB005-100G", weight: "100g", quantity: 140 },
-          { product_code: "GMB005-250G", weight: "250g", quantity: 75 },
-          { product_code: "GMB005-500G", weight: "500g", quantity: 40 }
-        ]
-      },
-      {
-        id: 6,
-        name: "Curry Powder",
-        category: "Spice Blends",
-        main_image: "https://images.unsplash.com/photo-1596040033229-a8a1dbd6b69a?w=300&h=300&fit=crop&crop=center",
-        variants: [
-          { product_code: "CPW006-100G", weight: "100g", quantity: 160 },
-          { product_code: "CPW006-250G", weight: "250g", quantity: 90 },
-          { product_code: "CPW006-500G", weight: "500g", quantity: 50 },
-          { product_code: "CPW006-1KG", weight: "1kg", quantity: 30 }
-        ]
-      },
-      {
-        id: 7,
-        name: "Red Chili Powder",
-        category: "Ground Spices",
-        main_image: "https://images.unsplash.com/photo-1583227264993-7019a5c9838a?w=300&h=300&fit=crop&crop=center",
-        variants: [
-          { product_code: "RCP007-100G", weight: "100g", quantity: 200 },
-          { product_code: "RCP007-250G", weight: "250g", quantity: 110 },
-          { product_code: "RCP007-500G", weight: "500g", quantity: 70 },
-          { product_code: "RCP007-1KG", weight: "1kg", quantity: 45 }
-        ]
-      },
-      {
-        id: 8,
-        name: "Cumin Seeds",
-        category: "Whole Spices",
-        main_image: "https://images.unsplash.com/photo-1596040033229-a8a1dbd6b69a?w=300&h=300&fit=crop&crop=center",
-        variants: [
-          { product_code: "CMS008-100G", weight: "100g", quantity: 175 },
-          { product_code: "CMS008-250G", weight: "250g", quantity: 85 },
-          { product_code: "CMS008-500G", weight: "500g", quantity: 55 },
-          { product_code: "CMS008-1KG", weight: "1kg", quantity: 35 }
-        ]
-      }
-    ]
-  };
+// Backend API: fetch products via API Gateway
+const fetchAllProducts = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const res = await axios.get('http://localhost:3000/api/products', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      params: { page: 1, limit: 500 }
+    });
+    const data = res.data?.data?.products || [];
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return { success: false, error: error.message };
+  }
 };
 
 // Mock toast function
@@ -191,7 +103,7 @@ const AddBulk = () => {
     (async () => {
       try {
         setLoading(true);
-        const response = await getProducts();
+        const response = await fetchAllProducts();
         if (response.success) {
           setProducts(response.data);
         } else {
@@ -206,20 +118,28 @@ const AddBulk = () => {
   }, []);
 
   useEffect(() => {
-    const filteredProducts = filterProducts(products || [], searchQuery);
-    const filteredCategoriesMap = filteredProducts.reduce((acc, product) => {
-      if (!acc[product.category]) {
-        acc[product.category] = [];
-      }
-      acc[product.category].push(product);
+    const filteredRows = filterProducts(products || [], searchQuery);
+    const filteredCategoriesMap = (filteredRows || []).reduce((acc, p) => {
+      const key = p.category_name || 'Uncategorized';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(p);
       return acc;
     }, {});
 
     const filterCategories = Object.entries(filteredCategoriesMap).map(
-      ([name, products]) => ({
+      ([name, rows]) => ({
         name,
-        products,
-      }),
+        products: rows.map(p => ({
+          id: p.product_id,
+          name: p.name,
+          category: name,
+          main_image: `https://loremflickr.com/300/300/${encodeURIComponent(name)}`,
+          variants: [
+            { product_id: p.product_id, product_code: p.product_id, weight: p.name, quantity: p.current_stock }
+          ],
+          _raw: p
+        }))
+      })
     );
 
     const filteredCategories = selectedCategory
@@ -231,11 +151,21 @@ const AddBulk = () => {
     setFilteredCategories(filteredCategories);
   }, [products, searchQuery, selectedCategory]);
 
-  const categoriesMap = (products || []).reduce((acc, product) => {
-    if (!acc[product.category]) {
-      acc[product.category] = [];
-    }
-    acc[product.category].push(product);
+  // Build categories from backend products (each product is a variant row)
+  const categoriesMap = (products || []).reduce((acc, p) => {
+    const key = p.category_name || 'Uncategorized';
+    if (!acc[key]) acc[key] = [];
+    // Normalize to UI shape
+    acc[key].push({
+      id: p.product_id,
+      name: p.name,
+      category: key,
+      main_image: `https://loremflickr.com/300/300/${encodeURIComponent(key)}`,
+      variants: [
+        { product_id: p.product_id, product_code: p.product_id, weight: p.name, quantity: p.current_stock }
+      ],
+      _raw: p
+    });
     return acc;
   }, {});
 
@@ -244,20 +174,15 @@ const AddBulk = () => {
     products,
   }));
 
-  const filterProducts = (products, keyword) => {
-    if (!products || !Array.isArray(products)) return [];
-    if (!keyword) return products;
-    return products.filter((product) => {
-      const nameMatch = product.name
-        .toLowerCase()
-        .includes(keyword.toLowerCase());
-
-      const variantMatch = product.variants && product.variants.some((variant) =>
-        variant.product_code.toLowerCase().includes(keyword.toLowerCase())
-      );
-
-      return nameMatch || variantMatch;
-    });
+  const filterProducts = (rows, keyword) => {
+    if (!rows || !Array.isArray(rows)) return [];
+    if (!keyword) return rows;
+    const q = keyword.toLowerCase();
+    return rows.filter(p =>
+      (p.name || '').toLowerCase().includes(q) ||
+      (p.category_name || '').toLowerCase().includes(q) ||
+      (p.product_id || '').toLowerCase().includes(q)
+    );
   };
 
   const handleCategoryChange = (selectedOption) => {
@@ -308,8 +233,21 @@ const AddBulk = () => {
     });
   };
 
-  const openProductDialog = (product) => {
-    setSelectedProduct(product);
+  const openCategoryDialog = (categoryName) => {
+    const rows = categoriesMap[categoryName] || [];
+    const variants = rows.map(r => ({
+      product_id: r.id,
+      product_code: r.id,
+      weight: r.name,
+      quantity: r.variants?.[0]?.quantity ?? r._raw?.current_stock ?? 0
+    }));
+    setSelectedProduct({
+      name: categoryName,
+      main_image: `https://loremflickr.com/300/300/${encodeURIComponent(categoryName)}`,
+      variants
+    });
+    setSelectedItemCode(variants?.[0]?.product_code || "");
+    setQuantity(1);
     setDialogOpen(true);
   };
 
@@ -323,14 +261,14 @@ const AddBulk = () => {
   };
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-orange-50 via-white to-yellow-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className="w-full h-full bg-gradient-to-br from-blue-50 via-white to-blue-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-orange-600 via-red-600 to-yellow-600 text-white p-6 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-5 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-white/10"></div>
         </div>
         <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                 <Layers className="w-6 h-6" />
@@ -361,7 +299,7 @@ const AddBulk = () => {
           </div>
 
           {/* Search and Filter Controls */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3">
             <div className="flex items-center gap-4">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/60" />
@@ -400,7 +338,7 @@ const AddBulk = () => {
       </div>
 
       {/* Main Content */}
-      <div className="h-[calc(100%-200px)] p-6 overflow-y-auto">
+      <div className="h-[calc(100%-170px)] p-5 overflow-y-auto">
         {isProcessed ? (
           <BulkList bulkList={productBulk} isProcessed={setIsProcessed} setBulk={setProductBulk} />
         ) : (
@@ -416,56 +354,33 @@ const AddBulk = () => {
               </div>
             ) : products && products.length > 0 ? (
               <div className="space-y-8">
-                {filteredCategories.map((category, index) => (
-                  <div key={index} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-4">
-                      <div className="flex items-center gap-3">
-                        <Package className="w-5 h-5" />
-                        <h3 className="font-semibold text-lg">{category.name}</h3>
-                        <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
-                          {category.products.length} products
-                        </span>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
+              {(filteredCategories || []).map(({ name }) => (
+                <div key={name} className="group">
+                  <button
+                    onClick={() => openCategoryDialog(name)}
+                    className="w-full bg-white rounded-xl border border-gray-200 hover:border-orange-300 hover:shadow-lg transition-all duration-300 overflow-hidden group-hover:scale-105"
+                  >
+                    <div className="aspect-square overflow-hidden">
+                      <img
+                        src={`https://loremflickr.com/300/300/${encodeURIComponent(name)}`}
+                        alt={name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <h4 className="font-medium text-gray-800 text-sm mb-2 line-clamp-2">
+                        {name}
+                      </h4>
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>{(categoriesMap[name]?.length) || 0} items</span>
+                        <Scale className="w-4 h-4" />
                       </div>
                     </div>
-                    
-                    {category.products.length > 0 ? (
-                      <div className="p-6">
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
-                          {category.products.map((product) => (
-                            <div key={product.id} className="group">
-                              <button
-                                onClick={() => openProductDialog(product)}
-                                className="w-full bg-white rounded-xl border border-gray-200 hover:border-orange-300 hover:shadow-lg transition-all duration-300 overflow-hidden group-hover:scale-105"
-                              >
-                                <div className="aspect-square overflow-hidden">
-                                  <img
-                                    src={product.main_image}
-                                    alt={product.name}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                  />
-                                </div>
-                                <div className="p-4">
-                                  <h4 className="font-medium text-gray-800 text-sm mb-2 line-clamp-2">
-                                    {product.name}
-                                  </h4>
-                                  <div className="flex items-center justify-between text-xs text-gray-500">
-                                    <span>{product.variants.length} sizes</span>
-                                    <Scale className="w-4 h-4" />
-                                  </div>
-                                </div>
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="p-12 text-center text-gray-500">
-                        <Package className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                        <p>No products found in this category</p>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  </button>
+                </div>
+              ))}
+            </div>
               </div>
             ) : (
               <div className="h-full flex items-center justify-center">
