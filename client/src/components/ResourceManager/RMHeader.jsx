@@ -1,165 +1,268 @@
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Sparkles, Menu, X, Zap, Shield, Settings } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { HiMenu } from "react-icons/hi";
+import { HiX } from "react-icons/hi";
+import { BellIcon, UserIcon, SunIcon, MoonIcon, Sparkles } from "lucide-react";
+import { useTheme } from "../../context/theme/ThemeContext";
 
 const navItems = [
-  { label: "Dashboard", path: "/resourcemanager", icon: Zap },
-  { label: "Resources", path: "/resourcemanager/resources", icon: Shield },
-  { label: "Orders", path: "/resourcemanager/orders", icon: Zap },
+  { id: "1", title: "Dashboard", url: "/resourcemanager" },
+  { id: "2", title: "Resources", url: "/resourcemanager/resources" },
+  { id: "3", title: "Orders", url: "/resourcemanager/orders" },
+  { id: "4", title: "Vehicles", url: "/resourcemanager/vehicles" },
 ];
 
 const RMHeader = () => {
-  const location = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  const isDarkMode = false;
+  const { isDarkMode, toggleTheme } = useTheme();
+  const pathname = useLocation();
+  const navigate = useNavigate();
+  const [openNavigation, setOpenNavigation] = useState(false);
+
+  const toggleNavigation = () => {
+    setOpenNavigation(!openNavigation);
+  };
+
+  useEffect(() => {
+    setOpenNavigation(false);
+  }, [pathname]);
+
+  const menuVariants = {
+    closed: {
+      opacity: 0,
+      y: -20,
+      transition: {
+        duration: 0.2,
+        staggerChildren: 0.05,
+        staggerDirection: -1,
+      },
+    },
+    open: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.4,
+        staggerChildren: 0.07,
+        delayChildren: 0.1,
+      },
+    },
+  };
+
+  const menuItemVariants = {
+    closed: { opacity: 0, x: -10 },
+    open: { opacity: 1, x: 0 },
+  };
+
+  const handleNavigation = (id, url) => {
+    navigate(url); // navigate to url
+  };
 
   return (
-    <>
-      <header className="w-full h-20 flex items-center px-6 lg:px-12 xl:px-16 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 shadow-2xl sticky top-0 z-50 backdrop-blur-md border-b border-white/10">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-0 left-1/4 w-32 h-32 bg-gradient-to-br from-blue-400/20 to-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute top-0 right-1/3 w-24 h-24 bg-gradient-to-br from-cyan-300/20 to-blue-400/20 rounded-full blur-2xl animate-pulse delay-1000"></div>
-        </div>
-
-        <div className="relative w-full max-w-7xl mx-auto flex items-center justify-between">
-          {/* Enhanced Logo/Brand Section */}
-          <div className="flex items-center gap-4 flex-shrink-0 group">
-            <div className="relative">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 rounded-2xl flex items-center justify-center shadow-2xl transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
-                <Sparkles className="w-7 h-7 text-white animate-spin-slow" />
-              </div>
-              {/* Glow effect */}
-              <div className="absolute inset-0 w-12 h-12 bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity duration-300"></div>
+    <motion.header
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ type: "spring", stiffness: 100 }}
+      className="fixed top-0 w-full z-50 shadow-lg"
+    >
+      {/* Header with InventoryManager style */}
+      <div className={`h-full w-full transition-colors duration-300 ${
+        isDarkMode 
+          ? 'bg-gray-900 border-gray-700' 
+          : 'bg-white border-gray-200'
+      } border-b shadow-sm`}>
+        <nav className="h-20 px-3 sm:px-4 lg:px-6 flex items-center justify-between gap-2 sm:gap-4">
+          {/* Logo/Brand Section - Optimized for Mobile */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
-            
-            <div className="hidden sm:block">
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-black bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent drop-shadow-lg tracking-tight">
-                  Inventory pro
-                </h1>
-              </div>
-              <p className="text-sm font-medium text-emerald-100 tracking-wide">
-                Smart Inventory Management System
-              </p>
+            <div className="block">
+              <h1 className="text-base sm:text-lg md:text-xl font-bold bg-gradient-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent">
+                ResourcePro
+              </h1>
+              <p className={`text-xs transition-colors duration-300 hidden sm:block ${
+                isDarkMode ? 'text-slate-400' : 'text-gray-500'
+              }`}>Management System</p>
             </div>
           </div>
 
-          {/* Enhanced Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-2xl p-2 border border-white/20">
-            {navItems.map((item, index) => {
-              const IconComponent = item.icon;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`group relative px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-300 transform hover:scale-105 flex items-center gap-2 ${
-                    location.pathname === item.path
-                      ? "bg-gradient-to-r from-white to-blue-50 text-emerald-700 shadow-xl ring-2 ring-white/50"
-                      : "text-white hover:bg-white/20 hover:shadow-lg"
+          {/* Right Section: Prioritized for Mobile/Tablet */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Tablet Navigation - Show on medium screens and up */}
+            <nav className="hidden md:flex items-center space-x-1">
+              {navItems.map((item) => (
+                <motion.a
+                  key={item.id}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`relative px-3 py-2 text-xs font-medium rounded-lg cursor-pointer transition-all duration-200 ${
+                    item.url === pathname.pathname
+                      ? "bg-gradient-to-r from-blue-400 to-blue-500 text-white shadow-lg"
+                      : isDarkMode 
+                        ? "text-gray-300 hover:bg-gray-800 hover:text-white"
+                        : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                   }`}
-                  style={{
-                    animationDelay: `${index * 100}ms`
-                  }}
+                  onClick={() => handleNavigation(item.id, item.url)}
                 >
-                  <IconComponent className={`w-4 h-4 transition-transform duration-300 ${
-                    location.pathname === item.path ? 'text-emerald-600' : 'text-white/80 group-hover:scale-110'
-                  }`} />
-                  {item.label}
-                  
-                  {/* Active indicator */}
-                  {location.pathname === item.path && (
-                    <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-lg"></div>
+                  {item.url === pathname.pathname && (
+                    <motion.div
+                      layoutId="activeTabRM"
+                      className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg shadow-lg"
+                      style={{ zIndex: -1 }}
+                    />
                   )}
-                </Link>
-              );
-            })}
-          </nav>
+                  <span className="relative z-10">{item.title}</span>
+                </motion.a>
+              ))}
+            </nav>
 
-          {/* Enhanced Mobile Menu Button */}
-          <div className="lg:hidden relative">
-            <button
-              className="p-3 text-white hover:bg-white/20 rounded-xl transition-all duration-200 transform hover:scale-105 bg-white/10 backdrop-blur-sm border border-white/20"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            {/* Dark/Light Mode Toggle - Always visible */}
+            <button 
+              onClick={toggleTheme}
+              className={`p-2 rounded-lg transition-colors duration-200 group ${
+                isDarkMode 
+                  ? 'hover:bg-gray-800' 
+                  : 'hover:bg-gray-100'
+              }`}
+              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
-              {mobileMenuOpen ? (
-                <X className="w-6 h-6" />
+              {isDarkMode ? (
+                <SunIcon className="h-5 w-5 text-gray-400 group-hover:text-yellow-500 transition-colors duration-200" />
               ) : (
-                <Menu className="w-6 h-6" />
+                <MoonIcon className="h-5 w-5 text-gray-600 group-hover:text-blue-500 transition-colors duration-200" />
               )}
             </button>
-          </div>
-        </div>
-      </header>
 
-      {/* Enhanced Mobile Navigation */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 top-20 bg-black/50 backdrop-blur-md z-40" onClick={() => setMobileMenuOpen(false)}>
-          <div className="bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 shadow-2xl mx-4 mt-4 rounded-2xl overflow-hidden border border-white/20">
-            <div className="p-6 space-y-3">
-              {navItems.map((item, index) => {
-                const IconComponent = item.icon;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`flex items-center gap-4 px-4 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 ${
-                      location.pathname === item.path
-                        ? "bg-gradient-to-r from-white to-blue-50 text-emerald-700 shadow-xl"
-                        : "text-white hover:bg-white/20 hover:shadow-lg"
+            {/* Notifications - Always visible */}
+            <button className={`p-2 rounded-lg transition-colors duration-200 relative group ${
+              isDarkMode 
+                ? 'hover:bg-gray-800' 
+                : 'hover:bg-gray-100'
+            }`}>
+              <BellIcon className={`h-5 w-5 transition-colors duration-200 ${
+                isDarkMode 
+                  ? 'text-gray-400 group-hover:text-blue-400' 
+                  : 'text-gray-600 group-hover:text-blue-500'
+              }`} />
+              {/* Notification badge */}
+              <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
+                2
+              </span>
+            </button>
+
+            {/* Profile Section - Simplified for mobile */}
+            <div className={`flex items-center gap-2 p-2 rounded-lg transition-colors duration-200 cursor-pointer group ${
+              isDarkMode 
+                ? 'hover:bg-gray-800' 
+                : 'hover:bg-gray-100'
+            }`}>
+              <div className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors duration-200 ${
+                isDarkMode
+                  ? 'bg-blue-900 group-hover:bg-blue-800'
+                  : 'bg-blue-100 group-hover:bg-blue-200'
+              }`}>
+                <UserIcon className={`h-4 w-4 ${
+                  isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                }`} />
+              </div>
+              <span className={`font-medium text-sm hidden lg:block transition-colors duration-200 ${
+                isDarkMode ? 'text-gray-200' : 'text-gray-700'
+              }`}>RM</span>
+            </div>
+
+            {/* Mobile Menu Button - Only show on small/medium screens */}
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className={`md:hidden p-2 rounded-lg transition-colors ${
+                isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
+              }`}
+              onClick={toggleNavigation}
+            >
+              {openNavigation ? (
+                <HiX size={24} className={isDarkMode ? 'text-gray-300' : 'text-slate-700'} />
+              ) : (
+                <HiMenu size={24} className={isDarkMode ? 'text-gray-300' : 'text-slate-700'} />
+              )}
+            </motion.button>
+          </div>
+        </nav>
+
+        {/* Mobile Navigation Menu - Enhanced for Mobile/Tablet */}
+        <AnimatePresence>
+          {openNavigation && (
+            <motion.nav
+              initial="closed"
+              animate="open"
+              exit="closed"
+              variants={menuVariants}
+              className={`md:hidden absolute top-full inset-x-0 border-t shadow-xl z-50 ${
+                isDarkMode 
+                  ? 'bg-gray-900 border-gray-700' 
+                  : 'bg-white border-slate-200'
+              }`}
+            >
+              <div className="px-4 py-6 space-y-4">
+                {/* Navigation Items - Mobile optimized */}
+                {navItems.map((item, index) => (
+                  <motion.a
+                    key={item.id}
+                    variants={menuItemVariants}
+                    className={`flex items-center justify-between px-4 py-4 text-lg font-medium rounded-xl cursor-pointer transition-all duration-200 ${
+                      item.url === pathname.pathname
+                        ? "bg-gradient-to-r from-blue-400 to-blue-500 text-white shadow-lg"
+                        : isDarkMode
+                          ? "text-gray-300 hover:bg-gray-800 active:bg-gray-700"
+                          : "text-slate-700 hover:bg-slate-100 active:bg-slate-200"
                     }`}
-                    onClick={() => setMobileMenuOpen(false)}
-                    style={{
-                      animationDelay: `${index * 50}ms`
+                    onClick={() => {
+                      handleNavigation(item.id, item.url);
+                      setOpenNavigation(false);
                     }}
                   >
-                    <div className={`p-2 rounded-lg ${
-                      location.pathname === item.path 
-                        ? 'bg-emerald-100 text-emerald-600' 
-                        : 'bg-white/10 text-white'
-                    }`}>
-                      <IconComponent className="w-5 h-5" />
-                    </div>
-                    <span className="text-lg">{item.label}</span>
-                    
-                    {location.pathname === item.path && (
-                      <div className="ml-auto w-3 h-3 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-lg animate-pulse"></div>
+                    <span className="text-base font-semibold">{item.title}</span>
+                    {item.url === pathname.pathname && (
+                      <motion.div
+                        layoutId="activeMobileTabRM"
+                        className="w-3 h-3 bg-white rounded-full shadow-lg"
+                      />
                     )}
-                  </Link>
-                );
-              })}
-            </div>
-            
-            {/* Mobile menu footer */}
-            <div className="px-6 py-4 bg-black/20 border-t border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <p className="text-white font-semibold">ResourcePro</p>
-                  <p className="text-xs text-emerald-200">v2.1.0</p>
+                  </motion.a>
+                ))}
+                
+                {/* Mobile Footer Info */}
+                <div className={`mt-6 pt-4 border-t ${
+                  isDarkMode ? 'border-gray-700' : 'border-gray-200'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center">
+                        <Sparkles className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                          ResourcePro
+                        </p>
+                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          Mobile Optimized
+                        </p>
+                      </div>
+                    </div>
+                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      isDarkMode 
+                        ? 'bg-blue-900 text-blue-200' 
+                        : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      v2.0
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <style jsx>{`
-        @keyframes spin-slow {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-        .animate-spin-slow {
-          animation: spin-slow 8s linear infinite;
-        }
-      `}</style>
-    </>
+            </motion.nav>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.header>
   );
 };
 

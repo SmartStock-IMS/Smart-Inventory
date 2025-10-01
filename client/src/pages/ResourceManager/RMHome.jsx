@@ -20,6 +20,7 @@ import {
   ShoppingBag,
   User
 } from "lucide-react";
+import { useTheme } from "../../context/theme/ThemeContext.jsx";
 
 // Get assigned orders from localStorage
 function getAssignedOrders() {
@@ -251,6 +252,7 @@ function estimateWeight(description, quantity) {
 }
 
 const RMHome = () => {
+  const { isDarkMode } = useTheme();
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState(null);
   const [currentRM, setCurrentRM] = useState(null);
@@ -288,38 +290,38 @@ const RMHome = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <div className="text-center">
-          <Package className="w-12 h-12 mx-auto mb-4 text-gray-400 animate-pulse" />
-          <p className="text-gray-600">Loading dashboard...</p>
+          <Package className={`w-12 h-12 mx-auto mb-4 animate-pulse ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+          <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-3 sm:p-6 space-y-6">
+    <div className={`max-w-7xl mx-auto p-3 sm:p-6 space-y-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl p-4 sm:p-6 text-white">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4 sm:p-6 text-white">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
               <Truck className="w-8 h-8" />
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold">Delivery Dashboard</h1>
-                <p className="text-emerald-100">
+                <p className="text-blue-100">
                   Welcome, <strong>{currentRM?.name}</strong> ({currentRM?.emp_code}) • 📍 {currentRM?.sales_area}
                 </p>
               </div>
             </div>
-            <p className="text-emerald-100 text-sm">
+            <p className="text-blue-100 text-sm">
               Your daily delivery summary and logistics overview
             </p>
           </div>
           <div className="flex items-center gap-4">
             <div className="bg-white/20 rounded-lg p-3 backdrop-blur-sm">
               <div className="text-center">
-                <p className="text-emerald-100 text-sm">Today's Date</p>
+                <p className="text-blue-100 text-sm">Today's Date</p>
                 <p className="font-bold text-lg">{new Date().toLocaleDateString('en-US', { 
                   weekday: 'short', 
                   month: 'short', 
@@ -333,7 +335,7 @@ const RMHome = () => {
               className="bg-white/20 hover:bg-white/30 rounded-lg p-3 backdrop-blur-sm transition-colors"
               title="Refresh Dashboard"
             >
-              <Activity className="w-6 h-6 text-emerald-100" />
+              <Activity className="w-6 h-6 text-blue-100" />
             </button>
           </div>
         </div>
@@ -341,50 +343,50 @@ const RMHome = () => {
 
       {/* Quick Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-lg p-4 border-l-4 border-blue-500">
+        <div className={`rounded-xl shadow-lg p-4 border-l-4 border-blue-500 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
               <Package className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total Orders</p>
-              <p className="text-2xl font-bold text-gray-900">{stats?.totalOrders || 0}</p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Orders</p>
+              <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{stats?.totalOrders || 0}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-4 border-l-4 border-green-500">
+        <div className={`rounded-xl shadow-lg p-4 border-l-4 border-green-500 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-100 rounded-lg">
               <CheckCircle className="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Completed</p>
-              <p className="text-2xl font-bold text-gray-900">{stats?.completedOrders || 0}</p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Completed</p>
+              <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{stats?.completedOrders || 0}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-4 border-l-4 border-orange-500">
+        <div className={`rounded-xl shadow-lg p-4 border-l-4 border-orange-500 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="flex items-center gap-3">
             <div className="p-2 bg-orange-100 rounded-lg">
               <Activity className="w-6 h-6 text-orange-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">In Progress</p>
-              <p className="text-2xl font-bold text-gray-900">{stats?.inProgressOrders || 0}</p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>In Progress</p>
+              <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{stats?.inProgressOrders || 0}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-4 border-l-4 border-purple-500">
+        <div className={`rounded-xl shadow-lg p-4 border-l-4 border-purple-500 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="flex items-center gap-3">
             <div className="p-2 bg-purple-100 rounded-lg">
               <DollarSign className="w-6 h-6 text-purple-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total Value</p>
-              <p className="text-lg font-bold text-gray-900">{formatCurrency(stats?.totalAmount || 0)}</p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Value</p>
+              <p className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{formatCurrency(stats?.totalAmount || 0)}</p>
             </div>
           </div>
         </div>
@@ -394,11 +396,11 @@ const RMHome = () => {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Item Summary */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className={`rounded-xl shadow-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <div className="flex items-center gap-3 mb-6">
-              <Boxes className="w-6 h-6 text-indigo-600" />
-              <h2 className="text-xl font-bold text-gray-900">Items In Progress for Delivery</h2>
-              <span className="bg-orange-100 text-orange-800 text-sm font-medium px-2 py-1 rounded-full">
+              <Boxes className="w-6 h-6 text-blue-500" />
+              <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Items In Progress for Delivery</h2>
+              <span className="bg-blue-100 text-blue-500 text-sm font-medium px-2 py-1 rounded-full">
                 {stats?.inProgressOrders || 0} orders
               </span>
             </div>
@@ -406,24 +408,24 @@ const RMHome = () => {
             {stats?.itemSummary && stats.itemSummary.length > 0 ? (
               <div className="space-y-4">
                 {stats.itemSummary.slice(0, 10).map((item, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4">
+                  <div key={index} className={`border rounded-lg p-4 ${isDarkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-200 bg-white'}`}>
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">{item.name}</h3>
-                        <p className="text-sm text-gray-500">Code: {item.code}</p>
+                        <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{item.name}</h3>
+                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Code: {item.code}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-bold text-gray-900">{item.totalQty} units</p>
-                        <p className="text-sm text-gray-500">{formatCurrency(item.totalValue)}</p>
+                        <p className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{item.totalQty} units</p>
+                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{formatCurrency(item.totalValue)}</p>
                       </div>
                     </div>
                     
                     {Object.keys(item.variants).length > 0 && (
                       <div className="mt-3">
-                        <p className="text-xs text-gray-600 mb-2">Variants:</p>
+                        <p className={`text-xs mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Variants:</p>
                         <div className="flex flex-wrap gap-2">
                           {Object.entries(item.variants).map(([variant, qty]) => (
-                            <span key={variant} className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                            <span key={variant} className="text-xs px-2 py-1 bg-blue-100 text-blue-500 rounded-full">
                               {variant}: {qty} units
                             </span>
                           ))}
@@ -435,7 +437,7 @@ const RMHome = () => {
                 
                 {stats.itemSummary.length > 10 && (
                   <div className="text-center py-4">
-                    <p className="text-sm text-gray-500">
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       ... and {stats.itemSummary.length - 10} more items
                     </p>
                   </div>
@@ -443,8 +445,8 @@ const RMHome = () => {
               </div>
             ) : (
               <div className="text-center py-8">
-                <ShoppingBag className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-500">No items assigned for delivery yet</p>
+                <ShoppingBag className={`w-12 h-12 mx-auto mb-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} />
+                <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No items assigned for delivery yet</p>
               </div>
             )}
           </div>
@@ -453,37 +455,37 @@ const RMHome = () => {
         {/* Right Side Stats */}
         <div className="space-y-6">
           {/* Daily Summary */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className={`rounded-xl shadow-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <div className="flex items-center gap-3 mb-4">
-              <BarChart3 className="w-6 h-6 text-emerald-600" />
-              <h2 className="text-lg font-bold text-gray-900">In Progress Deliveries</h2>
+              <BarChart3 className="w-6 h-6 text-blue-500" />
+              <h2 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>In Progress Deliveries</h2>
             </div>
             
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Orders to Deliver</span>
-                <span className="font-bold text-orange-600">{stats?.inProgressOrders || 0}</span>
+                <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Orders to Deliver</span>
+                <span className="font-bold text-blue-500">{stats?.inProgressOrders || 0}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Items to Deliver</span>
-                <span className="font-bold text-blue-600">{stats?.totalItems || 0}</span>
+                <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Items to Deliver</span>
+                <span className="font-bold text-blue-400">{stats?.totalItems || 0}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Est. Weight</span>
-                <span className="font-bold text-purple-600">{formatWeight(stats?.totalWeight || 0)}</span>
+                <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Est. Weight</span>
+                <span className="font-bold text-blue-500">{formatWeight(stats?.totalWeight || 0)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">In Progress Value</span>
-                <span className="font-bold text-orange-600">{formatCurrency(stats?.inProgressValue || 0)}</span>
+                <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>In Progress Value</span>
+                <span className="font-bold text-blue-400">{formatCurrency(stats?.inProgressValue || 0)}</span>
               </div>
               <div className="border-t pt-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Completion Rate</span>
-                  <span className="font-bold text-blue-600">{stats?.completionRate || 0}%</span>
+                  <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Completion Rate</span>
+                  <span className="font-bold text-blue-500">{stats?.completionRate || 0}%</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div className={`w-full rounded-full h-2 mt-2 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
                   <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${stats?.completionRate || 0}%` }}
                   ></div>
                 </div>
@@ -492,48 +494,48 @@ const RMHome = () => {
           </div>
 
           {/* Delivery Status */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className={`rounded-xl shadow-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <div className="flex items-center gap-3 mb-4">
-              <Activity className="w-6 h-6 text-red-600" />
-              <h2 className="text-lg font-bold text-gray-900">Delivery Status</h2>
+              <Activity className="w-6 h-6 text-blue-500" />
+              <h2 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Delivery Status</h2>
             </div>
             
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">Completed Orders</span>
+                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Completed Orders</span>
                 <span className="ml-auto font-bold text-green-600">{stats?.completedOrders || 0}</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">In Progress Deliveries</span>
-                <span className="ml-auto font-bold text-orange-600">{stats?.inProgressOrders || 0}</span>
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>In Progress Deliveries</span>
+                <span className="ml-auto font-bold text-blue-500">{stats?.inProgressOrders || 0}</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">Pending Orders</span>
-                <span className="ml-auto font-bold text-blue-600">{stats?.pendingOrders || 0}</span>
+                <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
+                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Pending Orders</span>
+                <span className="ml-auto font-bold text-blue-400">{stats?.pendingOrders || 0}</span>
               </div>
             </div>
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className={`rounded-xl shadow-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <div className="flex items-center gap-3 mb-4">
-              <Target className="w-6 h-6 text-purple-600" />
-              <h2 className="text-lg font-bold text-gray-900">Quick Actions</h2>
+              <Target className="w-6 h-6 text-blue-500" />
+              <h2 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Quick Actions</h2>
             </div>
             
             <div className="space-y-3">
               <a 
                 href="/resourcemanager/orders" 
-                className="block w-full px-4 py-3 bg-purple-600 text-white rounded-lg font-medium text-center hover:bg-purple-700 transition-colors"
+                className="block w-full px-4 py-3 bg-blue-500 text-white rounded-lg font-medium text-center hover:bg-blue-600 transition-colors"
               >
                 📦 View All Orders
               </a>
               <a 
                 href="/resourcemanager/resources" 
-                className="block w-full px-4 py-3 bg-yellow-600 text-white rounded-lg font-medium text-center hover:bg-yellow-700 transition-colors"
+                className="block w-full px-4 py-3 bg-blue-400 text-white rounded-lg font-medium text-center hover:bg-blue-500 transition-colors"
               >
                 🔧 Vehicle Maintenance
               </a>
@@ -543,11 +545,11 @@ const RMHome = () => {
       </div>
 
       {/* Footer Info */}
-      <div className="bg-gray-50 rounded-xl p-4 text-center">
-        <p className="text-sm text-gray-600">
+      <div className={`rounded-xl p-4 text-center ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
           💡 Dashboard updates automatically every 30 seconds • Last updated: {lastUpdate.toLocaleTimeString()}
         </p>
-        <p className="text-xs text-gray-500 mt-1">
+        <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
           Click the refresh button above or complete orders to see updates immediately
         </p>
       </div>

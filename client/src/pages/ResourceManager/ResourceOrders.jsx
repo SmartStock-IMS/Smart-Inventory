@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTheme } from "../../context/theme/ThemeContext";
 import { 
   Package, 
   Clock, 
@@ -101,6 +102,7 @@ const enrichOrderWithDetails = (order) => {
 };
 
 const ResourceOrders = () => {
+  const { isDarkMode } = useTheme();
   const [assignedOrders, setAssignedOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -226,11 +228,11 @@ const ResourceOrders = () => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto p-3 sm:p-6">
+      <div className={`max-w-7xl mx-auto p-3 sm:p-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <Package className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-gray-400 animate-pulse" />
-            <p className="text-gray-600 font-medium text-sm sm:text-base">Loading orders...</p>
+            <Package className={`w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 animate-pulse ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} />
+            <p className={`font-medium text-sm sm:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loading orders...</p>
           </div>
         </div>
       </div>
@@ -238,9 +240,9 @@ const ResourceOrders = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
+    <div className={`max-w-7xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-4 sm:p-6 text-white">
+      <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-4 sm:p-6 text-white">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
@@ -249,17 +251,17 @@ const ResourceOrders = () => {
                 <h2 className="text-xl sm:text-3xl font-bold">Resource Orders</h2>
                 {currentRM && (
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-1">
-                    <span className="text-sm sm:text-base text-purple-100">
+                    <span className="text-sm sm:text-base text-blue-100">
                       Welcome, <strong>{currentRM.name}</strong> ({currentRM.emp_code})
                     </span>
-                    <span className="text-xs sm:text-sm text-purple-200">
+                    <span className="text-xs sm:text-sm text-blue-200">
                       📍 {currentRM.sales_area}
                     </span>
                   </div>
                 )}
               </div>
             </div>
-            <p className="text-purple-100 text-sm sm:text-base">
+            <p className="text-blue-100 text-sm sm:text-base">
               {currentRM 
                 ? `Orders assigned to you for delivery preparation.`
                 : "View order details and quotation information for delivery preparation."
@@ -297,8 +299,8 @@ const ResourceOrders = () => {
         <div className="space-y-4 sm:space-y-6">
           {/* Mobile Order Selection Dropdown */}
           <div className="block lg:hidden">
-            <div className="bg-white rounded-xl shadow-lg p-4">
-              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+            <div className={`rounded-xl shadow-lg p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+              <h3 className={`font-semibold text-lg mb-3 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                 <FileText className="w-5 h-5 text-blue-600" />
                 Select Order
               </h3>
@@ -308,7 +310,7 @@ const ResourceOrders = () => {
                   const order = assignedOrders.find(o => o.quotation_id.toString() === e.target.value);
                   setSelectedOrder(order);
                 }}
-                className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full p-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
               >
                 <option value="">Choose an order...</option>
                 {assignedOrders.map((order, index) => (
@@ -324,8 +326,8 @@ const ResourceOrders = () => {
           <div className="hidden lg:grid lg:grid-cols-4 gap-6">
             {/* Desktop Order List Sidebar */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl shadow-lg p-4">
-                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+              <div className={`rounded-xl shadow-lg p-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <h3 className={`font-semibold text-lg mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   <FileText className="w-5 h-5 text-blue-600" />
                   Assigned Orders
                 </h3>
@@ -337,17 +339,19 @@ const ResourceOrders = () => {
                       className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
                         selectedOrder?.quotation_id === order.quotation_id
                           ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          : isDarkMode 
+                            ? 'border-gray-600 hover:border-gray-500 hover:bg-gray-700'
+                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                       }`}
                       onClick={() => setSelectedOrder(order)}
                     >
-                      <div className="font-medium text-gray-900">
+                      <div className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                         Order #{order.quotation_id || order.id}
                       </div>
-                      <div className="text-sm text-gray-600 mt-1">
+                      <div className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                         {order.customerName || order.customer}
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                         {order.net_total ? formatCurrency(order.net_total) : 'Amount N/A'}
                       </div>
                       <div className="mt-2">
@@ -366,15 +370,15 @@ const ResourceOrders = () => {
               {selectedOrder && (
                 <div className="space-y-6">
                   {/* Status */}
-                  <div className="bg-white rounded-xl shadow-lg p-6">
+                  <div className={`rounded-xl shadow-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
                         <CheckCircle className={`w-8 h-8 ${selectedOrder.status === 'Complete' ? 'text-green-600' : 'text-blue-600'}`} />
                         <div>
-                          <h3 className={`text-2xl font-bold ${selectedOrder.status === 'Complete' ? 'text-green-800' : 'text-gray-900'}`}>
+                          <h3 className={`text-2xl font-bold ${selectedOrder.status === 'Complete' ? 'text-green-800' : isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                             {selectedOrder.status}
                           </h3>
-                          <p className="text-gray-600">Order #{selectedOrder.quotation_id}</p>
+                          <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Order #{selectedOrder.quotation_id}</p>
                           {selectedOrder.status === 'Complete' && selectedOrder.completedAt && (
                             <p className="text-sm text-green-600">
                               ✅ Completed on {new Date(selectedOrder.completedAt).toLocaleDateString('en-US', {
@@ -410,27 +414,27 @@ const ResourceOrders = () => {
                   </div>
 
                   {/* Desktop Product Table */}
-                  <div className="bg-white rounded-xl shadow-lg p-6">
+                  <div className={`rounded-xl shadow-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                     <div className="flex items-center gap-3 mb-4">
                       <Package className="w-6 h-6 text-blue-600" />
                       <div>
-                        <h3 className="text-xl font-bold text-gray-900">📦 Product Details for Delivery</h3>
-                        <p className="text-gray-600">Complete variant information for accurate delivery</p>
+                        <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>📦 Product Details for Delivery</h3>
+                        <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Complete variant information for accurate delivery</p>
                       </div>
                     </div>
 
                     {/* Desktop Product Table */}
                     <div className="overflow-x-auto">
-                      <table className="w-full border-collapse border border-gray-200 rounded-lg">
-                        <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
+                      <table className={`w-full border-collapse border rounded-lg ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
+                        <thead className={`${isDarkMode ? 'bg-gray-700' : 'bg-gradient-to-r from-blue-50 to-indigo-50'}`}>
                           <tr>
-                            <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">Product Code</th>
-                            <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">Product Name</th>
-                            <th className="border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700">Variant Details</th>
-                            <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">Quantity</th>
-                            <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">Unit Price</th>
-                            <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">Total</th>
-                            <th className="border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700">Status</th>
+                            <th className={`border px-4 py-3 text-left text-sm font-semibold ${isDarkMode ? 'border-gray-600 text-gray-300' : 'border-gray-200 text-gray-700'}`}>Product Code</th>
+                            <th className={`border px-4 py-3 text-left text-sm font-semibold ${isDarkMode ? 'border-gray-600 text-gray-300' : 'border-gray-200 text-gray-700'}`}>Product Name</th>
+                            <th className={`border px-4 py-3 text-left text-sm font-semibold ${isDarkMode ? 'border-gray-600 text-gray-300' : 'border-gray-200 text-gray-700'}`}>Variant Details</th>
+                            <th className={`border px-4 py-3 text-center text-sm font-semibold ${isDarkMode ? 'border-gray-600 text-gray-300' : 'border-gray-200 text-gray-700'}`}>Quantity</th>
+                            <th className={`border px-4 py-3 text-center text-sm font-semibold ${isDarkMode ? 'border-gray-600 text-gray-300' : 'border-gray-200 text-gray-700'}`}>Unit Price</th>
+                            <th className={`border px-4 py-3 text-center text-sm font-semibold ${isDarkMode ? 'border-gray-600 text-gray-300' : 'border-gray-200 text-gray-700'}`}>Total</th>
+                            <th className={`border px-4 py-3 text-center text-sm font-semibold ${isDarkMode ? 'border-gray-600 text-gray-300' : 'border-gray-200 text-gray-700'}`}>Status</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -817,20 +821,20 @@ const ResourceOrders = () => {
         </div>
       ) : (
         /* No orders message */
-        <div className="bg-white rounded-xl shadow-lg p-8 sm:p-12 text-center">
-          <Package className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-gray-400" />
-          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
+        <div className={`rounded-xl shadow-lg p-8 sm:p-12 text-center ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+          <Package className={`w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} />
+          <h3 className={`text-lg sm:text-xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             No Orders Assigned
           </h3>
-          <p className="text-gray-600 mb-2 text-sm sm:text-base">
+          <p className={`mb-2 text-sm sm:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             {currentRM 
               ? `No orders have been assigned to ${currentRM.name} (${currentRM.emp_code}) yet.`
               : "There are currently no orders assigned to this resource manager."
             }
           </p>
           {currentRM && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 text-sm">
-              <div className="flex items-center justify-center gap-2 text-blue-700 font-medium mb-2">
+            <div className={`border rounded-lg p-4 mb-4 text-sm ${isDarkMode ? 'bg-blue-900/20 border-blue-700' : 'bg-blue-50 border-blue-200'}`}>
+              <div className={`flex items-center justify-center gap-2 font-medium mb-2 ${isDarkMode ? 'text-blue-400' : 'text-blue-700'}`}>
                 <User className="w-4 h-4" />
                 Your Profile
               </div>
@@ -847,7 +851,7 @@ const ResourceOrders = () => {
           </p>
           <button
             onClick={handleRefresh}
-            className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transition-all text-sm sm:text-base"
+            className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium hover:from-blue-600 hover:to-blue-700 transition-all text-sm sm:text-base"
           >
             Refresh Orders
           </button>
