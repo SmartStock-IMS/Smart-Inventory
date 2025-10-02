@@ -73,107 +73,241 @@ class Order extends BaseModel {
       throw error;
     }
   }
-/*
-  async findById(id) {
+
+  async findOrderdataBySalesRep(id) {
     try {
-      const result = await this.callFunction('fn_get_order_by_id', [id]);
-      return result[0] || null;
+      const result = await this.callFunction('fn_get_orders_by_sales_rep', [id]);
+      return result;
     } catch (error) {
       throw error;
     }
   }
+  
+    async findById(id) {
+      try {
+        const result = await this.callFunction('fn_get_order_by_id', [id]);
+        return result[0] || null;
+      } catch (error) {
+        throw error;
+      }
+    }
+  /*
+    async findByCustomerId(customerId, limit = 10, offset = 0) {
+      try {
+        return await this.callFunction('fn_get_orders_by_customer', [
+          customerId,
+          limit,
+          offset
+        ]);
+      } catch (error) {
+        throw error;
+      }
+    }
+  
+    async create(orderData) {
+      try {
+        const result = await this.callProcedure('sp_create_order', [
+          orderData.customer_id,
+          orderData.order_date || new Date(),
+          orderData.status || 'pending',
+          orderData.total_amount || 0,
+          orderData.discount_amount || 0,
+          orderData.tax_amount || 0,
+          orderData.shipping_address || null,
+          orderData.billing_address || null,
+          orderData.notes || null,
+          orderData.sales_rep_id || null
+        ]);
+        return result[0];
+      } catch (error) {
+        throw error;
+      }
+    }
+  /*
+    async update(id, updateData) {
+      try {
+        const result = await this.callProcedure('sp_update_order', [
+          id,
+          updateData.status || null,
+          updateData.total_amount || null,
+          updateData.discount_amount || null,
+          updateData.tax_amount || null,
+          updateData.shipping_address || null,
+          updateData.billing_address || null,
+          updateData.notes || null,
+          updateData.delivery_date || null
+        ]);
+        return result[0];
+      } catch (error) {
+        throw error;
+      }
+    }
+  
+    async updateStatus(id, status) {
+      try {
+        const result = await this.callProcedure('sp_update_order_status', [id, status]);
+        return result[0];
+      } catch (error) {
+        throw error;
+      }
+    }
+  
+    async getOrdersWithItems(limit = 10, offset = 0) {
+      try {
+        return await this.callFunction('fn_get_orders_with_items', [limit, offset]);
+      } catch (error) {
+        throw error;
+      }
+    }
+  
+    async getOrdersByDateRange(startDate, endDate, limit = 10, offset = 0) {
+      try {
+        return await this.callFunction('fn_get_orders_by_date_range', [
+          startDate,
+          endDate,
+          limit,
+          offset
+        ]);
+      } catch (error) {
+        throw error;
+      }
+    }
+  
+    async getOrderStatistics(startDate = null, endDate = null) {
+      try {
+        return await this.callFunction('fn_get_order_statistics', [
+          startDate,
+          endDate
+        ]);
+      } catch (error) {
+        throw error;
+      }
+    }*/
 
-  async findByCustomerId(customerId, limit = 10, offset = 0) {
+  /**
+   * Get daily summary data for quotations/orders.
+   * @param {Date|string} report_date
+   * @param {string|null} status
+   */
+  async getDailySummary(report_date = null, status = null) {
     try {
-      return await this.callFunction('fn_get_orders_by_customer', [
-        customerId,
-        limit,
-        offset
+      return await this.callFunction('fn_get_daily_summary', [
+        report_date,
+        status
       ]);
     } catch (error) {
       throw error;
     }
   }
 
-  async create(orderData) {
+  /**
+   * Get daily summary statistics.
+   * @param {Date|string} report_date
+   * @param {string|null} status
+   */
+  async getDailySummaryStats(report_date = null, status = null) {
     try {
-      const result = await this.callProcedure('sp_create_order', [
-        orderData.customer_id,
-        orderData.order_date || new Date(),
-        orderData.status || 'pending',
-        orderData.total_amount || 0,
-        orderData.discount_amount || 0,
-        orderData.tax_amount || 0,
-        orderData.shipping_address || null,
-        orderData.billing_address || null,
-        orderData.notes || null,
-        orderData.sales_rep_id || null
+      return await this.callFunction('fn_get_daily_summary_stats', [
+        report_date,
+        status
       ]);
-      return result[0];
     } catch (error) {
       throw error;
     }
   }
 
-  async update(id, updateData) {
+  /**
+   * Get available status options for a specific date.
+   * @param {Date|string} report_date
+   */
+  async getDailyStatusOptions(report_date = null) {
     try {
-      const result = await this.callProcedure('sp_update_order', [
-        id,
-        updateData.status || null,
-        updateData.total_amount || null,
-        updateData.discount_amount || null,
-        updateData.tax_amount || null,
-        updateData.shipping_address || null,
-        updateData.billing_address || null,
-        updateData.notes || null,
-        updateData.delivery_date || null
+      return await this.callFunction('fn_get_daily_status_options', [
+        report_date
       ]);
-      return result[0];
     } catch (error) {
       throw error;
     }
   }
 
   async updateStatus(id, status) {
-    try {
-      const result = await this.callProcedure('sp_update_order_status', [id, status]);
-      return result[0];
-    } catch (error) {
-      throw error;
+      try {
+        const result = await this.callProcedure('sp_update_order_status', [
+          null,
+          null,
+          id, 
+          status 
+        ]);
+        return result[0];
+      } catch (error) {
+        throw error;
+      }
     }
-  }
 
-  async getOrdersWithItems(limit = 10, offset = 0) {
-    try {
-      return await this.callFunction('fn_get_orders_with_items', [limit, offset]);
-    } catch (error) {
-      throw error;
+    async getWeeklySummary(week_start_date, status = null) {
+      try {
+        return await this.callFunction('fn_get_weekly_summary', [
+          week_start_date,
+          status
+        ]);
+      } catch (error) {
+        throw error;
+      }
     }
-  }
+  
+    async getWeeklySummaryStats(week_start_date, status = null) {
+      try {
+        return await this.callFunction('fn_get_weekly_summary_stats', [
+          week_start_date,
+          status
+        ]);
+      } catch (error) {
+        throw error;
+      }
+    }
+  
+    async getWeeklyStatusOptions(week_start_date) {
+      try {
+        return await this.callFunction('fn_get_weekly_status_options', [
+          week_start_date
+        ]);
+      } catch (error) {
+        throw error;
+      }
+    }
 
-  async getOrdersByDateRange(startDate, endDate, limit = 10, offset = 0) {
-    try {
-      return await this.callFunction('fn_get_orders_by_date_range', [
-        startDate,
-        endDate,
-        limit,
-        offset
-      ]);
-    } catch (error) {
-      throw error;
+    async getYearlySummary(year, status = null) {
+      try {
+        return await this.callFunction('fn_get_yearly_summary', [year, status]);
+      } catch (error) {
+        throw error;
+      }
     }
-  }
 
-  async getOrderStatistics(startDate = null, endDate = null) {
-    try {
-      return await this.callFunction('fn_get_order_statistics', [
-        startDate,
-        endDate
-      ]);
-    } catch (error) {
-      throw error;
+    async getYearlySummaryStats(year, status = null) {
+      try {
+        return await this.callFunction('fn_get_yearly_summary_stats', [year, status]);
+      } catch (error) {
+        throw error;
+      }
     }
-  }*/
+
+    async getMonthlyBreakdown(year, status = null) {
+      try {
+        return await this.callFunction('fn_get_monthly_breakdown', [year, status]);
+      } catch (error) {
+        throw error;
+      }
+    }
+
+    async getYearlyStatusOptions(year) {
+      try {
+        return await this.callFunction('fn_get_yearly_status_options', [year]);
+      } catch (error) {
+        throw error;
+      }
+    }
 }
 
+module.exports = Order;
 module.exports = Order;
