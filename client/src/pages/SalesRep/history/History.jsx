@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { getQuotationsBySalesRep } from "@services/quotation-service.js";
 import { useAuth } from "../../../context/auth/AuthContext.jsx";
 import { FaSpinner } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
@@ -12,41 +11,83 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@components/ui/Dialog.jsx";
-import OrderDetails from "@components/InventoryManager/orders/OrderDetails.jsx";
-
-// NOTE: Currently using mock data since backend is not connected
-// TODO: Replace mock data with real API calls when backend is ready
+//import OrderDetails from "@components/InventoryManager/orders/OrderDetails.jsx";
+import OrderDetails from "../orders/OrderDetails.jsx";
+import { jwtDecode } from "jwt-decode";
 
 const History = () => {
   const { user } = useAuth();
-
-  // const [searchQuery, setSearchQuery] = useState("");
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    setIsLoading(true);
+  function getSalesStaffIdFromToken() {
+    const token = localStorage.getItem("token");
+    if (!token) return "SR001";
     try {
-      // Get quotations from localStorage for frontend dev
-      const savedQuotations = localStorage.getItem('quotations');
-      let quotations = [];
-      if (savedQuotations) {
-        quotations = JSON.parse(savedQuotations);
-      }
-      setOrders(quotations);
-    } catch (error) {
-      console.error("Error fetching quotations from localStorage:", error);
-      toast.error("Failed to load quotation history");
-    } finally {
-      setIsLoading(false);
+      const payload = jwtDecode(token);
+      return payload.role_id || "SR001";
+    } catch {
+      return "SR001";
     }
-  }, []);
+  }
 
-  // const filteredOrders = orders.filter(order =>
-  //   order.id.includes(searchQuery) ||
-  //   order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  //   order.date.includes(searchQuery)
-  // );
+  useEffect(() => {
+    const salesRepId = getSalesStaffIdFromToken();
+    if (!salesRepId) return;
+    setIsLoading(true);
+    const token = localStorage.getItem("token");
+    fetch(`http://localhost:3000/api/orders/by-sales-rep/${salesRepId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Failed to fetch orders");
+        const result = await res.json();
+        // Handle API response structure
+        let ordersArr = [];
+        if (result && result.data && result.data.orders) {
+          if (Array.isArray(result.data.orders)) {
+            ordersArr = result.data.orders;
+          } else {
+            ordersArr = [result.data.orders];
+          }
+        }
+        // Map API fields to UI expected fields
+        ordersArr = ordersArr.map(order => {
+          // Normalize product items
+          let quotationItems = order.quotationItems || order.products_json || order.products || [];
+          quotationItems = Array.isArray(quotationItems)
+            ? quotationItems.map(prod => ({
+                ...prod,
+                item_code: prod.item_code || prod.product_id || prod.code,
+                description: prod.description || prod.product_name || prod.name,
+                item_qty: prod.item_qty || prod.quantity,
+                unit_price: prod.unit_price || prod.price,
+                total_amount: prod.total_amount || prod.line_total,
+              }))
+            : [];
+          return {
+            ...order,
+            quotation_id: order.quotation_id || order.order_id,
+            quotation_date: order.quotation_date || order.order_date,
+            quotationItems,
+            no_items: order.no_of_products || quotationItems.length,
+            status: order.status || order.order_status,
+          };
+        });
+        ordersArr.sort(
+          (a, b) =>
+            new Date(b.quotation_date) - new Date(a.quotation_date)
+        );
+        setOrders(ordersArr);
+      })
+      .catch((error) => {
+        console.error("Error fetching quotations:", error);
+        toast.error("Failed to load quotation history");
+      })
+      .finally(() => setIsLoading(false));
+  }, []);
 
   return (
     <div className="max-w-6xl mx-auto p-6 mt-24 space-y-6">
@@ -95,10 +136,12 @@ const History = () => {
             >
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-indigo-500 rounded-full mr-3"></div>
-                <span className="font-mono text-sm font-medium text-gray-900">#{order.quotation_id}</span>
+                <span className="font-mono text-sm font-medium text-gray-900">
+                  #{order.quotation_id || order.order_id}
+                </span>
               </div>
               <div className="text-sm text-gray-600">
-                {new Date(order.quotation_date).toLocaleDateString('en-US', { 
+                {new Date(order.quotation_date || order.order_date).toLocaleDateString('en-US', { 
                   year: 'numeric', 
                   month: 'short', 
                   day: 'numeric' 
@@ -113,10 +156,13 @@ const History = () => {
                   </DialogTrigger>
                   <DialogContent className="h-screen lg:h-[90%] max-w-screen lg:max-w-[90%] overflow-y-auto">
                     <DialogHeader>
-                      <DialogTitle className="text-xl font-bold text-gray-900">Order Details - {order.quotation_id}</DialogTitle>
-                      <DialogDescription>
-                        <OrderDetails item={order} />
-                      </DialogDescription>
+                      <DialogTitle className="text-xl font-bold text-gray-900">
+                        Order Details - {order.quotation_id || order.order_id}
+                      </DialogTitle>
+                      <DialogDescription />
+                      <div>
+                        <OrderDetails item={order} changeOpen={() => {}} /> {/* Pass a no-op function */}
+                      </div>
                     </DialogHeader>
                   </DialogContent>
                 </Dialog>
@@ -142,5 +188,7 @@ const History = () => {
     </div>
   );
 };
+
+
 
 export default History;

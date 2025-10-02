@@ -2,158 +2,118 @@ import {useEffect, useState} from "react";
 import {FaSpinner} from "react-icons/fa";
 import { NotebookPen, Download, Calendar, Filter, TrendingUp, FileText, Users, Package, CalendarRange } from "lucide-react";
 
-// Mock data for testing - yearly aggregated data
-const mockYearlySummaryData = [
-  {
-    year: "2025",
-    month: "August",
-    quotation_id: "QUO001",
-    quotation_date: "2025-08-13",
-    customer_id: "CUST001",
-    sales_rep_id: "EMP001",
-    no_items: 5,
-    net_total: 15750.00,
-    status: "Completed"
-  },
-  {
-    year: "2025",
-    month: "August",
-    quotation_id: "QUO002",
-    quotation_date: "2025-08-14",
-    customer_id: "CUST002",
-    sales_rep_id: "EMP002",
-    no_items: 3,
-    net_total: 8900.50,
-    status: "Pending"
-  },
-  {
-    year: "2025",
-    month: "August",
-    quotation_id: "QUO003",
-    quotation_date: "2025-08-15",
-    customer_id: "CUST003",
-    sales_rep_id: "EMP001",
-    no_items: 7,
-    net_total: 22300.75,
-    status: "Processing"
-  },
-  {
-    year: "2025",
-    month: "July",
-    quotation_id: "QUO004",
-    quotation_date: "2025-07-16",
-    customer_id: "CUST004",
-    sales_rep_id: "EMP003",
-    no_items: 2,
-    net_total: 5600.00,
-    status: "Completed"
-  },
-  {
-    year: "2025",
-    month: "July",
-    quotation_id: "QUO005",
-    quotation_date: "2025-07-07",
-    customer_id: "CUST005",
-    sales_rep_id: "EMP002",
-    no_items: 4,
-    net_total: 12450.25,
-    status: "Cancelled"
-  },
-  {
-    year: "2025",
-    month: "June",
-    quotation_id: "QUO006",
-    quotation_date: "2025-06-08",
-    customer_id: "CUST006",
-    sales_rep_id: "EMP001",
-    no_items: 6,
-    net_total: 18900.00,
-    status: "Pending"
-  },
-  {
-    year: "2025",
-    month: "June",
-    quotation_id: "QUO007",
-    quotation_date: "2025-06-09",
-    customer_id: "CUST007",
-    sales_rep_id: "EMP003",
-    no_items: 8,
-    net_total: 31200.50,
-    status: "Completed"
-  },
-  {
-    year: "2025",
-    month: "May",
-    quotation_id: "QUO008",
-    quotation_date: "2025-05-10",
-    customer_id: "CUST008",
-    sales_rep_id: "EMP002",
-    no_items: 1,
-    net_total: 2750.00,
-    status: "Processing"
-  },
-  {
-    year: "2024",
-    month: "December",
-    quotation_id: "QUO009",
-    quotation_date: "2024-12-15",
-    customer_id: "CUST009",
-    sales_rep_id: "EMP001",
-    no_items: 9,
-    net_total: 45000.00,
-    status: "Completed"
-  },
-  {
-    year: "2024",
-    month: "November",
-    quotation_id: "QUO010",
-    quotation_date: "2024-11-20",
-    customer_id: "CUST010",
-    sales_rep_id: "EMP003",
-    no_items: 3,
-    net_total: 12000.00,
-    status: "Completed"
-  }
-];
-
 const YearlySummary = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [yearlySummaryData, setYearlySummaryData] = useState(mockYearlySummaryData);
+  const [yearlySummaryData, setYearlySummaryData] = useState([]);
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [summaryStats, setSummaryStats] = useState({
+    total_quotations: 0,
+    total_value: 0,
+    total_items: 0,
+    unique_customers: 0
+  });
+  const [monthlyBreakdown, setMonthlyBreakdown] = useState({});
+  const [statusOptions, setStatusOptions] = useState(["All"]);
 
   useEffect(() => {
-    (async () => {
+    const loadYearlyData = async () => {
       try {
         setIsLoading(true);
-        // Use mock data for now - comment out the API call
-        // const result = await yearlySummary(selectedYear);
-        // console.log("result", result);
-        // if (result.success) {
-        //   setYearlySummaryData(result.data.data);
-        // } else {
-        //   console.error("No data found");
-        // }
-        
-        // Filter mock data by selected year
-        const filteredMockData = mockYearlySummaryData.filter(item => 
-          item.year === selectedYear
-        );
-        setYearlySummaryData(filteredMockData);
-        
+
+        // Fetch all data concurrently
+        const [summaryResult, statsResult, breakdownResult, statusResult] = await Promise.all([
+          fetch(`http://localhost:3000/api/reports/yearly-summary?year=${selectedYear}&status=${statusFilter === "All" ? "" : statusFilter}`, {
+            headers: {
+              'authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          }).then(res => res.json()),
+          fetch(`http://localhost:3000/api/reports/yearly-summary-stats?year=${selectedYear}&status=${statusFilter === "All" ? "" : statusFilter}`, {
+            headers: {
+              'authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          }).then(res => res.json()),
+          fetch(`http://localhost:3000/api/reports/monthly-breakdown?year=${selectedYear}&status=${statusFilter === "All" ? "" : statusFilter}`, {
+            headers: {
+              'authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          }).then(res => res.json()),
+          fetch(`http://localhost:3000/api/reports/yearly-status-options?year=${selectedYear}`, {
+            headers: {
+              'authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          }).then(res => res.json())
+        ]);
+
+        // Set yearly summary data
+        if (summaryResult.success) {
+          setYearlySummaryData(summaryResult.data);
+        } else {
+          console.error("Failed to fetch yearly summary:", summaryResult);
+          setYearlySummaryData([]);
+        }
+
+        // Set summary stats
+        if (statsResult.success) {
+          setSummaryStats({
+            total_quotations: statsResult.data.total_quotations || 0,
+            total_value: statsResult.data.total_value || 0,
+            total_items: statsResult.data.total_items || 0,
+            unique_customers: statsResult.data.unique_customers || 0
+          });
+        } else {
+          console.error("Failed to fetch yearly stats:", statsResult);
+          setSummaryStats({
+            total_quotations: 0,
+            total_value: 0,
+            total_items: 0,
+            unique_customers: 0
+          });
+        }
+
+        // Set monthly breakdown
+        if (breakdownResult.success) {
+          // Map backend data to a format suitable for rendering
+          const breakdown = breakdownResult.data.reduce((acc, item) => {
+            acc[item.month] = {
+              quotations: item.quotations,
+              revenue: item.revenue,
+              items: item.items
+            };
+            return acc;
+          }, {});
+          setMonthlyBreakdown(breakdown);
+        } else {
+          console.error("Failed to fetch monthly breakdown:", breakdownResult);
+          setMonthlyBreakdown({});
+        }
+
+        // Set status options
+        if (statusResult.success) {
+          setStatusOptions(["All", ...statusResult.data]);
+        } else {
+          console.error("Failed to fetch status options:", statusResult);
+          setStatusOptions(["All"]);
+        }
+
       } catch (error) {
-        console.error(error);
-        // Fallback to mock data on error
-        setYearlySummaryData(mockYearlySummaryData.filter(item => 
-          item.year === selectedYear
-        ));
+        console.error("Error loading yearly data:", error);
+        setYearlySummaryData([]);
+        setSummaryStats({
+          total_quotations: 0,
+          total_value: 0,
+          total_items: 0,
+          unique_customers: 0
+        });
+        setMonthlyBreakdown({});
+        setStatusOptions(["All"]);
       } finally {
         setIsLoading(false);
       }
-    }) ();
-  }, [selectedYear]);
+    };
 
-  const statusOptions = ["All", ...new Set(yearlySummaryData?.map((data) => data.status) || [])];
+    loadYearlyData();
+  }, [selectedYear, statusFilter]);
 
   const filteredData = (yearlySummaryData || []).filter((data) => {
     return statusFilter === "All" || data.status === statusFilter;
@@ -166,7 +126,7 @@ const YearlySummary = () => {
   const uniqueCustomers = new Set(filteredData.map(item => item.customer_id)).size;
 
   // Calculate monthly breakdown
-  const monthlyBreakdown = filteredData.reduce((acc, item) => {
+  const monthlyBreakdownData = filteredData.reduce((acc, item) => {
     if (!acc[item.month]) {
       acc[item.month] = {
         quotations: 0,
@@ -266,7 +226,7 @@ const YearlySummary = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-purple-100 text-sm">Annual Quotations</p>
-              <p className="text-2xl font-bold">{totalQuotations}</p>
+              <p className="text-2xl font-bold">{summaryStats.total_quotations}</p>
             </div>
             <FileText className="w-8 h-8 text-purple-200" />
           </div>
@@ -275,8 +235,8 @@ const YearlySummary = () => {
         <div className="bg-gradient-to-r from-emerald-500 to-green-500 p-4 rounded-xl text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-emerald-100 text-sm">Annual Revenue</p>
-              <p className="text-2xl font-bold">Rs {totalValue.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+              <p className="text-emerald-100 text-sm">Annual Value</p>
+              <p className="text-2xl font-bold">Rs {summaryStats.total_value.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
             </div>
             <TrendingUp className="w-8 h-8 text-emerald-200" />
           </div>
@@ -286,7 +246,7 @@ const YearlySummary = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-pink-100 text-sm">Total Items</p>
-              <p className="text-2xl font-bold">{totalItems}</p>
+              <p className="text-2xl font-bold">{summaryStats.total_items}</p>
             </div>
             <Package className="w-8 h-8 text-pink-200" />
           </div>
@@ -296,7 +256,7 @@ const YearlySummary = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-orange-100 text-sm">Total Customers</p>
-              <p className="text-2xl font-bold">{uniqueCustomers}</p>
+              <p className="text-2xl font-bold">{summaryStats.unique_customers}</p>
             </div>
             <Users className="w-8 h-8 text-orange-200" />
           </div>
@@ -312,7 +272,7 @@ const YearlySummary = () => {
               <h4 className="font-semibold text-gray-800 text-sm mb-2">{month}</h4>
               <div className="space-y-1 text-xs">
                 <p className="text-gray-600">Quotations: <span className="font-semibold text-blue-600">{data.quotations}</span></p>
-                <p className="text-gray-600">Revenue: <span className="font-semibold text-green-600">Rs {data.revenue.toLocaleString('en-IN')}</span></p>
+                <p className="text-gray-600">Value: <span className="font-semibold text-green-600">Rs {data.revenue.toLocaleString('en-IN')}</span></p>
                 <p className="text-gray-600">Items: <span className="font-semibold text-purple-600">{data.items}</span></p>
               </div>
             </div>

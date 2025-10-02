@@ -12,18 +12,14 @@ const createOrderValidation = [
   body('items.*.quantity').isInt({ min: 1 }).withMessage('Quantity must be at least 1')
 ];
 
-const updateStatusValidation = [
-  body('status')
-    .isIn(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'])
-    .withMessage('Invalid status')
-];
 
 // Routes
 // Get comprehensive order data
 router.get('/all-data', orderController.getAllOrdersData.bind(orderController));
-//router.get('/:id', orderController.getOrderById);
+router.get('/:id', orderController.getOrderById);
 router.post('/', createOrderValidation, orderController.createOrder);
-//router.patch('/:id/status', updateStatusValidation, orderController.updateOrderStatus);
+router.get('/by-sales-rep/:id', orderController.getOrdersBySalesRepId.bind(orderController));
+router.patch('/status/:id',orderController.updateOrderStatus);
 //router.delete('/:id', orderController.deleteOrder);
 
 module.exports = router;

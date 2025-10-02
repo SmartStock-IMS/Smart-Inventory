@@ -26,21 +26,10 @@ class OrderController {
     }
   }
 
-  /*async getOrderById(req, res) {
+  async getOrderById(req, res) {
     try {
       const { id } = req.params;
-      const order = await Order.findByPk(id, {
-        include: [
-          {
-            model: Customer,
-            as: 'customer'
-          },
-          {
-            model: OrderItem,
-            as: 'items'
-          }
-        ]
-      });
+      const order = await Order.findById(id);
 
       if (!order) {
         return res.status(404).json({
@@ -60,7 +49,7 @@ class OrderController {
         message: error.message
       });
     }
-  }*/
+  }
 
   async createOrder(req, res) {
     try {
@@ -107,15 +96,46 @@ class OrderController {
       });
     }
   }
-/*
-  async updateOrderStatus(req, res) {
+
+
+  async getOrdersBySalesRepId(req, res) {
     try {
       const { id } = req.params;
-      const { status } = req.body;
+      const orders = await Order.findOrderdataBySalesRep(id);
 
-      const order = await Order.findByPk(id, {
-        include: [{ model: OrderItem, as: 'items' }]
+      if (!orders) {
+        return res.status(404).json({
+          success: false,
+          message: 'No orders found for this sales representative'
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'orders retrieved successfully',
+        data: { orders }
       });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      }); 
+    }
+  }
+
+  async updateOrderStatus(req, res) {
+    try {
+      const { id } = req.params; // Extract the ID from the URL parameters
+      const { status } = req.body; // Extract the status from the request body
+
+      if (!id || !status) {
+        return res.status(400).json({
+          success: false,
+          message: 'Order ID and status are required'
+        });
+      }
+
+      const order = await Order.findById(id);
 
       if (!order) {
         return res.status(404).json({
@@ -124,30 +144,12 @@ class OrderController {
         });
       }
 
-      // Handle inventory based on status change
-      if (status === 'delivered' && order.status !== 'delivered') {
-        // Deduct from actual inventory when delivered
-        for (const item of order.items) {
-          // This would need the inventory ID - simplified for demo
-          // await inventoryService.updateInventory(inventoryId, item.quantity, 'subtract');
-        }
-      } else if (status === 'cancelled' && order.status !== 'cancelled') {
-        // Release reservations when cancelled
-        for (const item of order.items) {
-          await inventoryService.releaseReservation(
-            item.product_id,
-            item.variant_id,
-            item.quantity
-          );
-        }
-      }
-
-      await order.update({ status });
+      await Order.updateStatus(id, status); 
 
       res.status(200).json({
         success: true,
         message: 'Order status updated successfully',
-        data: { order }
+        data: { id, status }
       });
     } catch (error) {
       res.status(500).json({
@@ -156,7 +158,7 @@ class OrderController {
       });
     }
   }
-
+/*
   async deleteOrder(req, res) {
     try {
       const { id } = req.params;
@@ -201,6 +203,170 @@ class OrderController {
       });
     }
   }*/
+
+  async getDailySummary(req, res) {
+    try {
+      const report_date = req.query.date || null;
+      const status = req.query.status || null;
+      const data = await Order.getDailySummary(report_date, status);
+      res.json({ success: true, data });
+    } catch (error) {
+      console.error("Error fetching daily summary:", error);
+      res.status(500).json({ success: false, message: "Internal server error" });
+    }
+  }
+
+  async getDailySummaryStats(req, res) {
+    try {
+      const report_date = req.query.date || null;
+      const status = req.query.status || null;
+      const stats = await Order.getDailySummaryStats(report_date, status);
+      res.json({ success: true, data: stats && stats[0] ? stats[0] : {} });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  async getDailyStatusOptions(req, res) {
+    try {
+      const report_date = req.query.date || null;
+      const options = await Order.getDailyStatusOptions(report_date);
+      res.json({ success: true, data: options.map(o => o.status) });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  async getWeeklySummary(req, res) {
+    try {
+      const week_start_date = req.query.week_start_date;
+      const status = req.query.status || null;
+
+      if (!week_start_date) {
+        return res.status(400).json({
+          success: false,
+          message: 'week_start_date is required'
+        });
+      }
+
+      const data = await Order.getWeeklySummary(week_start_date, status);
+      res.json({ success: true, data });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  async getWeeklySummaryStats(req, res) {
+    try {
+      const week_start_date = req.query.week_start_date;
+      const status = req.query.status === "" ? null : req.query.status; // Treat empty string as null
+
+      if (!week_start_date) {
+        return res.status(400).json({
+          success: false,
+          message: 'week_start_date is required'
+        });
+      }
+
+      const stats = await Order.getWeeklySummaryStats(week_start_date, status);
+      res.json({ success: true, data: stats && stats[0] ? stats[0] : {} });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  async getWeeklyStatusOptions(req, res) {
+    try {
+      const week_start_date = req.query.week_start_date;
+
+      if (!week_start_date) {
+        return res.status(400).json({
+          success: false,
+          message: 'week_start_date is required'
+        });
+      }
+
+      const options = await Order.getWeeklyStatusOptions(week_start_date);
+      res.json({ success: true, data: options.map(o => o.status) });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  async getYearlySummary(req, res) {
+    try {
+      const year = parseInt(req.query.year, 10);
+      const status = req.query.status || null;
+
+      if (!year) {
+        return res.status(400).json({
+          success: false,
+          message: 'Year is required'
+        });
+      }
+
+      const data = await Order.getYearlySummary(year, status);
+      res.json({ success: true, data });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  async getYearlySummaryStats(req, res) {
+    try {
+      const year = parseInt(req.query.year, 10);
+      const status = req.query.status || null;
+
+      if (!year) {
+        return res.status(400).json({
+          success: false,
+          message: 'Year is required'
+        });
+      }
+
+      const stats = await Order.getYearlySummaryStats(year, status);
+      res.json({ success: true, data: stats && stats[0] ? stats[0] : {} });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  async getMonthlyBreakdown(req, res) {
+    try {
+      const year = parseInt(req.query.year, 10);
+      const status = req.query.status || null;
+
+      if (!year) {
+        return res.status(400).json({
+          success: false,
+          message: 'Year is required'
+        });
+      }
+
+      const data = await Order.getMonthlyBreakdown(year, status);
+      res.json({ success: true, data });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  async getYearlyStatusOptions(req, res) {
+    try {
+      const year = parseInt(req.query.year, 10);
+
+      if (!year) {
+        return res.status(400).json({
+          success: false,
+          message: 'Year is required'
+        });
+      }
+
+      const options = await Order.getYearlyStatusOptions(year);
+      res.json({ success: true, data: options.map(o => o.status) });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  }
 }
 
 module.exports = new OrderController();

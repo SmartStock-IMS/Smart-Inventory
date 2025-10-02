@@ -53,7 +53,7 @@ export const AuthContextProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem("authToken");
+    localStorage.removeItem("token");
     localStorage.removeItem("cart");
     setIsAuthenticated(false);
   };

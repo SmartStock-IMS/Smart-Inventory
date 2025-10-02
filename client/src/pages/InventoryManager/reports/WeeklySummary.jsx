@@ -1,102 +1,17 @@
 import {useEffect, useState} from "react";
 import {FaSpinner} from "react-icons/fa";
-import { NotebookPen, Download, Calendar, Filter, TrendingUp, FileText, Users, Package, CalendarDays } from "lucide-react";
-
-// Mock data for testing - weekly aggregated data
-const mockWeeklySummaryData = [
-  {
-    week_start: "2025-08-11",
-    week_end: "2025-08-17",
-    quotation_id: "QUO001",
-    quotation_date: "2025-08-13",
-    customer_id: "CUST001",
-    sales_rep_id: "EMP001",
-    no_items: 5,
-    net_total: 15750.00,
-    status: "Completed"
-  },
-  {
-    week_start: "2025-08-11",
-    week_end: "2025-08-17",
-    quotation_id: "QUO002",
-    quotation_date: "2025-08-14",
-    customer_id: "CUST002",
-    sales_rep_id: "EMP002",
-    no_items: 3,
-    net_total: 8900.50,
-    status: "Pending"
-  },
-  {
-    week_start: "2025-08-11",
-    week_end: "2025-08-17",
-    quotation_id: "QUO003",
-    quotation_date: "2025-08-15",
-    customer_id: "CUST003",
-    sales_rep_id: "EMP001",
-    no_items: 7,
-    net_total: 22300.75,
-    status: "Processing"
-  },
-  {
-    week_start: "2025-08-11",
-    week_end: "2025-08-17",
-    quotation_id: "QUO004",
-    quotation_date: "2025-08-16",
-    customer_id: "CUST004",
-    sales_rep_id: "EMP003",
-    no_items: 2,
-    net_total: 5600.00,
-    status: "Completed"
-  },
-  {
-    week_start: "2025-08-04",
-    week_end: "2025-08-10",
-    quotation_id: "QUO005",
-    quotation_date: "2025-08-07",
-    customer_id: "CUST005",
-    sales_rep_id: "EMP002",
-    no_items: 4,
-    net_total: 12450.25,
-    status: "Cancelled"
-  },
-  {
-    week_start: "2025-08-04",
-    week_end: "2025-08-10",
-    quotation_id: "QUO006",
-    quotation_date: "2025-08-08",
-    customer_id: "CUST006",
-    sales_rep_id: "EMP001",
-    no_items: 6,
-    net_total: 18900.00,
-    status: "Pending"
-  },
-  {
-    week_start: "2025-08-04",
-    week_end: "2025-08-10",
-    quotation_id: "QUO007",
-    quotation_date: "2025-08-09",
-    customer_id: "CUST007",
-    sales_rep_id: "EMP003",
-    no_items: 8,
-    net_total: 31200.50,
-    status: "Completed"
-  },
-  {
-    week_start: "2025-08-04",
-    week_end: "2025-08-10",
-    quotation_id: "QUO008",
-    quotation_date: "2025-08-10",
-    customer_id: "CUST008",
-    sales_rep_id: "EMP002",
-    no_items: 1,
-    net_total: 2750.00,
-    status: "Processing"
-  }
-];
+import { Download, Calendar, Filter, TrendingUp, FileText, Users, Package, CalendarDays } from "lucide-react";
 
 const WeeklySummary = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [weeklySummaryData, setWeeklySummaryData] = useState(mockWeeklySummaryData);
+  const [weeklySummaryData, setWeeklySummaryData] = useState([]);
+  const [summaryStats, setSummaryStats] = useState({
+    total_quotations: 0,
+    total_value: 0,
+    total_items: 0,
+    unique_customers: 0
+  });
+  const [statusOptions, setStatusOptions] = useState(["All"]);
   const [statusFilter, setStatusFilter] = useState("All");
 
   // Get current week's start date (Monday)
@@ -110,56 +25,117 @@ const WeeklySummary = () => {
 
   const [weekStartDate, setWeekStartDate] = useState(getCurrentWeekStart());
 
+  // API call functions
+  const fetchWeeklySummary = async (weekStartDate, status) => {
+    const token = localStorage.getItem('token'); // Adjust based on your auth implementation
+    const statusParam = status === "All" ? "" : `&status=${status}`; // Pass empty string for "All"
+    const response = await fetch(`http://localhost:3000/api/reports/weekly-summary?week_start_date=${weekStartDate}${statusParam}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      method: 'GET'
+    });
+    const result = await response.json();
+    return result;
+  };
+
+  const fetchWeeklySummaryStats = async (weekStartDate, status) => {
+    const token = localStorage.getItem('token'); // Adjust based on your auth implementation
+    const statusParam = status === "All" ? "" : `&status=${status}`; // Pass empty string for "All"
+    const response = await fetch(`http://localhost:3000/api/reports/weekly-summary-stats?week_start_date=${weekStartDate}${statusParam}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      method: 'GET'
+    });
+    const result = await response.json();
+    return result;
+  };
+
+  const fetchWeeklyStatusOptions = async (weekStartDate) => {
+    const token = localStorage.getItem('token'); // Adjust based on your auth implementation
+    const response = await fetch(`http://localhost:3000/api/reports/weekly-status-options?week_start_date=${weekStartDate}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      method: 'GET'
+    });
+    const result = await response.json();
+    return result;
+  };
+
   useEffect(() => {
-    (async () => {
+    const loadWeeklyData = async () => {
       try {
         setIsLoading(true);
-        // Use mock data for now - comment out the API call
-        // const result = await weeklySummary(weekStartDate);
-        // console.log("result", result);
-        // if (result.success) {
-        //   setWeeklySummaryData(result.data.data);
-        // } else {
-        //   console.error("No data found");
-        // }
-        
-        // Filter mock data by selected week
-        const weekEndDate = new Date(weekStartDate);
-        weekEndDate.setDate(weekEndDate.getDate() + 6);
-        const weekEndStr = weekEndDate.toISOString().split("T")[0];
-        
-        const filteredMockData = mockWeeklySummaryData.filter(item => 
-          item.week_start === weekStartDate && item.week_end === weekEndStr
-        );
-        setWeeklySummaryData(filteredMockData);
-        
+
+        // Fetch all data concurrently
+        const [summaryResult, statsResult, statusResult] = await Promise.all([
+          fetchWeeklySummary(weekStartDate, statusFilter), // Pass statusFilter here
+          fetchWeeklySummaryStats(weekStartDate, statusFilter),
+          fetchWeeklyStatusOptions(weekStartDate)
+        ]);
+
+        // Set weekly summary data
+        if (summaryResult.success) {
+          setWeeklySummaryData(summaryResult.data);
+        } else {
+          console.error("Failed to fetch weekly summary:", summaryResult);
+          setWeeklySummaryData([]);
+        }
+
+        // Set summary stats
+        if (statsResult.success) {
+          setSummaryStats({
+            total_quotations: parseInt(statsResult.data.total_quotations) || 0,
+            total_value: parseFloat(statsResult.data.total_value) || 0,
+            total_items: parseInt(statsResult.data.total_items) || 0,
+            unique_customers: parseInt(statsResult.data.unique_customers) || 0
+          });
+        } else {
+          console.error("Failed to fetch summary stats:", statsResult);
+          setSummaryStats({
+            total_quotations: 0,
+            total_value: 0,
+            total_items: 0,
+            unique_customers: 0
+          });
+        }
+
+        // Set status options
+        if (statusResult.success) {
+          setStatusOptions(["All", ...statusResult.data]);
+        } else {
+          console.error("Failed to fetch status options:", statusResult);
+          setStatusOptions(["All"]);
+        }
+
       } catch (error) {
-        console.error(error);
-        // Fallback to mock data on error
-        const weekEndDate = new Date(weekStartDate);
-        weekEndDate.setDate(weekEndDate.getDate() + 6);
-        const weekEndStr = weekEndDate.toISOString().split("T")[0];
-        
-        setWeeklySummaryData(mockWeeklySummaryData.filter(item => 
-          item.week_start === weekStartDate && item.week_end === weekEndStr
-        ));
+        console.error("Error loading weekly data:", error);
+        // Reset to empty state on error
+        setWeeklySummaryData([]);
+        setSummaryStats({
+          total_quotations: 0,
+          total_value: 0,
+          total_items: 0,
+          unique_customers: 0
+        });
+        setStatusOptions(["All"]);
       } finally {
         setIsLoading(false);
       }
-    }) ();
-  }, [weekStartDate]);
+    };
 
-  const statusOptions = ["All", ...new Set(weeklySummaryData?.map((data) => data.status) || [])];
+    loadWeeklyData();
+  }, [weekStartDate, statusFilter]); // Add statusFilter as a dependency
 
+  // Filter data based on status
   const filteredData = (weeklySummaryData || []).filter((data) => {
     return statusFilter === "All" || data.status === statusFilter;
   });
-
-  // Calculate summary stats
-  const totalQuotations = filteredData.length;
-  const totalValue = filteredData.reduce((sum, item) => sum + (typeof item.net_total === 'number' ? item.net_total : 0), 0);
-  const totalItems = filteredData.reduce((sum, item) => sum + item.no_items, 0);
-  const uniqueCustomers = new Set(filteredData.map(item => item.customer_id)).size;
 
   // Calculate week end date for display
   const weekEndDate = new Date(weekStartDate);
@@ -173,9 +149,9 @@ const WeeklySummary = () => {
     }
     console.log("weeklySummary: ", weeklySummaryData);
     exportToCSV(weeklySummaryData, "weekly-summary.csv");
-  }
+  };
 
-  // export to csv file
+  // Export to CSV file
   function exportToCSV(arr, filename = 'data.csv') {
     if (!arr || arr.length === 0) {
       console.error("No data to export");
@@ -245,7 +221,7 @@ const WeeklySummary = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100 text-sm">Weekly Quotations</p>
-              <p className="text-2xl font-bold">{totalQuotations}</p>
+              <p className="text-2xl font-bold">{summaryStats.total_quotations}</p>
             </div>
             <FileText className="w-8 h-8 text-blue-200" />
           </div>
@@ -254,8 +230,8 @@ const WeeklySummary = () => {
         <div className="bg-gradient-to-r from-emerald-500 to-green-500 p-4 rounded-xl text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-emerald-100 text-sm">Weekly Revenue</p>
-              <p className="text-2xl font-bold">Rs {totalValue.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+              <p className="text-emerald-100 text-sm">Weekly Value</p>
+              <p className="text-2xl font-bold">Rs {summaryStats.total_value.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
             </div>
             <TrendingUp className="w-8 h-8 text-emerald-200" />
           </div>
@@ -265,7 +241,7 @@ const WeeklySummary = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-purple-100 text-sm">Total Items</p>
-              <p className="text-2xl font-bold">{totalItems}</p>
+              <p className="text-2xl font-bold">{summaryStats.total_items}</p>
             </div>
             <Package className="w-8 h-8 text-purple-200" />
           </div>
@@ -275,7 +251,7 @@ const WeeklySummary = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-orange-100 text-sm">Active Customers</p>
-              <p className="text-2xl font-bold">{uniqueCustomers}</p>
+              <p className="text-2xl font-bold">{summaryStats.unique_customers}</p>
             </div>
             <Users className="w-8 h-8 text-orange-200" />
           </div>

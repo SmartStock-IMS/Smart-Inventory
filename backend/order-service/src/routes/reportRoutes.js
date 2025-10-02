@@ -1,4 +1,5 @@
 const express = require('express');
+const orderController = require('../controllers/orderController');
 
 const router = express.Router();
 
@@ -26,5 +27,21 @@ router.get('/customers', (req, res) => {
     }
   });
 });
+
+// Real daily summary endpoints
+router.get('/daily-summary', orderController.getDailySummary);
+router.get('/daily-summary-stats', orderController.getDailySummaryStats);
+router.get('/daily-status-options', orderController.getDailyStatusOptions);
+
+// Real weekly summary endpoints
+router.get('/weekly-summary', orderController.getWeeklySummary);
+router.get('/weekly-summary-stats', orderController.getWeeklySummaryStats);
+router.get('/weekly-status-options', orderController.getWeeklyStatusOptions);
+
+// Real yearly summary endpoints
+router.get('/yearly-summary', orderController.getYearlySummary);
+router.get('/yearly-summary-stats', orderController.getYearlySummaryStats);
+router.get('/monthly-breakdown', orderController.getMonthlyBreakdown);
+router.get('/yearly-status-options', orderController.getYearlyStatusOptions);
 
 module.exports = router;
