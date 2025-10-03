@@ -107,7 +107,14 @@ const createSalesRep = async (salesRepData) => {
 
 const toast = {
   success: (message) => alert(`✅ ${message}`),
-  error: (message) => alert(`❌ ${message}`),
+  error: (message) => {
+    // Handle array of messages or single message
+    if (Array.isArray(message)) {
+      alert(`❌ Validation Errors:\n\n${message.join('\n')}`);
+    } else {
+      alert(`❌ ${message}`);
+    }
+  },
 };
 
 // Memoized InputField component
@@ -171,9 +178,6 @@ const AddSalesRep = () => {
     phone: "",
     address: "",
     password: "",
-    city: "",
-    state: "",
-    zipCode: "",
     region: "",
     status: "active",
     photo: null,
@@ -206,23 +210,23 @@ const AddSalesRep = () => {
   }, []);
 
   const handleClear = () => {
-  setFormData({
-    firstName: '',
-    lastName: '',
-    nicNo: '',
-    email: '',
-    phone: '',
-    address: '',
-    password: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    region: '',
-    status: 'active',
-    photo: null,
-  });
-  setErrors({});
-};
+    setFormData({
+      firstName: "",
+      lastName: "",
+      nicNo: "",
+      email: "",
+      phone: "",
+      address: "",
+      password: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      region: "",
+      status: "active",
+      photo: null,
+    });
+    setErrors({});
+  };
 
   const handleImageUpload = useCallback((file) => {
     setFormData((prev) => ({
@@ -257,10 +261,13 @@ const AddSalesRep = () => {
     }
     if (!formData.password?.trim()) {
       newErrors.password = "Password is required";
-    } else if (formData.password.length < 4) {
-      newErrors.password = "Password must be at least 4 characters long";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters long";
     }
-  
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
 
     setErrors(newErrors);
     console.log("Validation errors:", newErrors);
@@ -272,7 +279,9 @@ const AddSalesRep = () => {
       e.preventDefault();
 
       if (!validateForm()) {
-        toast.error("Please fix the validation errors");
+        const firstError = Object.values(errors)[0];
+        console.log("Validation errors:", errors);
+        toast.error(firstError || "Please fix the validation errors");
         return;
       }
 
@@ -283,7 +292,7 @@ const AddSalesRep = () => {
 
         // Map form data to API format
         const salesRepData = {
-          username: formData.email,
+          username: `${formData.firstName} ${formData.lastName}`,
           password: formData.password,
           first_name: formData.firstName.trim(),
           last_name: formData.lastName.trim(),
@@ -369,7 +378,7 @@ const AddSalesRep = () => {
       <div className="relative w-full max-w-none px-4">
         {/* Header Section */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 mb-8 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-400 to-blue-500 p-8 text-white relative">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-400 p-8 text-white relative">
             <div className="absolute inset-0 bg-black/10"></div>
             <div className="relative flex items-center justify-center gap-4">
               <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
@@ -525,7 +534,7 @@ const AddSalesRep = () => {
                       value={formData.email}
                       onChange={handleInputChange}
                       className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all duration-200 hover:border-gray-300"
-                      placeholder="user@example.com"
+                      placeholder="salesrep@example.com"
                       required
                     />
                   </div>
@@ -540,7 +549,7 @@ const AddSalesRep = () => {
                       value={formData.phone}
                       onChange={handleInputChange}
                       className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 transition-all duration-200 hover:border-gray-300"
-                      placeholder="+1 (555) 123-4567"
+                      placeholder="+94 77 123 4567"
                     />
                   </div>
                 </div>
@@ -664,7 +673,7 @@ const AddSalesRep = () => {
                 <button
                   type="button"
                   className="group px-6 py-3 text-sm font-medium border-2 border-gray-300 rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 flex items-center gap-2"
-                  onClick={handleClear} // You'll need to add this function
+                  onClick={handleClear}
                 >
                   <span className="w-2 h-2 bg-gray-400 rounded-full group-hover:bg-gray-500 transition-colors"></span>
                   Clear Form
