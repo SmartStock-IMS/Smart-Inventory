@@ -180,7 +180,7 @@ const OrderSummary = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:3000/api/users/sales-staff', {
+      const response = await fetch('http://localhost:3000/api/users/resource-manager', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -194,12 +194,12 @@ const OrderSummary = () => {
         console.log("Resource managers fetched: ", result.data.users);
         
         const transformedRMs = result.data.users.map(staff => ({
-          id: staff.sales_staff_id,
+          id: staff.resource_manager_id,
           name: staff.full_name,
           area: 'Sales Area', // Not provided in API response
           email: staff.email,
           phone: staff.phone,
-          target: staff.target,
+          // target: staff.target,
           achieved: staff.achieved,
           performance_rating: staff.performance_rating
         }));
@@ -363,7 +363,7 @@ const OrderSummary = () => {
       averageOrderValue: orders.length > 0 ? Math.round(totalRevenue / orders.length) : 0,
       pendingOrders: statusCounts['pending'] || 0,
       approvedOrders: statusCounts['approved'] || 0,
-      inProgressOrders: statusCounts['in_progress'] || 0,
+      inProgressOrders: statusCounts['inprogress'] || 0,
       completedOrders: statusCounts['completed'] || 0,
       rejectedOrders: statusCounts['rejected'] || 0,
       totalCustomers: uniqueCustomers,
@@ -398,16 +398,38 @@ const OrderSummary = () => {
   };
 
   // Function to assign order to locked resource manager
-  const assignOrderToLockedManager = (order) => {
+  const assignOrderToLockedManager = async (order) => {
     try {
       const lockedRM = resourceManagers.find(rm => rm.id === lockedResourceManager);
       
+      // Call the API to assign the order
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3000/api/orders/assign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          orderId: order.order_id,
+          resourceManagerId: lockedResourceManager
+        })
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        alert(`Failed to assign order: ${result.message}`);
+        return;
+      }
+
+      // Transform order data for localStorage (keeping existing functionality)
       const orderData = {
         id: order.order_id,
         quotation_id: order.order_id,
         customer: order.customer_name,
         customerName: order.customer_name,
-        status: order.order_status,
+        status: 'inprogress', // Updated status from API
         date: order.order_date,
         quotation_date: order.order_date,
         net_total: parseFloat(order.total_amount),
@@ -438,8 +460,8 @@ const OrderSummary = () => {
         })) || []
       };
 
+      // Update localStorage (keeping existing functionality for ResourceOrders page)
       const existingOrders = JSON.parse(localStorage.getItem("assignedOrders") || "[]");
-      // Remove any existing order with the same order_id to prevent duplicates
       const filteredOrders = existingOrders.filter(o => o.quotation_id !== orderData.quotation_id);
       const updatedOrders = [...filteredOrders, orderData];
       localStorage.setItem("assignedOrders", JSON.stringify(updatedOrders));
@@ -456,16 +478,16 @@ const OrderSummary = () => {
         }
       }));
       
-      // Add the order to assigned orders set
+      // Update UI state
       setAssignedOrders(prev => new Set([...prev, order.order_id]));
-      
-      // Store the resource manager info for this order
-      const assignedRM = resourceManagers.find(rm => rm.id === lockedResourceManager);
       setOrderResourceManagers(prev => new Map(prev.set(order.order_id, {
         id: lockedResourceManager,
-        name: assignedRM.name,
+        name: lockedRM.name,
         assignedAt: new Date().toISOString()
       })));
+      
+      // Refresh orders to show updated status
+      fetchOrders();
     } catch (error) {
       console.error("Error assigning order:", error);
       alert("Error assigning order");
@@ -478,7 +500,7 @@ const OrderSummary = () => {
     setShowResourceManagerModal(true);
   };
 
-  const confirmPassOrder = () => {
+  const confirmPassOrder = async () => {
     if (!selectedResourceManager || !orderToPass) {
       alert("Please select a Resource Manager");
       return;
@@ -488,13 +510,34 @@ const OrderSummary = () => {
       // Get selected Resource Manager details
       const chosenRM = resourceManagers.find(rm => rm.id === selectedResourceManager);
       
-      // Transform single order to match ResourceOrders expected format
+      // Call the API to assign the order
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3000/api/orders/assign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          orderId: orderToPass.order_id,
+          resourceManagerId: selectedResourceManager
+        })
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        alert(`Failed to assign order: ${result.message}`);
+        return;
+      }
+
+      // Transform order data for localStorage (keeping existing functionality)
       const orderData = {
         id: orderToPass.order_id,
         quotation_id: orderToPass.order_id,
         customer: orderToPass.customer_name,
         customerName: orderToPass.customer_name,
-        status: orderToPass.order_status,
+        status: 'inprogress', // Updated status from API
         date: orderToPass.order_date,
         quotation_date: orderToPass.order_date,
         net_total: parseFloat(orderToPass.total_amount),
@@ -525,16 +568,13 @@ const OrderSummary = () => {
         })) || []
       };
 
-      // Get existing assigned orders or create empty array
+      // Update localStorage (keeping existing functionality for ResourceOrders page)
       const existingOrders = JSON.parse(localStorage.getItem("assignedOrders") || "[]");
-      
-      // Remove any existing order with the same order_id to prevent duplicates
       const filteredOrders = existingOrders.filter(o => o.quotation_id !== orderData.quotation_id);
       const updatedOrders = [...filteredOrders, orderData];
-      
       localStorage.setItem("assignedOrders", JSON.stringify(updatedOrders));
       
-      alert(`Successfully passed Order ${orderToPass.order_id} to ${chosenRM.name}!`);
+      alert(`Successfully assigned Order ${orderToPass.order_id} to ${chosenRM.name}!`);
       
       // Dispatch custom event to notify ResourceOrders page
       window.dispatchEvent(new CustomEvent('orderAssigned', {
@@ -545,10 +585,8 @@ const OrderSummary = () => {
         }
       }));
       
-      // Add the order to assigned orders set
+      // Update UI state
       setAssignedOrders(prev => new Set([...prev, orderToPass.order_id]));
-      
-      // Store the resource manager info for this order
       setOrderResourceManagers(prev => new Map(prev.set(orderToPass.order_id, {
         id: selectedResourceManager,
         name: chosenRM.name,
@@ -563,9 +601,12 @@ const OrderSummary = () => {
       setSelectedResourceManager("");
       setOrderToPass(null);
       setRmSearchQuery("");
+      
+      // Refresh orders to show updated status
+      fetchOrders();
     } catch (error) {
-      console.error("Error passing order to Resource Manager:", error);
-      alert("Error passing order to Resource Manager");
+      console.error("Error assigning order to Resource Manager:", error);
+      alert("Error assigning order to Resource Manager");
     }
   };
 
@@ -911,7 +952,7 @@ const OrderSummary = () => {
                                 <Eye className="w-4 h-4" />
                                 View
                               </button>
-                              {item.order_status === "approved" ? (
+                              {item.order_status === "approved" || item.order_status === "inprogress" ? (
                                 assignedOrders.has(item.order_id) ? (
                                   // Check if order is completed by Resource Manager
                                   isOrderCompletedByRM(item.order_id) ? (

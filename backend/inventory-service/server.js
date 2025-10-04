@@ -44,7 +44,8 @@ app.get('/health', (req, res) => {
 // Routes
 app.use('/products', productRoutes);
 app.use('/categories', categoryRoutes);
-app.use('/inventory', inventoryRoutes);
+//app.use('/inventory', inventoryRoutes);
+app.use('/resources', inventoryRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

@@ -367,6 +367,70 @@ class OrderController {
       res.status(500).json({ success: false, message: error.message });
     }
   }
+
+  async assignOrderToResourceManager(req, res) {
+    try {
+      const { orderId, resourceManagerId } = req.body;
+
+      // Validate required fields
+      if (!orderId || !resourceManagerId) {
+        return res.status(400).json({
+          success: false,
+          message: 'orderId and resourceManagerId are required'
+        });
+      }
+
+      // Call the stored procedure via the model
+      const result = await Order.assignOrderToResourceManager(orderId, resourceManagerId);
+
+      if (!result.p_success) {
+        return res.status(400).json({
+          success: false,
+          message: result.p_message || 'Failed to assign order to resource manager'
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: result.p_message || 'Order successfully assigned to resource manager',
+        data: {
+          orderId,
+          resourceManagerId,
+          status: 'inprogress'
+        }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  async getOrdersByRMId(req, res) {
+    try {
+      const { id } = req.params;
+      const orders = await Order.findOrderdataByRM(id);
+
+      if (!orders) {
+        return res.status(404).json({
+          success: false,
+          message: 'No orders assigned for this resource manager'
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'orders retrieved successfully',
+        data: { orders }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      }); 
+    }
+  }
 }
 
 module.exports = new OrderController();

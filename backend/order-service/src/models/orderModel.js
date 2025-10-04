@@ -307,6 +307,35 @@ class Order extends BaseModel {
         throw error;
       }
     }
+
+    /**
+   * Assigns an order to a resource manager using sp_assign_order_to_resource_manager
+   * @param {string} orderId - The order ID to assign
+   * @param {string} resourceManagerId - The resource manager ID
+   * @returns {Object} Procedure output: { p_success, p_message }
+   */
+  async assignOrderToResourceManager(orderId, resourceManagerId) {
+    try {
+      const result = await this.callProcedure('sp_assign_order_to_resource_manager', [
+        null, // p_success OUT parameter
+        null, // p_message OUT parameter
+        orderId,
+        resourceManagerId
+      ]);
+      return result[0];
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async findOrderdataByRM(id) {
+    try {
+      const result = await this.callFunction('fn_get_orders_by_resource_manager', [id]);
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = Order;

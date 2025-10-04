@@ -12,6 +12,10 @@ const createOrderValidation = [
   body('items.*.quantity').isInt({ min: 1 }).withMessage('Quantity must be at least 1')
 ];
 
+const assignOrderValidation = [
+  body('orderId').isUUID().withMessage('Valid order ID is required'),
+  body('resourceManagerId').isUUID().withMessage('Valid resource manager ID is required')
+];
 
 // Routes
 // Get comprehensive order data
@@ -20,6 +24,8 @@ router.get('/:id', orderController.getOrderById);
 router.post('/', createOrderValidation, orderController.createOrder);
 router.get('/by-sales-rep/:id', orderController.getOrdersBySalesRepId.bind(orderController));
 router.patch('/status/:id',orderController.updateOrderStatus);
+router.post('/assign', assignOrderValidation, orderController.assignOrderToResourceManager);
+router.get('/by-resource-manager/:id', orderController.getOrdersByRMId.bind(orderController));
 //router.delete('/:id', orderController.deleteOrder);
 
 module.exports = router;
