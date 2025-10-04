@@ -1,139 +1,10 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { getCustomer } from "@services/user-services";
-import { getCustomerByUserCode } from "@services/customer-services";
-import {getQuotationsByCustomer} from "@services/quotation-service.js";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from "@components/ui/Dialog.jsx";
-import OrderDetails from "@components/InventoryManager/orders/OrderDetails.jsx";
 import { ChevronLeft, User, Mail, Phone, MapPin, Edit, Package, Calendar, Hash, DollarSign, FileText } from "lucide-react";
-
-// Mock customer data matching the CustomerList data
-const mockCustomers = [
-  {
-    user_code: "CUST001",
-    first_name: "Rajesh",
-    last_name: "Kumar",
-    contact1: "+91 98765 43210",
-    email: "rajesh.kumar@email.com",
-    city: "Mumbai",
-    address_line1: "123 Business Street",
-    province: "Maharashtra"
-  },
-  {
-    user_code: "CUST002", 
-    first_name: "Priya",
-    last_name: "Sharma",
-    contact1: "+91 87654 32109",
-    email: "priya.sharma@email.com",
-    city: "Delhi",
-    address_line1: "456 Market Road",
-    province: "Delhi"
-  },
-  {
-    user_code: "CUST003",
-    first_name: "Amit",
-    last_name: "Patel",
-    contact1: "+91 76543 21098",
-    email: "amit.patel@email.com",
-    city: "Ahmedabad",
-    address_line1: "789 Trade Center",
-    province: "Gujarat"
-  },
-  {
-    user_code: "CUST004",
-    first_name: "Sunita",
-    last_name: "Singh",
-    contact1: "+91 65432 10987",
-    email: "sunita.singh@email.com",
-    city: "Pune",
-    address_line1: "321 Industrial Area",
-    province: "Maharashtra"
-  },
-  {
-    user_code: "CUST005",
-    first_name: "Vikram",
-    last_name: "Gupta",
-    contact1: "+91 54321 09876",
-    email: "vikram.gupta@email.com",
-    city: "Bangalore",
-    address_line1: "654 Tech Park",
-    province: "Karnataka"
-  },
-  {
-    user_code: "CUST006",
-    first_name: "Kavita",
-    last_name: "Joshi",
-    contact1: "+91 43210 98765",
-    email: "kavita.joshi@email.com",
-    city: "Hyderabad",
-    address_line1: "987 Commercial Complex",
-    province: "Telangana"
-  },
-  {
-    user_code: "CUST007",
-    first_name: "Rahul",
-    last_name: "Verma",
-    contact1: "+91 32109 87654",
-    email: "rahul.verma@email.com",
-    city: "Chennai",
-    address_line1: "147 Export Hub",
-    province: "Tamil Nadu"
-  },
-  {
-    user_code: "CUST008",
-    first_name: "Meera",
-    last_name: "Reddy",
-    contact1: "+91 21098 76543",
-    email: "meera.reddy@email.com",
-    city: "Kolkata",
-    address_line1: "258 Wholesale Market",
-    province: "West Bengal"
-  }
-];
-
-// Mock quotations data
-const mockQuotations = [
-  {
-    id: 1,
-    quotation_id: "QUO001",
-    quotation_date: "2024-01-15",
-    customer_id: "CUST001",
-    sales_rep_id: "REP001",
-    net_total: 15000,
-    no_items: 3,
-    status: "Approved"
-  },
-  {
-    id: 2,
-    quotation_id: "QUO002",
-    quotation_date: "2024-01-20",
-    customer_id: "CUST001",
-    sales_rep_id: "REP002",
-    net_total: 8500,
-    no_items: 2,
-    status: "Pending"
-  },
-  {
-    id: 3,
-    quotation_id: "QUO003",
-    quotation_date: "2024-02-05",
-    customer_id: "CUST002",
-    sales_rep_id: "REP001",
-    net_total: 22000,
-    no_items: 5,
-    status: "Completed"
-  }
-];
+import axios from "axios";
 
 const CustomerDetails = () => {
-  const { user_code } = useParams();
+  const { user_code } = useParams(); // This will be customer_id from the backend
   const navigate = useNavigate();
   const [customer, setCustomer] = useState(null);
   const [quotations, setQuotations] = useState([]);
@@ -141,40 +12,67 @@ const CustomerDetails = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Use mock data since backend isn't connected
-    const fetchCustomer = async () => {
+    const fetchCustomerData = async () => {
       try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        setLoading(true);
+        const token = localStorage.getItem("token");
         
-        // Find customer in mock data
-        const foundCustomer = mockCustomers.find(c => c.user_code === user_code);
+        // Fetch all customers
+        const customersResponse = await axios.get(
+          "http://localhost:3000/api/customers",
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          }
+        );
         
-        if (foundCustomer) {
-          setCustomer(foundCustomer);
-          
-          // Filter quotations for this customer
-          const customerQuotations = mockQuotations.filter(q => q.customer_id === user_code);
-          setQuotations(customerQuotations);
-          
-          console.log("Customer found:", foundCustomer);
-          console.log("Customer quotations:", customerQuotations);
-        } else {
+        // Find the specific customer by customer_id
+        const foundCustomer = customersResponse.data.data.customers.find(
+          c => c.customer_id === user_code
+        );
+        
+        if (!foundCustomer) {
           setError("Customer not found");
+          setLoading(false);
+          return;
         }
+        
+        setCustomer(foundCustomer);
+        
+        // Fetch all orders/quotations
+        const ordersResponse = await axios.get(
+          "http://localhost:3000/api/orders/all-data",
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          }
+        );
+        
+        // Filter quotations for this customer
+        const customerQuotations = ordersResponse.data.data.filter(
+          order => order.customer_id === user_code
+        );
+        
+        setQuotations(customerQuotations);
+        
+        console.log("Customer found:", foundCustomer);
+        console.log("Customer quotations:", customerQuotations);
+        
       } catch (err) {
         setError("Error loading customer data");
-        console.error(err);
+        console.error("API error:", err.response?.data || err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCustomer();
+    fetchCustomerData();
   }, [user_code]);
 
-  const getInitials = (firstName, lastName) => {
-    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
+  const getInitials = (name) => {
+    const names = name?.split(' ') || [];
+    if (names.length >= 2) {
+      return `${names[0].charAt(0)}${names[1].charAt(0)}`.toUpperCase();
+    }
+    return name?.substring(0, 2).toUpperCase() || '';
   };
 
   const getStatusColor = (status) => {
@@ -185,6 +83,8 @@ const CustomerDetails = () => {
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'completed':
         return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'inprogress':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'rejected':
         return 'bg-red-100 text-red-800 border-red-200';
       default:
@@ -239,7 +139,7 @@ const CustomerDetails = () => {
           
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg">
-              {getInitials(customer.first_name, customer.last_name)}
+              {getInitials(customer.name)}
             </div>
           </div>
         </div>
@@ -247,9 +147,9 @@ const CustomerDetails = () => {
         <div className="flex items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold mb-2">
-              {customer.first_name} {customer.last_name}
+              {customer.name}
             </h1>
-            <p className="text-white/80 text-lg">Customer ID: {customer.user_code}</p>
+            <p className="text-white/80 text-lg">Customer ID: {customer.customer_id}</p>
           </div>
         </div>
       </div>
@@ -273,8 +173,8 @@ const CustomerDetails = () => {
                     <Hash className="w-4 h-4 text-gray-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Customer Code</p>
-                    <p className="font-semibold text-gray-800">{customer.user_code}</p>
+                    <p className="text-sm text-gray-500">Customer ID</p>
+                    <p className="font-semibold text-gray-800">{customer.customer_id}</p>
                   </div>
                 </div>
                 
@@ -294,7 +194,7 @@ const CustomerDetails = () => {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Phone Number</p>
-                    <p className="font-semibold text-gray-800">{customer.contact1}</p>
+                    <p className="font-semibold text-gray-800">{customer.contact_no}</p>
                   </div>
                 </div>
               </div>
@@ -307,8 +207,23 @@ const CustomerDetails = () => {
                   <div>
                     <p className="text-sm text-gray-500">Address</p>
                     <p className="font-semibold text-gray-800">
-                      {customer.address_line1}<br />
-                      {customer.city}, {customer.province}
+                      {customer.address}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <Calendar className="w-4 h-4 text-gray-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Member Since</p>
+                    <p className="font-semibold text-gray-800">
+                      {new Date(customer.created_at).toLocaleDateString('en-IN', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
                     </p>
                   </div>
                 </div>
@@ -317,7 +232,7 @@ const CustomerDetails = () => {
             
             <div className="mt-6 pt-6 border-t border-gray-200">
               <button
-                onClick={() => navigate(`/inventorymanager/customer/edit/${customer.user_code}`)}
+                onClick={() => navigate(`/inventorymanager/customer/edit/${customer.customer_id}`)}
                 className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2"
               >
                 <Edit className="w-4 h-4" />
@@ -347,9 +262,23 @@ const CustomerDetails = () => {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-800">
-                    Rs{quotations.reduce((sum, q) => sum + q.net_total, 0).toLocaleString()}
+                    Rs {quotations.reduce((sum, q) => sum + parseFloat(q.total_amount || 0), 0).toLocaleString()}
                   </p>
                   <p className="text-sm text-gray-600">Total Value</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <Package className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-800">
+                    {quotations.reduce((sum, q) => sum + parseInt(q.no_of_products || 0), 0)}
+                  </p>
+                  <p className="text-sm text-gray-600">Total Products</p>
                 </div>
               </div>
             </div>
@@ -376,20 +305,20 @@ const CustomerDetails = () => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4" />
-                          Date
+                          Order Date
                         </div>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         <div className="flex items-center gap-2">
                           <Hash className="w-4 h-4" />
-                          Quotation ID
+                          Order ID
                         </div>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Sales Rep
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Items
+                        Products
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         <div className="flex items-center gap-2">
@@ -398,37 +327,49 @@ const CustomerDetails = () => {
                         </div>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Delivery Date
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {quotations.map((quotation) => (
-                      <tr key={quotation.id} className="hover:bg-gray-50 transition-colors">
+                    {quotations.map((order) => (
+                      <tr key={order.order_id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 text-sm text-gray-800">
-                          {new Date(quotation.quotation_date).toLocaleDateString('en-IN', {
+                          {new Date(order.order_date).toLocaleDateString('en-IN', {
                             year: 'numeric',
                             month: 'short',
                             day: 'numeric'
                           })}
                         </td>
                         <td className="px-6 py-4">
-                          <span className="font-medium text-blue-600">{quotation.quotation_id}</span>
+                          <span className="font-medium text-blue-600 text-xs">
+                            {order.order_id.substring(0, 8)}...
+                          </span>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-800">
-                          {quotation.sales_rep_id}
+                          {order.sales_rep_name}
                         </td>
                         <td className="px-6 py-4">
                           <span className="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {quotation.no_items} items
+                            {order.no_of_products} items
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm font-semibold text-gray-800">
-                          Rs{quotation.net_total.toLocaleString()}
+                          Rs {parseFloat(order.total_amount || 0).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-800">
+                          {new Date(order.delivery_date).toLocaleDateString('en-IN', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(quotation.status)}`}>
-                            {quotation.status}
+                          <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.order_status)}`}>
+                            {order.order_status}
                           </span>
                         </td>
                       </tr>
