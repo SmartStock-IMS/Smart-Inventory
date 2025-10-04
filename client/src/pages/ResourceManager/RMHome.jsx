@@ -21,14 +21,17 @@ import {
   User
 } from "lucide-react";
 import { useTheme } from "../../context/theme/ThemeContext.jsx";
+import { jwtDecode } from "jwt-decode";
 
-// Get assigned orders from localStorage
-function getAssignedOrders() {
+function getRMIdFromToken() {
+  const token = localStorage.getItem("token");
+  if (!token) return "RM001";
   try {
-    const data = localStorage.getItem("assignedOrders");
-    if (data) return JSON.parse(data);
-  } catch {}
-  return [];
+    const payload = jwtDecode(token);
+    return payload.role_id || "RM001";
+  } catch {
+    return "RM001";
+  }
 }
 
 // Get current RM (Test RM - EMP001 from Mumbai Central)
@@ -41,6 +44,45 @@ const getCurrentRM = () => ({
   phone: "+91 98765 43210"
 });
 
+// Transform API order data to match the expected format
+function transformApiOrderToLocalFormat(apiOrder) {
+  return {
+    id: apiOrder.order_id,
+    quotation_id: apiOrder.order_id,
+    customer: apiOrder.customer_name,
+    customerName: apiOrder.customer_name,
+    status: apiOrder.order_status,
+    date: apiOrder.order_date,
+    quotation_date: apiOrder.order_date,
+    net_total: parseFloat(apiOrder.total_amount),
+    no_items: parseInt(apiOrder.no_of_products),
+    assignedTo: getRMIdFromToken(),
+    assignedResourceManager: {
+      id: getRMIdFromToken(),
+      name: getCurrentRM().name,
+      assignedAt: apiOrder.created_at
+    },
+    assignedAt: apiOrder.created_at,
+    items: apiOrder.products_json?.map(product => ({
+      name: product.product_name,
+      description: product.product_name,
+      qty: product.quantity,
+      item_qty: product.quantity,
+      unit_price: product.unit_price,
+      total_amount: product.total_amount,
+      item_code: product.product_id,
+      variant_details: {
+        color: "N/A",
+        weight: "N/A",
+        category: product.category_name,
+        batch_no: "N/A",
+        exp_date: "N/A",
+        image_url: "/products/default.jpg"
+      }
+    })) || []
+  };
+}
+
 // Get the actual status of an order considering completion status from localStorage
 function getOrderStatus(order) {
   const orderStatuses = JSON.parse(localStorage.getItem('orderStatuses') || '{}');
@@ -51,18 +93,18 @@ function getOrderStatus(order) {
     return 'Complete';
   }
   
-  // Otherwise, check the original order status
-  const originalStatus = order.status || '';
+  // Check API status
+  const apiStatus = order.status || '';
   
-  // If original status indicates completion
-  if (originalStatus.toLowerCase().includes('completed') || 
-      originalStatus.toLowerCase().includes('delivered') ||
-      originalStatus === 'Complete') {
+  // If API status indicates completion
+  if (apiStatus.toLowerCase() === 'completed' || 
+      apiStatus.toLowerCase() === 'delivered' ||
+      apiStatus === 'Complete') {
     return 'Complete';
   }
   
-  // For orders assigned to RM, if not completed, they are "In Progress"
-  if (order.assignedTo || order.assignedResourceManager) {
+  // For orders with inprogress status from API
+  if (apiStatus.toLowerCase() === 'inprogress') {
     return 'In Progress';
   }
   
@@ -70,7 +112,7 @@ function getOrderStatus(order) {
   return 'Pending';
 }
 
-// Enrich order with detailed information (same as ResourceOrders.jsx)
+// Enrich order with detailed information
 const enrichOrderWithDetails = (order) => {
   // Check localStorage for completion status
   const orderStatuses = JSON.parse(localStorage.getItem('orderStatuses') || '{}');
@@ -103,16 +145,6 @@ const enrichOrderWithDetails = (order) => {
     })) || []
   };
 };
-
-// Get orders assigned to current RM
-function getMyOrders() {
-  const allOrders = getAssignedOrders();
-  const currentRM = getCurrentRM();
-  return allOrders.filter(order => 
-    order.assignedTo === currentRM.id || 
-    order.assignedResourceManager?.id === currentRM.id
-  );
-}
 
 // Calculate delivery statistics
 function calculateDeliveryStats(orders) {
@@ -259,22 +291,58 @@ const RMHome = () => {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
-  const refreshData = () => {
+  // Fetch orders from API
+  const fetchOrdersFromAPI = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const rmId = getRMIdFromToken();
+      
+      if (!token) {
+        console.error('No token found in localStorage');
+        return [];
+      }
+
+      const response = await fetch(`http://localhost:3000/api/orders/by-resource-manager/${rmId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const result = await response.json();
+      
+      if (result.success && result.data && result.data.orders) {
+        console.log("Orders fetched from API: ", result.data.orders);
+        // Transform API orders to match the expected format
+        return result.data.orders.map(order => transformApiOrderToLocalFormat(order));
+      } else {
+        console.error("Failed to fetch orders:", result.message);
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching orders from API:", error);
+      return [];
+    }
+  };
+
+  const refreshData = async () => {
+    setLoading(true);
+    
     const rm = getCurrentRM();
-    const myOrders = getMyOrders();
-    const deliveryStats = calculateDeliveryStats(myOrders);
+    const apiOrders = await fetchOrdersFromAPI();
+    const deliveryStats = calculateDeliveryStats(apiOrders);
     
     setCurrentRM(rm);
-    setOrders(myOrders);
+    setOrders(apiOrders);
     setStats(deliveryStats);
     setLastUpdate(new Date());
     setLoading(false);
   };
 
   useEffect(() => {
-    const loadData = () => {
-      setLoading(true);
-      refreshData();
+    const loadData = async () => {
+      await refreshData();
     };
 
     loadData();
@@ -550,7 +618,7 @@ const RMHome = () => {
           💡 Dashboard updates automatically every 30 seconds • Last updated: {lastUpdate.toLocaleTimeString()}
         </p>
         <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-          Click the refresh button above or complete orders to see updates immediately
+          Data fetched from server API • Complete orders to see updates immediately
         </p>
       </div>
     </div>

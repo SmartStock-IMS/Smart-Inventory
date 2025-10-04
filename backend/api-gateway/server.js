@@ -175,6 +175,7 @@ app.use('/api/users', authenticateToken, createProxy(USER_SERVICE_URL, { '^/api/
 app.use('/api/products', authenticateToken, createProxy(INVENTORY_SERVICE_URL, { '^/api/products': '/products' }));
 app.use('/api/inventory', authenticateToken, createProxy(INVENTORY_SERVICE_URL, { '^/api/inventory': '/inventory' }));
 app.use('/api/categories', authenticateToken, createProxy(INVENTORY_SERVICE_URL, { '^/api/categories': '/categories' }));
+app.use('/api/resources', authenticateToken, createProxy(INVENTORY_SERVICE_URL, { '^/api/resources': '/resources' }));
 
 // order service routes
 app.use('/api/orders', authenticateToken, createProxy(ORDER_SERVICE_URL, { '^/api/orders': '/orders' }));
@@ -220,6 +221,10 @@ app.get('/api', (req, res) => {
       users: '/api/users',
       products: '/api/products',
       inventory: '/api/inventory',
+      categories: '/api/categories',
+      resources: '/api/resources',
+      vehicles: '/api/resources/vehicle',
+      stockMovements: '/api/resources/stock-movement',
       orders: '/api/orders',
       customers: '/api/customers',
       quotations: '/api/quotations',

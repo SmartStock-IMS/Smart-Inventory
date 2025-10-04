@@ -18,23 +18,17 @@ import {
   Tag
 } from "lucide-react";
 
-// Read assigned orders from localStorage (simulate Inventory Manager passing orders)
-function getAssignedOrders() {
-  try {
-    const data = localStorage.getItem("assignedOrders");
-    if (data) return JSON.parse(data);
-  } catch {}
-  return [];
-}
+import { jwtDecode } from "jwt-decode";
 
-// Get orders assigned to specific Resource Manager
-function getOrdersForRM(rmId) {
-  const allOrders = getAssignedOrders();
-  return allOrders.filter(order => {
-    // Check if order is assigned to this specific RM
-    return order.assignedTo === rmId || 
-           order.assignedResourceManager?.id === rmId;
-  });
+function getRMIdFromToken() {
+  const token = localStorage.getItem("token");
+  if (!token) return "RM001";
+  try {
+    const payload = jwtDecode(token);
+    return payload.role_id || "RM001";
+  } catch {
+    return "RM001";
+  }
 }
 
 // Current logged-in Resource Manager (simulate authentication)
@@ -51,6 +45,45 @@ const getCurrentRM = () => {
   };
 };
 
+// Transform API order data to match the expected format
+function transformApiOrderToLocalFormat(apiOrder) {
+  return {
+    id: apiOrder.order_id,
+    quotation_id: apiOrder.order_id,
+    customer: apiOrder.customer_name,
+    customerName: apiOrder.customer_name,
+    status: apiOrder.order_status,
+    date: apiOrder.order_date,
+    quotation_date: apiOrder.order_date,
+    net_total: parseFloat(apiOrder.total_amount),
+    no_items: parseInt(apiOrder.no_of_products),
+    assignedTo: getRMIdFromToken(),
+    assignedResourceManager: {
+      id: getRMIdFromToken(),
+      name: getCurrentRM().name,
+      assignedAt: apiOrder.created_at
+    },
+    assignedAt: apiOrder.created_at,
+    items: apiOrder.products_json?.map(product => ({
+      name: product.product_name,
+      description: product.product_name,
+      qty: product.quantity,
+      item_qty: product.quantity,
+      unit_price: product.unit_price,
+      total_amount: product.total_amount,
+      item_code: product.product_id,
+      variant_details: {
+        color: "N/A",
+        weight: "N/A",
+        category: product.category_name,
+        batch_no: "N/A",
+        exp_date: "N/A",
+        image_url: "/products/default.jpg"
+      }
+    })) || []
+  };
+}
+
 // Enrich order data with calculated fields
 const enrichOrderWithDetails = (order) => {
   // Check localStorage for completion status
@@ -60,7 +93,7 @@ const enrichOrderWithDetails = (order) => {
   return {
     ...order,
     // Preserve the actual status from localStorage completion if it exists, otherwise keep original
-    status: isCompleted ? 'Complete' : (order.status || "In Progress"),
+    status: isCompleted ? 'Complete' : (order.status === 'inprogress' ? 'In Progress' : order.status),
     // Calculate sub_total from net_total if available
     sub_total: order.sub_total || (order.net_total ? Math.round(order.net_total / 0.945) : order.net_total),
     // Use actual discount or calculate from sub_total and net_total
@@ -110,6 +143,41 @@ const ResourceOrders = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [orderToComplete, setOrderToComplete] = useState(null);
 
+  // Fetch orders from API
+  const fetchOrdersFromAPI = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const rmId = getRMIdFromToken();
+      
+      if (!token) {
+        console.error('No token found in localStorage');
+        return [];
+      }
+
+      const response = await fetch(`http://localhost:3000/api/orders/by-resource-manager/${rmId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const result = await response.json();
+      
+      if (result.success && result.data && result.data.orders) {
+        console.log("Orders fetched from API: ", result.data.orders);
+        // Transform API orders to match the expected format
+        return result.data.orders.map(order => transformApiOrderToLocalFormat(order));
+      } else {
+        console.error("Failed to fetch orders:", result.message);
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching orders from API:", error);
+      return [];
+    }
+  };
+
   useEffect(() => {
     const loadOrders = async () => {
       setLoading(true);
@@ -118,12 +186,12 @@ const ResourceOrders = () => {
       const rm = getCurrentRM();
       setCurrentRM(rm);
       
-      // Get orders assigned specifically to this RM
-      const orders = getOrdersForRM(rm.id);
+      // Get orders from API
+      const apiOrders = await fetchOrdersFromAPI();
       
-      if (orders.length > 0) {
+      if (apiOrders.length > 0) {
         // Enrich orders with detailed quotation information
-        const enrichedOrders = orders.map(enrichOrderWithDetails);
+        const enrichedOrders = apiOrders.map(enrichOrderWithDetails);
         setAssignedOrders(enrichedOrders);
         setSelectedOrder(enrichedOrders[0]); // Select first order by default
       } else {
@@ -136,10 +204,10 @@ const ResourceOrders = () => {
 
     loadOrders();
 
-    // Listen for localStorage changes to automatically refresh when new orders are assigned
+    // Listen for localStorage changes to automatically refresh when orders are completed
     const handleStorageChange = (event) => {
-      if (event.key === 'assignedOrders') {
-        console.log('Detected new order assignment, refreshing...');
+      if (event.key === 'orderStatuses') {
+        console.log('Detected order status change, refreshing...');
         loadOrders();
       }
     };
@@ -159,8 +227,31 @@ const ResourceOrders = () => {
     };
   }, []);
 
-  const handleRefresh = () => {
-    window.location.reload();
+  const handleRefresh = async () => {
+    setLoading(true);
+    const rm = getCurrentRM();
+    setCurrentRM(rm);
+    
+    const apiOrders = await fetchOrdersFromAPI();
+    
+    if (apiOrders.length > 0) {
+      const enrichedOrders = apiOrders.map(enrichOrderWithDetails);
+      setAssignedOrders(enrichedOrders);
+      // Keep the same selected order if it still exists
+      if (selectedOrder) {
+        const updatedSelectedOrder = enrichedOrders.find(
+          order => order.quotation_id === selectedOrder.quotation_id
+        );
+        setSelectedOrder(updatedSelectedOrder || enrichedOrders[0]);
+      } else {
+        setSelectedOrder(enrichedOrders[0]);
+      }
+    } else {
+      setAssignedOrders([]);
+      setSelectedOrder(null);
+    }
+    
+    setLoading(false);
   };
 
   const handleCompleteOrder = (orderToComplete) => {
@@ -169,15 +260,39 @@ const ResourceOrders = () => {
     setShowConfirmModal(true);
   };
 
-  const confirmCompleteOrder = () => {
+  const confirmCompleteOrder = async () => {
     if (!orderToComplete) return;
 
     try {
-      // Get all assigned orders from localStorage
-      const allOrders = JSON.parse(localStorage.getItem("assignedOrders") || "[]");
+      // Call the API to update order status to completed
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:3000/api/orders/status/${orderToComplete.quotation_id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          status: 'completed'
+        })
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        alert(`Failed to complete order: ${result.message}`);
+        setShowConfirmModal(false);
+        setOrderToComplete(null);
+        return;
+      }
+
+      // Update order status in localStorage (for UI consistency)
+      const orderStatuses = JSON.parse(localStorage.getItem('orderStatuses') || '{}');
+      orderStatuses[orderToComplete.quotation_id] = 'Complete';
+      localStorage.setItem('orderStatuses', JSON.stringify(orderStatuses));
       
-      // Find and update the specific order
-      const updatedOrders = allOrders.map(order => {
+      // Update local state
+      const updatedOrders = assignedOrders.map(order => {
         if (order.quotation_id === orderToComplete.quotation_id) {
           return {
             ...order,
@@ -188,11 +303,7 @@ const ResourceOrders = () => {
         }
         return order;
       });
-
-      // Save updated orders back to localStorage
-      localStorage.setItem("assignedOrders", JSON.stringify(updatedOrders));
       
-      // Update local state
       setAssignedOrders(updatedOrders);
       
       // Update selected order if it's the one being completed
@@ -205,9 +316,15 @@ const ResourceOrders = () => {
         }
       }
       
+      // Show success message
+      alert(`Order ${orderToComplete.quotation_id} has been marked as completed successfully!`);
+      
       // Close modal and reset
       setShowConfirmModal(false);
       setOrderToComplete(null);
+      
+      // Refresh orders from API to get updated data
+      handleRefresh();
       
     } catch (error) {
       console.error("Error completing order:", error);
@@ -271,21 +388,20 @@ const ResourceOrders = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
-                localStorage.removeItem('assignedOrders');
                 localStorage.removeItem('orderStatuses');
-                alert('Test data cleared! Refresh the page.');
-                window.location.reload();
+                alert('Order completion data cleared! Refresh to see updated status.');
+                handleRefresh();
               }}
               className="flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-colors duration-200 backdrop-blur-sm text-sm"
-              title="Clear test data from localStorage"
+              title="Clear completion status data"
             >
               <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-              Clear Test Data
+              Clear Status Data
             </button>
             <button
               onClick={handleRefresh}
               className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-200 backdrop-blur-sm text-sm"
-              title="Refresh page data"
+              title="Refresh order data from API"
             >
               <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
               Refresh
