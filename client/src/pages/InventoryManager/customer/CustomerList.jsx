@@ -1,50 +1,82 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { BookUser, Search, Trash2, Eye, User, Mail, Phone, MapPin, Hash, Users, Sparkles, AlertCircle, UserCheck, Building, Grid3X3, TableProperties } from "lucide-react";
+import {
+  BookUser,
+  Search,
+  Trash2,
+  Eye,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Hash,
+  Users,
+  Sparkles,
+  AlertCircle,
+  UserCheck,
+  Building,
+  Grid3X3,
+  TableProperties,
+} from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
 import axios from "axios";
 
-const getAllCustomersNoPage= async()=>{  
+const getAllCustomersNoPage = async () => {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.get(
-      "http://localhost:3000/api/customers",
-      {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      }
-    );
+    const response = await axios.get("http://localhost:3000/api/customers", {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
     console.log("API response:", response.data.data.customers);
     return { success: true, data: response.data.data.customers };
   } catch (error) {
     console.error("API error:", error.response?.data || error.message);
-    return { success: false, message: error.response?.data?.message || error.message };
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message,
+    };
   }
 };
 
 const deleteCustomer = async (userCode) => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return { success: true, data: { message: "Customer removed successfully" } };
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.delete(
+      `http://localhost:3000/api/customers/${userCode}`,
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
+    console.log("Delete response:", response.data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Delete error:", error.response?.data || error.message);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message,
+    };
+  }
 };
 
 const toast = {
   success: (message) => console.log(`✅ ${message}`),
-  error: (message) => console.log(`❌ ${message}`)
+  error: (message) => console.log(`❌ ${message}`),
 };
 
-const cn = (...classes) => classes.filter(Boolean).join(' ');
+const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 const CustomerList = () => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
+  const [viewMode, setViewMode] = useState("table"); // 'table' or 'grid'
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchCustomers().then(data => {
+    fetchCustomers().then((data) => {
       setCustomers(data || []);
     });
   }, []);
@@ -91,10 +123,12 @@ const CustomerList = () => {
 
   const filteredCustomers = (customers || []).filter((customer) => {
     return searchQuery
-      ? customer.customer_id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.address.toLowerCase().includes(searchQuery.toLowerCase())
+      ? customer.customer_id
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+          customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          customer.address.toLowerCase().includes(searchQuery.toLowerCase())
       : true;
   });
 
@@ -104,13 +138,22 @@ const CustomerList = () => {
   };
 
   const getInitials = (name) => {
-    return name?.split(' ').map(n => n.charAt(0)).join('').toUpperCase() || '';
+    return (
+      name
+        ?.split(" ")
+        .map((n) => n.charAt(0))
+        .join("")
+        .toUpperCase() || ""
+    );
   };
 
   const GridView = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {filteredCustomers.map((customer) => (
-        <div key={customer.customer_id} className="bg-white rounded-2xl border border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group">
+        <div
+          key={customer.customer_id}
+          className="bg-white rounded-2xl border border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
+        >
           <div className="p-6">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg">
@@ -124,7 +167,9 @@ const CustomerList = () => {
                   <h3 className="font-semibold text-gray-800 truncate">
                     {customer.name}
                   </h3>
-                  <p className="text-sm text-gray-500">{customer.customer_id}</p>
+                  <p className="text-sm text-gray-500">
+                    {customer.customer_id}
+                  </p>
                 </button>
               </div>
             </div>
@@ -140,7 +185,9 @@ const CustomerList = () => {
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <MapPin className="w-4 h-4 text-gray-400" />
-                <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium border`}>
+                <span
+                  className={`inline-flex px-2 py-1 rounded-full text-xs font-medium border`}
+                >
                   {customer.address}
                 </span>
               </div>
@@ -210,13 +257,18 @@ const CustomerList = () => {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {filteredCustomers.map((customer) => (
-              <tr key={customer.customer_id} className="hover:bg-gray-50 transition-colors duration-200">
+              <tr
+                key={customer.customer_id}
+                className="hover:bg-gray-50 transition-colors duration-200"
+              >
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-sm font-bold">
                       {getInitials(customer.name)}
                     </div>
-                    <span className="font-medium text-gray-800">{customer.customer_id}</span>
+                    <span className="font-medium text-gray-800">
+                      {customer.customer_id}
+                    </span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
@@ -227,7 +279,9 @@ const CustomerList = () => {
                     {customer.name}
                   </button>
                 </td>
-                <td className="px-6 py-4 text-gray-600">{customer.contact_no}</td>
+                <td className="px-6 py-4 text-gray-600">
+                  {customer.contact_no}
+                </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-gray-400" />
@@ -235,9 +289,7 @@ const CustomerList = () => {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className='text-gray-600'>
-                    {customer.address}
-                  </span>
+                  <span className="text-gray-600">{customer.address}</span>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
@@ -281,7 +333,9 @@ const CustomerList = () => {
               </div>
               <div>
                 <h2 className="text-2xl font-bold mb-1">Customer Management</h2>
-                <p className="text-white/80">Manage and view all customer information</p>
+                <p className="text-white/80">
+                  Manage and view all customer information
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -304,25 +358,25 @@ const CustomerList = () => {
                   className="w-full pl-10 pr-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50"
                 />
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setViewMode('table')}
+                  onClick={() => setViewMode("table")}
                   className={cn(
                     "p-3 rounded-lg transition-colors duration-200",
-                    viewMode === 'table' 
-                      ? "bg-white/30 text-white" 
+                    viewMode === "table"
+                      ? "bg-white/30 text-white"
                       : "bg-white/10 text-white/70 hover:bg-white/20"
                   )}
                 >
                   <TableProperties className="w-5 h-5" />
                 </button>
                 <button
-                  onClick={() => setViewMode('grid')}
+                  onClick={() => setViewMode("grid")}
                   className={cn(
                     "p-3 rounded-lg transition-colors duration-200",
-                    viewMode === 'grid' 
-                      ? "bg-white/30 text-white" 
+                    viewMode === "grid"
+                      ? "bg-white/30 text-white"
                       : "bg-white/10 text-white/70 hover:bg-white/20"
                   )}
                 >
@@ -355,12 +409,14 @@ const CustomerList = () => {
                     <Users className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-gray-800">{filteredCustomers.length}</p>
+                    <p className="text-2xl font-bold text-gray-800">
+                      {filteredCustomers.length}
+                    </p>
                     <p className="text-sm text-gray-600">Total Customers</p>
                   </div>
                 </div>
               </div>
-                            
+
               <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -368,7 +424,14 @@ const CustomerList = () => {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-800">
-                      {new Set(customers.map(c => c.address)).size}
+                      {
+                        new Set(
+                          customers.map((c) => {
+                            const parts = c.address.trim().split(" ");
+                            return parts[parts.length - 1]; // take last word (city)
+                          })
+                        ).size
+                      }
                     </p>
                     <p className="text-sm text-gray-600">Cities Covered</p>
                   </div>
@@ -378,13 +441,21 @@ const CustomerList = () => {
 
             {/* Customers Display */}
             {filteredCustomers.length > 0 ? (
-              viewMode === 'table' ? <TableView /> : <GridView />
+              viewMode === "table" ? (
+                <TableView />
+              ) : (
+                <GridView />
+              )
             ) : (
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                   <Users className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-600 font-medium">No customers found</p>
-                  <p className="text-sm text-gray-500 mt-2">Try adjusting your search criteria</p>
+                  <p className="text-gray-600 font-medium">
+                    No customers found
+                  </p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Try adjusting your search criteria
+                  </p>
                 </div>
               </div>
             )}
@@ -403,11 +474,13 @@ const CustomerList = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold">Remove Customer</h3>
-                  <p className="text-white/80 text-sm">This action cannot be undone</p>
+                  <p className="text-white/80 text-sm">
+                    This action cannot be undone
+                  </p>
                 </div>
               </div>
             </div>
-            
+
             <div className="p-6">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold">
@@ -417,15 +490,20 @@ const CustomerList = () => {
                   <h4 className="font-semibold text-gray-800 mb-1">
                     {customerToDelete.name}
                   </h4>
-                  <p className="text-sm text-gray-600">{customerToDelete.customer_id}</p>
-                  <p className="text-xs text-gray-500 mt-1">{customerToDelete.email}</p>
+                  <p className="text-sm text-gray-600">
+                    {customerToDelete.customer_id}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {customerToDelete.email}
+                  </p>
                 </div>
               </div>
-              
+
               <p className="text-gray-600 mb-6">
-                Are you sure you want to remove this customer from your database? This will permanently delete all customer information.
+                Are you sure you want to remove this customer from your
+                database? This will permanently delete all customer information.
               </p>
-              
+
               <div className="flex gap-3">
                 <button
                   onClick={() => handleDelete(customerToDelete.customer_id)}
