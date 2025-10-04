@@ -75,6 +75,24 @@ class Customer extends BaseModel {
     }
   }
 
+  /**
+   * Delete a customer using sp_delete_customer stored procedure
+   * @param {string} customerId - The customer UUID
+   * @returns {Object} Procedure output: { p_success, p_message }
+   */
+  async delete(customerId) {
+    try {
+      const result = await this.callProcedure('sp_delete_customer', [
+        null, // p_success OUT parameter
+        null, // p_message OUT parameter
+        customerId
+      ]);
+      return result[0];
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async getCustomerOrderHistory(customerId, limit = 10, offset = 0) {
     try {
       return await this.callFunction('fn_get_customer_order_history', [

@@ -1,4 +1,3 @@
-
 const CustomerModel = require('../models/customerModel');
 const Customer = new CustomerModel();
 
@@ -106,24 +105,47 @@ class CustomerController {
   async deleteCustomer(req, res) {
     try {
       const { id } = req.params;
-      const customer = await Customer.findById(id);
-      if (!customer) {
-        return res.status(404).json({
+
+      // Validate customer ID format (basic UUID validation)
+      if (!id || id.length !== 36) {
+        return res.status(400).json({
           success: false,
-          message: 'Customer not found'
+          message: 'Invalid customer ID format'
         });
       }
 
-      await Customer.delete(id);
+      // Call the stored procedure for deletion
+      const result = await Customer.delete(id);
+
+      if (!result.p_success) {
+        // Check if it's a "customer not found" error or "has orders" error
+        if (result.p_message.includes('does not exist')) {
+          return res.status(404).json({
+            success: false,
+            message: result.p_message
+          });
+        } else if (result.p_message.includes('existing orders')) {
+          return res.status(409).json({
+            success: false,
+            message: result.p_message,
+            error_code: 'CUSTOMER_HAS_ORDERS'
+          });
+        } else {
+          return res.status(400).json({
+            success: false,
+            message: result.p_message
+          });
+        }
+      }
 
       res.status(200).json({
         success: true,
-        message: 'Customer deleted successfully'
+        message: result.p_message || 'Customer deleted successfully'
       });
     } catch (error) {
       res.status(500).json({
         success: false,
-        message: error.message
+        message: `Internal server error: ${error.message}`
       });
     }
   }
