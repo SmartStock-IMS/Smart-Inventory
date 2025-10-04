@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAllSalesReps, deleteSalesRep } from "@services/salesrep-service";
 import {
   Dialog,
   DialogClose,
@@ -8,185 +7,65 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@components/ui/Dialog.jsx";
-import {cn} from "@lib/utils.js";
+import { cn } from "@lib/utils.js";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { Contact, User, Mail, MapPin, Hash, Eye, Trash2, Users, Building, Phone } from "lucide-react";
-import { FaSpinner } from "react-icons/fa";
+import {
+  Contact,
+  User,
+  Mail,
+  MapPin,
+  Hash,
+  Eye,
+  Trash2,
+  Users,
+  Building,
+  Phone,
+  Award,
+} from "lucide-react";
+import axios from "axios";
 
-// Mock sales reps data for testing since backend isn't connected
-const mockSalesReps = [
-  {
-    emp_code: "EMP001",
-    sales_area: "Mumbai Central",
-    commission_rate: 5.5,
-    target_amount: 500000,
-    achievements: 420000,
-    join_date: "2022-01-15",
-    status: "Active",
-    users: {
-      name: "Arjun Singh",
-      email: "arjun.singh@company.com",
-      phone: "+91 98765 43210"
-    }
-  },
-  {
-    emp_code: "EMP002",
-    sales_area: "Delhi North",
-    commission_rate: 6.0,
-    target_amount: 450000,
-    achievements: 465000,
-    join_date: "2021-08-20",
-    status: "Active",
-    users: {
-      name: "Sneha Patel",
-      email: "sneha.patel@company.com",
-      phone: "+91 87654 32109"
-    }
-  },
-  {
-    emp_code: "EMP003",
-    sales_area: "Bangalore East",
-    commission_rate: 5.8,
-    target_amount: 600000,
-    achievements: 580000,
-    join_date: "2020-12-10",
-    status: "Active",
-    users: {
-      name: "Rajesh Kumar",
-      email: "rajesh.kumar@company.com",
-      phone: "+91 76543 21098"
-    }
-  },
-  {
-    emp_code: "EMP004",
-    sales_area: "Chennai South",
-    commission_rate: 5.2,
-    target_amount: 400000,
-    achievements: 380000,
-    join_date: "2022-03-05",
-    status: "Active",
-    users: {
-      name: "Priya Sharma",
-      email: "priya.sharma@company.com",
-      phone: "+91 65432 10987"
-    }
-  },
-  {
-    emp_code: "EMP005",
-    sales_area: "Pune West",
-    commission_rate: 6.2,
-    target_amount: 550000,
-    achievements: 610000,
-    join_date: "2019-11-18",
-    status: "Active",
-    users: {
-      name: "Vikram Gupta",
-      email: "vikram.gupta@company.com",
-      phone: "+91 54321 09876"
-    }
-  },
-  {
-    emp_code: "EMP006",
-    sales_area: "Hyderabad Central",
-    commission_rate: 5.7,
-    target_amount: 480000,
-    achievements: 445000,
-    join_date: "2021-06-12",
-    status: "Active",
-    users: {
-      name: "Kavita Joshi",
-      email: "kavita.joshi@company.com",
-      phone: "+91 43210 98765"
-    }
-  },
-  {
-    emp_code: "EMP007",
-    sales_area: "Kolkata East",
-    commission_rate: 5.5,
-    target_amount: 420000,
-    achievements: 390000,
-    join_date: "2022-07-08",
-    status: "Active",
-    users: {
-      name: "Amit Roy",
-      email: "amit.roy@company.com",
-      phone: "+91 32109 87654"
-    }
-  },
-  {
-    emp_code: "EMP008",
-    sales_area: "Ahmedabad West",
-    commission_rate: 6.1,
-    target_amount: 520000,
-    achievements: 540000,
-    join_date: "2020-09-25",
-    status: "Active",
-    users: {
-      name: "Meera Shah",
-      email: "meera.shah@company.com",
-      phone: "+91 21098 76543"
-    }
-  },
-  {
-    emp_code: "EMP009",
-    sales_area: "Jaipur Central",
-    commission_rate: 5.3,
-    target_amount: 380000,
-    achievements: 365000,
-    join_date: "2023-01-20",
-    status: "Active",
-    users: {
-      name: "Rohit Agarwal",
-      email: "rohit.agarwal@company.com",
-      phone: "+91 10987 65432"
-    }
-  },
-  {
-    emp_code: "EMP010",
-    sales_area: "Lucknow North",
-    commission_rate: 5.9,
-    target_amount: 460000,
-    achievements: 475000,
-    join_date: "2021-04-15",
-    status: "Active",
-    users: {
-      name: "Sonal Verma",
-      email: "sonal.verma@company.com",
-      phone: "+91 09876 54321"
-    }
-  },
-  {
-    emp_code: "EMP011",
-    sales_area: "Coimbatore South",
-    commission_rate: 5.4,
-    target_amount: 350000,
-    achievements: 340000,
-    join_date: "2022-10-12",
-    status: "Active",
-    users: {
-      name: "Karthik Raman",
-      email: "karthik.raman@company.com",
-      phone: "+91 87659 43210"
-    }
-  },
-  {
-    emp_code: "EMP012",
-    sales_area: "Indore Central",
-    commission_rate: 5.6,
-    target_amount: 410000,
-    achievements: 425000,
-    join_date: "2020-05-30",
-    status: "Active",
-    users: {
-      name: "Neha Malhotra",
-      email: "neha.malhotra@company.com",
-      phone: "+91 76549 32108"
-    }
+const getAllRMs = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(
+      "http://localhost:3000/api/users/resource-manager",
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
+    console.log("API response:", response.data.data.users);
+    return { success: true, data: response.data.data.users };
+  } catch (error) {
+    console.error("API error:", error.response?.data || error.message);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message,
+    };
   }
-];
+};
+
+const deleteRM = async (resourceManagerId) => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.delete(
+      `http://localhost:3000/api/users/resource-manager/${resourceManagerId}`,
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
+    console.log("Delete response:", response.data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Delete error:", error.response?.data || error.message);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message,
+    };
+  }
+};
 
 const RMList = () => {
   const [loading, setLoading] = useState(true);
@@ -200,45 +79,44 @@ const RMList = () => {
 
   const fetchSalesReps = async () => {
     try {
-      // Use mock data directly for frontend UI testing since backend isn't connected
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate loading time
-      
-      console.log("Loading mock sales reps data for UI testing");
-      setSalesReps(mockSalesReps);
-      
-      // Uncomment below when backend is ready:
-      /*
-      const result = await getAllSalesReps();
-      console.log("result: ", result);
+      const result = await getAllRMs();
+      console.log("result: ", result.data);
       if (result.success && result.data) {
         setSalesReps(result.data);
       } else {
-        console.error("Failed to fetch sales reps:", result.message);
-        setSalesReps(mockSalesReps);
+        console.error("Failed to fetch resource managers:", result.message);
+        toast.error(result.message || "Failed to load resource managers");
+        setSalesReps([]);
       }
-      */
     } catch (error) {
-      console.error("Error loading sales reps:", error);
-      setSalesReps(mockSalesReps);
+      console.error("Error loading resource managers:", error);
+      toast.error("Error loading resource managers");
+      setSalesReps([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleClick = (emp_code) => {
-    navigate(`/inventorymanager/rm-details/${emp_code}`);
+  const handleClick = (resourceManagerId) => {
+    navigate(`/inventorymanager/rm-details/${resourceManagerId}`);
   };
 
-  const handleDelete = async (empCode) => {
+  const handleDelete = async (resourceManagerId) => {
     try {
-      // Simulate delete operation
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success("Resource manager removed successfully");
-      
-      // Remove from current list (mock behavior)
-      setSalesReps(prevReps => prevReps.filter(rep => rep.emp_code !== empCode));
+      const result = await deleteRM(resourceManagerId);
+
+      if (result.success) {
+        toast.success("Resource manager removed successfully");
+        setSalesReps((prevReps) =>
+          prevReps.filter(
+            (rep) => rep.resource_manager_id !== resourceManagerId
+          )
+        );
+      } else {
+        toast.error(result.message || "Error removing resource manager");
+      }
     } catch (error) {
-      console.error("Error remove resource manager: ", error);
+      console.error("Error removing resource manager: ", error);
       toast.error("Error removing resource manager");
     }
   };
@@ -248,28 +126,22 @@ const RMList = () => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
-      rep.emp_code.toLowerCase().includes(query) ||
-      rep.users?.name?.toLowerCase().includes(query) ||
-      rep.users?.email?.toLowerCase().includes(query) ||
-      rep.sales_area?.toLowerCase().includes(query)
+      rep.resource_manager_id?.toLowerCase().includes(query) ||
+      rep.full_name?.toLowerCase().includes(query) ||
+      rep.email?.toLowerCase().includes(query) ||
+      rep.address?.toLowerCase().includes(query) ||
+      rep.phone?.toLowerCase().includes(query)
     );
   });
 
   const getInitials = (name) => {
-    return name?.split(' ').map(n => n.charAt(0)).join('').toUpperCase() || '';
-  };
-
-  const getAreaColor = (area) => {
-    const colors = [
-      'bg-blue-100 text-blue-800 border-blue-200',
-      'bg-green-100 text-green-800 border-green-200',
-      'bg-purple-100 text-purple-800 border-purple-200',
-      'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'bg-pink-100 text-pink-800 border-pink-200',
-      'bg-indigo-100 text-indigo-800 border-indigo-200'
-    ];
-    const hash = area?.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0) || 0;
-    return colors[Math.abs(hash) % colors.length];
+    return (
+      name
+        ?.split(" ")
+        .map((n) => n.charAt(0))
+        .join("")
+        .toUpperCase() || ""
+    );
   };
 
   if (loading) {
@@ -279,7 +151,9 @@ const RMList = () => {
           <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
             <Users className="w-8 h-8 text-white" />
           </div>
-          <p className="text-gray-600 font-medium">Loading resource managers...</p>
+          <p className="text-gray-600 font-medium">
+            Loading resource managers...
+          </p>
         </div>
       </div>
     );
@@ -300,7 +174,9 @@ const RMList = () => {
               </div>
               <div>
                 <h2 className="text-2xl font-bold mb-1">Resource Managers</h2>
-                <p className="text-white/80">Manage your resource management team</p>
+                <p className="text-white/80">
+                  Manage your resource management team
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -317,7 +193,7 @@ const RMList = () => {
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/60" />
                 <input
                   type="text"
-                  placeholder="Search by name, code, email, or area..."
+                  placeholder="Search by name, ID, email, phone, or address..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50"
@@ -338,12 +214,14 @@ const RMList = () => {
                 <Users className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-800">{filteredSalesReps.length}</p>
+                <p className="text-2xl font-bold text-gray-800">
+                  {filteredSalesReps.length}
+                </p>
                 <p className="text-sm text-gray-600">Active Managers</p>
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
@@ -351,9 +229,19 @@ const RMList = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-800">
-                  {new Set((salesReps || []).map(rep => rep.sales_area)).size}
+                  {
+                    new Set(
+                      (salesReps || [])
+                        .map((rep) => {
+                          if (!rep.address) return null;
+                          const parts = rep.address.trim().split(" ");
+                          return parts[parts.length - 1]; // last word → city
+                        })
+                        .filter(Boolean) // remove null/empty
+                    ).size
+                  }
                 </p>
-                <p className="text-sm text-gray-600">Resource Areas</p>
+                <p className="text-sm text-gray-600">Cities</p>
               </div>
             </div>
           </div>
@@ -369,7 +257,7 @@ const RMList = () => {
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <div className="flex items-center gap-2">
                         <Hash className="w-4 h-4" />
-                        Code
+                        ID
                       </div>
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -387,7 +275,13 @@ const RMList = () => {
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <div className="flex items-center gap-2">
                         <MapPin className="w-4 h-4" />
-                        Resource Area
+                        Address
+                      </div>
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <Award className="w-4 h-4" />
+                        Performance
                       </div>
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -397,44 +291,64 @@ const RMList = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {filteredSalesReps.map((rep) => (
-                    <tr key={rep.emp_code} className="hover:bg-gray-50 transition-colors duration-200">
+                    <tr
+                      key={rep.resource_manager_id}
+                      className="hover:bg-gray-50 transition-colors duration-200"
+                    >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-sm font-bold">
-                            {getInitials(rep.users?.name)}
+                            {getInitials(rep.full_name)}
                           </div>
-                          <span className="font-medium text-gray-800">{rep.emp_code}</span>
+                          <span className="font-medium text-gray-800 text-xs">
+                            {rep.resource_manager_id?.substring(0, 8)}...
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <button
-                          onClick={() => handleClick(rep.emp_code)}
+                          onClick={() => handleClick(rep.resource_manager_id)}
                           className="text-blue-600 hover:text-blue-800 font-medium hover:underline text-left transition-colors duration-200"
                         >
-                          {rep.users?.name || 'N/A'}
+                          {rep.full_name || "N/A"}
                         </button>
                       </td>
                       <td className="px-6 py-4">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <Mail className="w-4 h-4 text-gray-400" />
-                            <span className="text-gray-600 text-sm">{rep.users?.email || 'N/A'}</span>
+                            <span className="text-gray-600 text-sm">
+                              {rep.email || "N/A"}
+                            </span>
                           </div>
                           <div className="flex items-center gap-2">
                             <Phone className="w-4 h-4 text-gray-400" />
-                            <span className="text-gray-600 text-sm">{rep.users?.phone || 'N/A'}</span>
+                            <span className="text-gray-600 text-sm">
+                              {rep.phone || "N/A"}
+                            </span>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium border ${getAreaColor(rep.sales_area)}`}>
-                          {rep.sales_area || 'N/A'}
+                        <span className="text-gray-600 text-sm">
+                          {rep.address || "N/A"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
+                            rep.performance_rating
+                              ? "bg-green-100 text-green-800 border border-green-200"
+                              : "bg-gray-100 text-gray-600 border border-gray-200"
+                          }`}
+                        >
+                          {rep.performance_rating || "Not Rated"}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <button
-                            onClick={() => handleClick(rep.emp_code)}
+                            onClick={() => handleClick(rep.resource_manager_id)}
                             className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2"
                           >
                             <Eye className="w-4 h-4" />
@@ -450,11 +364,13 @@ const RMList = () => {
                             <DialogContent className="">
                               <DialogHeader>
                                 <DialogTitle>
-                                  <p className="text-center">Confirm removing Resource Manager</p>
+                                  <p className="text-center">
+                                    Confirm removing Resource Manager
+                                  </p>
                                 </DialogTitle>
                                 <DialogDescription>
                                   <p className="mt-1 text-center text-base font-normal">
-                                    {rep.users?.name || rep.emp_code}
+                                    {rep.full_name || rep.resource_manager_id}
                                   </p>
                                 </DialogDescription>
                               </DialogHeader>
@@ -463,9 +379,11 @@ const RMList = () => {
                                   <button
                                     className={cn(
                                       "w-1/5 border p-2 rounded-md bg-gray-950 text-white",
-                                      "hover:bg-gray-800",
+                                      "hover:bg-gray-800"
                                     )}
-                                    onClick={() => handleDelete(rep.emp_code)}
+                                    onClick={() =>
+                                      handleDelete(rep.resource_manager_id)
+                                    }
                                   >
                                     Yes
                                   </button>
@@ -490,8 +408,12 @@ const RMList = () => {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <Users className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-              <p className="text-gray-600 font-medium">No resource managers found</p>
-              <p className="text-sm text-gray-500 mt-2">Try adjusting your search criteria</p>
+              <p className="text-gray-600 font-medium">
+                No resource managers found
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Try adjusting your search criteria
+              </p>
             </div>
           </div>
         )}
