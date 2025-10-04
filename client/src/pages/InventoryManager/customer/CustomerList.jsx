@@ -2,79 +2,23 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { BookUser, Search, Trash2, Eye, User, Mail, Phone, MapPin, Hash, Users, Sparkles, AlertCircle, UserCheck, Building, Grid3X3, TableProperties } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
+import axios from "axios";
 
-// Mock customer data for testing since backend isn't connected
-const mockCustomers = [
-  {
-    user_code: "CUST001",
-    first_name: "Rajesh",
-    last_name: "Kumar",
-    contact1: "+91 98765 43210",
-    email: "rajesh.kumar@email.com",
-    city: "Mumbai"
-  },
-  {
-    user_code: "CUST002", 
-    first_name: "Priya",
-    last_name: "Sharma",
-    contact1: "+91 87654 32109",
-    email: "priya.sharma@email.com",
-    city: "Delhi"
-  },
-  {
-    user_code: "CUST003",
-    first_name: "Amit",
-    last_name: "Patel",
-    contact1: "+91 76543 21098",
-    email: "amit.patel@email.com",
-    city: "Ahmedabad"
-  },
-  {
-    user_code: "CUST004",
-    first_name: "Sunita",
-    last_name: "Singh",
-    contact1: "+91 65432 10987",
-    email: "sunita.singh@email.com",
-    city: "Pune"
-  },
-  {
-    user_code: "CUST005",
-    first_name: "Vikram",
-    last_name: "Gupta",
-    contact1: "+91 54321 09876",
-    email: "vikram.gupta@email.com",
-    city: "Bangalore"
-  },
-  {
-    user_code: "CUST006",
-    first_name: "Kavita",
-    last_name: "Joshi",
-    contact1: "+91 43210 98765",
-    email: "kavita.joshi@email.com",
-    city: "Hyderabad"
-  },
-  {
-    user_code: "CUST007",
-    first_name: "Rahul",
-    last_name: "Verma",
-    contact1: "+91 32109 87654",
-    email: "rahul.verma@email.com",
-    city: "Chennai"
-  },
-  {
-    user_code: "CUST008",
-    first_name: "Meera",
-    last_name: "Reddy",
-    contact1: "+91 21098 76543",
-    email: "meera.reddy@email.com",
-    city: "Kolkata"
+const getAllCustomersNoPage= async()=>{  
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(
+      "http://localhost:3000/api/customers",
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
+    console.log("API response:", response.data.data.customers);
+    return { success: true, data: response.data.data.customers };
+  } catch (error) {
+    console.error("API error:", error.response?.data || error.message);
+    return { success: false, message: error.response?.data?.message || error.message };
   }
-];
-
-// Mock services
-const getAllCustomersNoPage = async () => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return { success: true, data: mockCustomers };
 };
 
 const deleteCustomer = async (userCode) => {
@@ -101,7 +45,7 @@ const CustomerList = () => {
 
   useEffect(() => {
     fetchCustomers().then(data => {
-      setCustomers(data || mockCustomers);
+      setCustomers(data || []);
     });
   }, []);
 
@@ -113,13 +57,10 @@ const CustomerList = () => {
         return result.data;
       } else {
         console.error(result.message);
-        console.log("Using mock customer data");
-        return mockCustomers;
       }
     } catch (error) {
       console.error(error);
-      console.log("Backend error, using mock customer data");
-      return mockCustomers;
+      console.log("Backend error");
     } finally {
       setLoading(false);
     }
@@ -136,7 +77,6 @@ const CustomerList = () => {
       const result = await deleteCustomer(userCode);
       if (result.success) {
         toast.success(result.data.message);
-        setCustomers(mockCustomers);
         setDeleteDialogOpen(false);
         setCustomerToDelete(null);
       } else {
@@ -151,11 +91,10 @@ const CustomerList = () => {
 
   const filteredCustomers = (customers || []).filter((customer) => {
     return searchQuery
-      ? customer.user_code.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        customer.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.last_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ? customer.customer_id.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.city.toLowerCase().includes(searchQuery.toLowerCase())
+        customer.address.toLowerCase().includes(searchQuery.toLowerCase())
       : true;
   });
 
@@ -164,43 +103,28 @@ const CustomerList = () => {
     setDeleteDialogOpen(true);
   };
 
-  const getInitials = (firstName, lastName) => {
-    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
-  };
-
-  const getCityColor = (city) => {
-    const colors = [
-      'bg-blue-100 text-blue-800 border-blue-200',
-      'bg-green-100 text-green-800 border-green-200',
-      'bg-purple-100 text-purple-800 border-purple-200',
-      'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'bg-pink-100 text-pink-800 border-pink-200',
-      'bg-indigo-100 text-indigo-800 border-indigo-200',
-      'bg-red-100 text-red-800 border-red-200',
-      'bg-gray-100 text-gray-800 border-gray-200'
-    ];
-    const hash = city.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
-    return colors[Math.abs(hash) % colors.length];
+  const getInitials = (name) => {
+    return name?.split(' ').map(n => n.charAt(0)).join('').toUpperCase() || '';
   };
 
   const GridView = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {filteredCustomers.map((customer) => (
-        <div key={customer.user_code} className="bg-white rounded-2xl border border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group">
+        <div key={customer.customer_id} className="bg-white rounded-2xl border border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group">
           <div className="p-6">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg">
-                {getInitials(customer.first_name, customer.last_name)}
+                {getInitials(customer.name)}
               </div>
               <div className="flex-1 min-w-0">
                 <button
-                  onClick={() => handleClick(customer.user_code)}
+                  onClick={() => handleClick(customer.customer_id)}
                   className="text-left hover:text-blue-600 transition-colors duration-200"
                 >
                   <h3 className="font-semibold text-gray-800 truncate">
-                    {customer.first_name} {customer.last_name}
+                    {customer.name}
                   </h3>
-                  <p className="text-sm text-gray-500">{customer.user_code}</p>
+                  <p className="text-sm text-gray-500">{customer.customer_id}</p>
                 </button>
               </div>
             </div>
@@ -208,7 +132,7 @@ const CustomerList = () => {
             <div className="space-y-3 mb-6">
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <Phone className="w-4 h-4 text-gray-400" />
-                <span className="truncate">{customer.contact1}</span>
+                <span className="truncate">{customer.contact_no}</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <Mail className="w-4 h-4 text-gray-400" />
@@ -216,15 +140,15 @@ const CustomerList = () => {
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <MapPin className="w-4 h-4 text-gray-400" />
-                <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium border ${getCityColor(customer.city)}`}>
-                  {customer.city}
+                <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium border`}>
+                  {customer.address}
                 </span>
               </div>
             </div>
 
             <div className="flex gap-2">
               <button
-                onClick={() => handleClick(customer.user_code)}
+                onClick={() => handleClick(customer.customer_id)}
                 className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
               >
                 <Eye className="w-4 h-4" />
@@ -276,7 +200,7 @@ const CustomerList = () => {
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
-                  City
+                  Address
                 </div>
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -286,24 +210,24 @@ const CustomerList = () => {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {filteredCustomers.map((customer) => (
-              <tr key={customer.user_code} className="hover:bg-gray-50 transition-colors duration-200">
+              <tr key={customer.customer_id} className="hover:bg-gray-50 transition-colors duration-200">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-sm font-bold">
-                      {getInitials(customer.first_name, customer.last_name)}
+                      {getInitials(customer.name)}
                     </div>
-                    <span className="font-medium text-gray-800">{customer.user_code}</span>
+                    <span className="font-medium text-gray-800">{customer.customer_id}</span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
                   <button
-                    onClick={() => handleClick(customer.user_code)}
+                    onClick={() => handleClick(customer.customer_id)}
                     className="text-blue-600 hover:text-blue-800 font-medium hover:underline text-left transition-colors duration-200"
                   >
-                    {customer.first_name} {customer.last_name}
+                    {customer.name}
                   </button>
                 </td>
-                <td className="px-6 py-4 text-gray-600">{customer.contact1}</td>
+                <td className="px-6 py-4 text-gray-600">{customer.contact_no}</td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-gray-400" />
@@ -311,14 +235,14 @@ const CustomerList = () => {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium border ${getCityColor(customer.city)}`}>
-                    {customer.city}
+                  <span className='text-gray-600'>
+                    {customer.address}
                   </span>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <button
-                      onClick={() => handleClick(customer.user_code)}
+                      onClick={() => handleClick(customer.customer_id)}
                       className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2"
                     >
                       <Eye className="w-4 h-4" />
@@ -424,7 +348,7 @@ const CustomerList = () => {
         ) : (
           <>
             {/* Stats Bar */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -436,19 +360,7 @@ const CustomerList = () => {
                   </div>
                 </div>
               </div>
-              
-              <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <UserCheck className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-gray-800">{customers.length}</p>
-                    <p className="text-sm text-gray-600">Active Customers</p>
-                  </div>
-                </div>
-              </div>
-              
+                            
               <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -456,7 +368,7 @@ const CustomerList = () => {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-800">
-                      {new Set(customers.map(c => c.city)).size}
+                      {new Set(customers.map(c => c.address)).size}
                     </p>
                     <p className="text-sm text-gray-600">Cities Covered</p>
                   </div>
@@ -499,13 +411,13 @@ const CustomerList = () => {
             <div className="p-6">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-xl font-bold">
-                  {getInitials(customerToDelete.first_name, customerToDelete.last_name)}
+                  {getInitials(customerToDelete.name)}
                 </div>
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-800 mb-1">
-                    {customerToDelete.first_name} {customerToDelete.last_name}
+                    {customerToDelete.name}
                   </h4>
-                  <p className="text-sm text-gray-600">{customerToDelete.user_code}</p>
+                  <p className="text-sm text-gray-600">{customerToDelete.customer_id}</p>
                   <p className="text-xs text-gray-500 mt-1">{customerToDelete.email}</p>
                 </div>
               </div>
@@ -516,7 +428,7 @@ const CustomerList = () => {
               
               <div className="flex gap-3">
                 <button
-                  onClick={() => handleDelete(customerToDelete.user_code)}
+                  onClick={() => handleDelete(customerToDelete.customer_id)}
                   disabled={isLoading}
                   className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
                 >
