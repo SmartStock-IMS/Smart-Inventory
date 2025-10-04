@@ -367,6 +367,61 @@ class User extends BaseModel {
       throw error;
     }
   }
+
+  async findAllResourceManagers(limit = 10, offset = 0) {
+    try {
+      return await this.callFunction('fn_get_resource_managers', [
+        limit,
+        offset
+      ]);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Update resource manager using sp_update_resource_manager stored procedure
+   * @param {string} resourceManagerId - The resource manager UUID
+   * @param {Object} updateData - The update data
+   * @returns {Object} Procedure output: { p_success, p_message }
+   */
+  async updateResourceManager(resourceManagerId, updateData) {
+    try {
+      const result = await this.callProcedure('sp_update_resource_manager', [
+        null, // p_success OUT parameter
+        null, // p_message OUT parameter
+        resourceManagerId,
+        updateData.first_name || null,
+        updateData.last_name || null,
+        updateData.email || null,
+        updateData.phone || null,
+        updateData.address || null,
+        updateData.branch || null,
+        updateData.performance_rating || null
+      ]);
+      return result[0];
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Delete resource manager using sp_delete_resource_manager stored procedure
+   * @param {string} resourceManagerId - The resource manager UUID
+   * @returns {Object} Procedure output: { p_success, p_message }
+   */
+  async deleteResourceManager(resourceManagerId) {
+    try {
+      const result = await this.callProcedure('sp_delete_resource_manager', [
+        null, // p_success OUT parameter
+        null, // p_message OUT parameter
+        resourceManagerId
+      ]);
+      return result[0];
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = new User();
