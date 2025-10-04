@@ -10,67 +10,168 @@ import {
   AreaChart,
   Cell,
 } from "recharts";
-import { 
-  Calendar, 
-  CircleDollarSign, 
-  TrendingUp, 
+import {
+  Calendar,
+  CircleDollarSign,
+  TrendingUp,
   DollarSign,
   ArrowUpRight,
   ArrowDownRight,
   BarChart3,
-  Sparkles,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  X
 } from "lucide-react";
+import { FaSpinner } from "react-icons/fa";
 
-// Mock service function for demo - now supports different granularities
-const getDashboardIncomeData = async (fromDate, toDate, granularity = 'month') => {
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  const data = [];
-  const start = new Date(fromDate);
-  const end = new Date(toDate);
-  
-  if (granularity === 'day') {
-    // Generate daily data
-    for (let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
-      data.push({
-        date: new Date(dt).toISOString(),
-        totalIncome: Math.floor(Math.random() * 50000) + 10000,
-        granularity: 'day'
-      });
-    }
-  } else if (granularity === 'week') {
-    // Generate weekly data
-    const startWeek = new Date(start);
-    startWeek.setDate(start.getDate() - start.getDay()); // Start from Sunday
-    
-    for (let dt = new Date(startWeek); dt <= end; dt.setDate(dt.getDate() + 7)) {
-      if (dt >= start) {
-        data.push({
-          date: new Date(dt).toISOString(),
-          totalIncome: Math.floor(Math.random() * 200000) + 50000,
-          granularity: 'week'
-        });
+const API_BASE_URL = "http://localhost:3000/api/reports";
+
+const formatDateForAPI = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const getDashboardIncomeData = async (
+  fromDate,
+  toDate,
+  granularity = "month"
+) => {
+  try {
+    const data = [];
+    const start = new Date(fromDate);
+    const end = new Date(toDate);
+
+    if (granularity === "day") {
+      for (let dt = new Date(start); dt <= end; dt.setDate(dt.getDate() + 1)) {
+        const dateStr = formatDateForAPI(new Date(dt));
+        try {
+          const token = localStorage.getItem("token");
+          const response = await fetch(
+            `${API_BASE_URL}/daily-summary-stats?date=${dateStr}`,
+            {
+              headers: token ? { Authorization: `Bearer ${token}` } : {},
+            }
+          );
+          const result = await response.json();
+
+          if (result.success && result.data) {
+            data.push({
+              date: new Date(dt).toISOString(),
+              totalIncome: parseFloat(result.data.total_value || 0),
+              totalItems: parseInt(result.data.total_items || 0),
+              uniqueCustomers: parseInt(result.data.unique_customers || 0),
+              granularity: "day",
+            });
+          }
+        } catch (err) {
+          console.error(`Error fetching daily data for ${dateStr}:`, err);
+        }
+      }
+    } else if (granularity === "week") {
+      const startWeek = new Date(start);
+      startWeek.setDate(start.getDate() - start.getDay());
+
+      for (
+        let dt = new Date(startWeek);
+        dt <= end;
+        dt.setDate(dt.getDate() + 7)
+      ) {
+        if (
+          dt >= start ||
+          dt.getTime() + 6 * 24 * 60 * 60 * 1000 >= start.getTime()
+        ) {
+          const dateStr = formatDateForAPI(new Date(dt));
+          try {
+            const token = localStorage.getItem("token");
+            const response = await fetch(
+              `${API_BASE_URL}/weekly-summary-stats?week_start_date=${dateStr}`,
+              {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+              }
+            );
+            const result = await response.json();
+
+            if (result.success && result.data) {
+              data.push({
+                date: new Date(dt).toISOString(),
+                totalIncome: parseFloat(result.data.total_value || 0),
+                totalItems: parseInt(result.data.total_items || 0),
+                uniqueCustomers: parseInt(result.data.unique_customers || 0),
+                weekStart: result.data.week_start,
+                weekEnd: result.data.week_end,
+                granularity: "week",
+              });
+            }
+          } catch (err) {
+            console.error(`Error fetching weekly data for ${dateStr}:`, err);
+          }
+        }
+      }
+    } else {
+      const year = start.getFullYear();
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(
+          `${API_BASE_URL}/monthly-breakdown?year=${year}`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          }
+        );
+        const result = await response.json();
+
+        // Create a map of existing data by month number
+        const monthDataMap = new Map();
+
+        if (result.success && result.data && Array.isArray(result.data)) {
+          result.data.forEach((monthData) => {
+            monthDataMap.set(monthData.month_number, monthData);
+          });
+        }
+
+        // Generate all 12 months
+        const monthNames = [
+          "January",
+          "February",
+          "March",
+          "April",
+          "May",
+          "June",
+          "July",
+          "August",
+          "September",
+          "October",
+          "November",
+          "December",
+        ];
+
+        for (let monthNum = 1; monthNum <= 12; monthNum++) {
+          const monthDate = new Date(year, monthNum - 1, 1);
+          const existingData = monthDataMap.get(monthNum);
+
+          data.push({
+            date: monthDate.toISOString(),
+            totalIncome: existingData
+              ? parseFloat(existingData.revenue || 0)
+              : 0,
+            totalItems: existingData ? parseInt(existingData.items || 0) : 0,
+            uniqueCustomers: existingData
+              ? parseInt(existingData.quotations || 0)
+              : 0,
+            month: monthNames[monthNum - 1],
+            monthNumber: monthNum,
+            granularity: "month",
+          });
+        }
+      } catch (err) {
+        console.error(`Error fetching yearly data for ${year}:`, err);
       }
     }
-  } else {
-    // Generate monthly data
-    const startMonth = new Date(start.getFullYear(), start.getMonth(), 1);
-    const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
-    
-    for (let dt = new Date(startMonth); dt <= endMonth; dt.setMonth(dt.getMonth() + 1)) {
-      data.push({
-        date: dt.toISOString(),
-        totalIncome: Math.floor(Math.random() * 500000) + 100000,
-        granularity: 'month'
-      });
-    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error in getDashboardIncomeData:", error);
+    return { success: false, message: error.message, data: [] };
   }
-  
-  return { success: true, data };
 };
 
 const formatFullDate = (date) =>
@@ -83,7 +184,7 @@ const formatFullDate = (date) =>
 const formatMonth = (date) => {
   const month = date.toLocaleString("en-US", { month: "short" });
   const year = date.toLocaleString("en-US", { year: "2-digit" });
-  return `${month}/${year}`;
+  return `${month}`; // Just show month name for yearly view
 };
 
 const formatWeek = (date) => {
@@ -91,30 +192,43 @@ const formatWeek = (date) => {
   startOfWeek.setDate(date.getDate() - date.getDay());
   const endOfWeek = new Date(startOfWeek);
   endOfWeek.setDate(startOfWeek.getDate() + 6);
-  
+
   return `${startOfWeek.getDate()}/${startOfWeek.getMonth() + 1} - ${endOfWeek.getDate()}/${endOfWeek.getMonth() + 1}`;
 };
 
 const formatDay = (date) => {
-  return date.toLocaleDateString("en-US", { 
-    month: "short", 
-    day: "numeric" 
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
   });
 };
 
-const ModernDateSelector = ({ fromDate, toDate, setFromDate, setToDate, onGranularityChange }) => {
-  const [showCustomPicker, setShowCustomPicker] = useState(false);
-  const [tempFromDate, setTempFromDate] = useState(fromDate);
-  const [tempToDate, setTempToDate] = useState(toDate);
+const ModernDateSelector = ({
+  fromDate,
+  toDate,
+  setFromDate,
+  setToDate,
+  onGranularityChange,
+  selectedOption,
+  setSelectedOption,
+}) => {
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
 
-  const formatDateForInput = (date) => {
-    return date.toISOString().split('T')[0];
-  };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const quickSelectOptions = [
     {
       label: "Last 7 Days",
-      icon: "📅",
       granularity: "day",
       action: () => {
         const end = new Date();
@@ -123,12 +237,12 @@ const ModernDateSelector = ({ fromDate, toDate, setFromDate, setToDate, onGranul
         setFromDate(start);
         setToDate(end);
         onGranularityChange("day");
-        setShowCustomPicker(false);
-      }
+        setSelectedOption("Last 7 Days");
+        setShowDropdown(false);
+      },
     },
     {
       label: "Last 30 Days",
-      icon: "📊",
       granularity: "week",
       action: () => {
         const end = new Date();
@@ -137,12 +251,12 @@ const ModernDateSelector = ({ fromDate, toDate, setFromDate, setToDate, onGranul
         setFromDate(start);
         setToDate(end);
         onGranularityChange("week");
-        setShowCustomPicker(false);
-      }
+        setSelectedOption("Last 30 Days");
+        setShowDropdown(false);
+      },
     },
     {
       label: "This Month",
-      icon: "🗓️",
       granularity: "week",
       action: () => {
         const now = new Date();
@@ -151,12 +265,12 @@ const ModernDateSelector = ({ fromDate, toDate, setFromDate, setToDate, onGranul
         setFromDate(start);
         setToDate(end);
         onGranularityChange("week");
-        setShowCustomPicker(false);
-      }
+        setSelectedOption("This Month");
+        setShowDropdown(false);
+      },
     },
     {
       label: "Last Month",
-      icon: "📈",
       granularity: "week",
       action: () => {
         const now = new Date();
@@ -165,12 +279,12 @@ const ModernDateSelector = ({ fromDate, toDate, setFromDate, setToDate, onGranul
         setFromDate(start);
         setToDate(end);
         onGranularityChange("week");
-        setShowCustomPicker(false);
-      }
+        setSelectedOption("Last Month");
+        setShowDropdown(false);
+      },
     },
     {
       label: "This Year",
-      icon: "🎯",
       granularity: "month",
       action: () => {
         const now = new Date();
@@ -179,206 +293,107 @@ const ModernDateSelector = ({ fromDate, toDate, setFromDate, setToDate, onGranul
         setFromDate(start);
         setToDate(end);
         onGranularityChange("month");
-        setShowCustomPicker(false);
-      }
-    }
+        setSelectedOption("This Year");
+        setShowDropdown(false);
+      },
+    },
   ];
 
-  const handleCustomDateApply = () => {
-    setFromDate(tempFromDate);
-    setToDate(tempToDate);
-    
-    // Determine granularity based on date range
-    const diffTime = Math.abs(tempToDate - tempFromDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays <= 14) {
-      onGranularityChange("day");
-    } else if (diffDays <= 90) {
-      onGranularityChange("week");
-    } else {
-      onGranularityChange("month");
-    }
-    
-    setShowCustomPicker(false);
-  };
-
   return (
-    <div className="flex flex-col lg:flex-row items-center gap-4">
-      {/* Quick Select Cards */}
-      <div className="flex flex-wrap gap-3">
-        {quickSelectOptions.map((option, index) => (
-          <button
-            key={index}
-            onClick={option.action}
-            className="group flex items-center gap-2 px-4 py-3 bg-white/15 hover:bg-white/25 text-white rounded-xl transition-all duration-300 backdrop-blur-sm border border-white/20 hover:border-white/40 shadow-lg hover:shadow-xl transform hover:scale-105"
-          >
-            <span className="text-lg">{option.icon}</span>
-            <div className="text-left">
-              <div className="text-sm font-medium">{option.label}</div>
-              <div className="text-xs text-white/70 capitalize">{option.granularity} view</div>
-            </div>
-          </button>
-        ))}
-      </div>
-
-      {/* Custom Date Picker */}
-      <div className="relative">
-        <button
-          onClick={() => setShowCustomPicker(!showCustomPicker)}
-          className="flex items-center gap-3 px-5 py-3 bg-white/20 hover:bg-white/30 text-white rounded-xl transition-all duration-300 backdrop-blur-sm border border-white/30 hover:border-white/50 shadow-lg hover:shadow-xl"
-        >
-          <Calendar className="w-5 h-5" />
-          <div className="text-left">
-            <div className="text-sm font-medium">Custom Range</div>
-            <div className="text-xs text-white/80">
-              {formatFullDate(fromDate)} - {formatFullDate(toDate)}
-            </div>
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setShowDropdown(!showDropdown)}
+        className="flex items-center gap-3 px-5 py-3 bg-white hover:bg-gray-50 text-gray-700 rounded-lg transition-all duration-200 border border-gray-300 hover:border-gray-400 shadow-sm min-w-[200px]"
+      >
+        <Calendar className="w-5 h-5 text-gray-600" />
+        <div className="flex-1 text-left">
+          <div className="text-sm font-semibold">{selectedOption}</div>
+          <div className="text-xs text-gray-500">
+            {formatFullDate(fromDate)} - {formatFullDate(toDate)}
           </div>
-          <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showCustomPicker ? 'rotate-180' : ''}`} />
-        </button>
+        </div>
+        <ChevronDown
+          className={`w-4 h-4 transition-transform duration-200 ${showDropdown ? "rotate-180" : ""}`}
+        />
+      </button>
 
-        {/* Modern Custom Date Picker Modal */}
-        {showCustomPicker && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto overflow-hidden">
-              {/* Header */}
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
+      {showDropdown && (
+        <div className="absolute top-full mt-2 left-0 bg-white rounded-lg shadow-xl border border-gray-200 z-50 min-w-[250px] overflow-hidden">
+          <div className="p-2">
+            <div className="text-xs font-semibold text-gray-500 px-3 py-2">
+              SELECT TIME PERIOD
+            </div>
+            {quickSelectOptions.map((option, index) => (
+              <button
+                key={index}
+                onClick={option.action}
+                className={`w-full text-left px-4 py-3 rounded-md transition-colors duration-150 ${
+                  selectedOption === option.label
+                    ? "bg-blue-50 text-blue-700 font-medium"
+                    : "hover:bg-gray-50 text-gray-700"
+                }`}
+              >
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-xl font-bold">Select Date Range</h3>
-                    <p className="text-blue-100 text-sm mt-1">Choose your custom period</p>
-                  </div>
-                  <button
-                    onClick={() => setShowCustomPicker(false)}
-                    className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+                  <span className="text-sm">{option.label}</span>
+                  <span className="text-xs text-gray-500 capitalize">
+                    {option.granularity}
+                  </span>
                 </div>
-              </div>
-
-              {/* Date Inputs */}
-              <div className="p-6 space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                      From Date
-                    </label>
-                    <input
-                      type="date"
-                      value={formatDateForInput(tempFromDate)}
-                      onChange={(e) => setTempFromDate(new Date(e.target.value))}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300 text-gray-800 font-medium"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                      To Date
-                    </label>
-                    <input
-                      type="date"
-                      value={formatDateForInput(tempToDate)}
-                      onChange={(e) => setTempToDate(new Date(e.target.value))}
-                      min={formatDateForInput(tempFromDate)}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300 text-gray-800 font-medium"
-                    />
-                  </div>
-                </div>
-
-                {/* Date Range Info */}
-                <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-xl border border-blue-200">
-                  <div className="text-sm text-gray-600">
-                    <div className="font-medium text-gray-800 mb-1">Selected Range:</div>
-                    <div>{Math.ceil(Math.abs(tempToDate - tempFromDate) / (1000 * 60 * 60 * 24))} days</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      Chart will auto-adjust: ≤14 days (daily), ≤90 days (weekly), &gt;90 days (monthly)
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="bg-gray-50 px-6 py-4 flex justify-between items-center">
-                <button
-                  onClick={() => {
-                    setTempFromDate(fromDate);
-                    setTempToDate(toDate);
-                    setShowCustomPicker(false);
-                  }}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
-                >
-                  Cancel
-                </button>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      const today = new Date();
-                      setTempFromDate(today);
-                      setTempToDate(today);
-                    }}
-                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium transition-colors"
-                  >
-                    Today
-                  </button>
-                  <button
-                    onClick={handleCustomDateApply}
-                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-            </div>
+              </button>
+            ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
 
-const StatCard = ({ title, value, change, icon: Icon, color }) => (
-  <div className="relative overflow-hidden rounded-2xl p-6 bg-white shadow-lg isolate border-2 border-blue-500">
-    <div className="absolute top-0 right-0 w-32 h-32 opacity-10 -z-10">
-      <div className="absolute inset-0 bg-gradient-to-br from-white to-transparent rounded-full transform rotate-12 scale-150"></div>
-    </div>
-    <div className="relative z-0">
-      <div className="flex items-center justify-between mb-4">
-        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-500">
-          <Icon className="w-6 h-6 text-white" />
-        </div>
-        {change && (
-          <div className={`flex items-center gap-1 px-3 py-1 rounded-full ${
-            change > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-          }`}>
-            {change > 0 ? (
-              <ArrowUpRight className="w-3 h-3" />
-            ) : (
-              <ArrowDownRight className="w-3 h-3" />
-            )}
-            <span className="text-xs font-semibold">{Math.abs(change)}%</span>
-          </div>
-        )}
+const StatCard = ({ title, value, change, icon: Icon, color, subtitle }) => (
+  <div className="relative overflow-hidden rounded-lg p-6 bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+    <div className="flex items-start justify-between mb-3">
+      <div
+        className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}
+      >
+        <Icon className="w-6 h-6 text-white" />
       </div>
-      <h3 className="text-gray-900 text-sm font-medium mb-2">{title}</h3>
-      <p className="text-gray-900 text-2xl font-bold">{value}</p>
+      {change !== null && change !== undefined && (
+        <div
+          className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold ${
+            change > 0
+              ? "bg-green-50 text-green-700"
+              : change < 0
+                ? "bg-red-50 text-red-700"
+                : "bg-gray-50 text-gray-700"
+          }`}
+        >
+          {change > 0 ? (
+            <ArrowUpRight className="w-3 h-3" />
+          ) : change < 0 ? (
+            <ArrowDownRight className="w-3 h-3" />
+          ) : null}
+          <span>
+            {change > 0 ? "+" : ""}
+            {change}%
+          </span>
+        </div>
+      )}
     </div>
+    <h3 className="text-gray-600 text-sm font-medium mb-1">{title}</h3>
+    <p className="text-gray-900 text-2xl font-bold mb-1">{value}</p>
+    {subtitle && <p className="text-gray-500 text-xs">{subtitle}</p>}
   </div>
 );
 
 const LoadingSpinner = () => (
-  <div className="h-full w-full flex flex-col items-center justify-center gap-4">
+  <div className="h-full w-full flex flex-col items-center justify-center gap-6 py-12">
     <div className="relative">
-      <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center animate-pulse">
-        <Sparkles className="w-8 h-8 text-white animate-spin" />
+      <div className="w-20 h-20 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-pulse">
+        <FaSpinner size={32} color="white" className="animate-spin" />
       </div>
-      <div className="absolute inset-0 w-16 h-16 border-4 border-blue-200 rounded-full animate-ping"></div>
+      <div className="absolute inset-0 w-20 h-20 border-4 border-blue-200 rounded-full animate-ping opacity-75"></div>
     </div>
-    <div className="flex items-center gap-2 text-gray-600">
-      <span className="text-lg font-medium">Loading financial data</span>
+    <div className="flex items-center gap-3 text-gray-600">
+      <span className="text-xl font-medium">Loading overview data</span>
       <div className="flex gap-1">
         <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-0"></div>
         <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce delay-150"></div>
@@ -404,21 +419,26 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 const DashboardIncome = () => {
   const [fromDate, setFromDate] = useState(
-    new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
+    new Date(new Date().setDate(new Date().getDate() - 7))
   );
   const [toDate, setToDate] = useState(new Date());
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [chartType, setChartType] = useState('bar');
-  const [granularity, setGranularity] = useState('month');
+  const [chartType, setChartType] = useState("bar");
+  const [granularity, setGranularity] = useState("day");
+  const [selectedOption, setSelectedOption] = useState("Last 7 Days");
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
-        const result = await getDashboardIncomeData(fromDate, toDate, granularity);
+        const result = await getDashboardIncomeData(
+          fromDate,
+          toDate,
+          granularity
+        );
         if (result.success) {
           setData(Array.isArray(result.data) ? result.data : []);
         } else {
@@ -439,29 +459,32 @@ const DashboardIncome = () => {
 
   const chartData = useMemo(() => {
     if (!Array.isArray(data) || data.length === 0) return [];
-    
+
     return data.map((item) => {
       const date = new Date(item.date);
       let name;
-      
+
       switch (granularity) {
-        case 'day':
+        case "day":
           name = formatDay(date);
           break;
-        case 'week':
+        case "week":
           name = formatWeek(date);
           break;
-        case 'month':
+        case "month":
         default:
-          name = formatMonth(date);
+          console.log(item.month);
+          name = item.month || formatMonth(date);
           break;
       }
-      
+
       return {
         name,
         income: Number(item.totalIncome),
+        items: Number(item.totalItems || 0),
+        customers: Number(item.uniqueCustomers || 0),
         date: date,
-        granularity: item.granularity
+        granularity: item.granularity,
       };
     });
   }, [data, granularity]);
@@ -474,24 +497,28 @@ const DashboardIncome = () => {
     return chartData.length > 0 ? totalIncome / chartData.length : 0;
   }, [totalIncome, chartData]);
 
-  const highestMonth = useMemo(() => {
-    return chartData.reduce((max, item) => item.income > max.income ? item : max, { income: 0, name: 'N/A' });
+  const totalItems = useMemo(() => {
+    return chartData.reduce((sum, item) => sum + (item.items || 0), 0);
+  }, [chartData]);
+
+  const uniqueCustomers = useMemo(() => {
+    return chartData.reduce((sum, item) => sum + (item.customers || 0), 0);
   }, [chartData]);
 
   const getBarColor = (income, maxIncome) => {
     const intensity = income / maxIncome;
-    if (intensity > 0.8) return '#3366FF';
-    if (intensity > 0.6) return '#4F7CFF';
-    if (intensity > 0.4) return '#6B92FF';
-    if (intensity > 0.2) return '#87A8FF';
-    return '#A3BEFF';
+    if (intensity > 0.8) return "#3B82F6";
+    if (intensity > 0.6) return "#60A5FA";
+    if (intensity > 0.4) return "#93C5FD";
+    if (intensity > 0.2) return "#BFDBFE";
+    return "#DBEAFE";
   };
 
-  const maxIncome = Math.max(...chartData.map(item => item.income));
+  const maxIncome = Math.max(...chartData.map((item) => item.income), 1);
 
   if (loading) {
     return (
-      <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200">
+      <div className="w-full h-full bg-gray-50 rounded-lg">
         <LoadingSpinner />
       </div>
     );
@@ -499,168 +526,218 @@ const DashboardIncome = () => {
 
   if (error) {
     return (
-      <div className="w-full h-full bg-gradient-to-br from-red-50 to-red-100 rounded-2xl border border-red-200 flex items-center justify-center">
+      <div className="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
         <div className="text-center p-8">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CircleDollarSign className="w-8 h-8 text-red-500" />
           </div>
-          <h3 className="text-red-700 font-semibold text-lg mb-2">Error Loading Data</h3>
-          <p className="text-red-600">{error}</p>
+          <h3 className="text-red-700 font-semibold text-lg mb-2">
+            Error Loading Data
+          </h3>
+          <p className="text-red-600 text-sm">{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-white to-gray-50 rounded-2xl border border-gray-200 shadow-lg overflow-hidden relative">
-      {/* Header Section */}
-      <div className="p-6 bg-gradient-to-r from-blue-500 to-blue-400 text-white relative overflow-hidden dashboard-header">
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute inset-0 bg-white/10 bg-opacity-10"></div>
-        </div>
-        
-        <div className="relative z-10 flex flex-col space-y-6">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                <CircleDollarSign className="w-6 h-6" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold mb-1">Income Analytics</h2>
-                <div className="flex items-center gap-2 text-white/80">
-                  <span>Track your financial performance over time</span>
-                  <span className="px-2 py-1 bg-white/20 rounded-lg text-xs font-medium capitalize">
-                    {granularity} View
-                  </span>
+    <div className="bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+      <div className="p-6 space-y-6">
+        <div className="w-full h-full bg-gray-50 rounded-lg">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-6 text-white relative">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center">
+                  <CircleDollarSign className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold mb-1">Income Report</h2>
+                  <p className="text-gray-300 text-sm">
+                    Track your financial performance
+                  </p>
                 </div>
               </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setChartType(chartType === 'bar' ? 'area' : 'bar')}
-                className="flex items-center gap-2 px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors duration-200"
-              >
-                <BarChart3 className="w-4 h-4" />
-                <span className="text-sm font-medium">
-                  {chartType === 'bar' ? 'Area View' : 'Bar View'}
-                </span>
-              </button>
-              
-              <ModernDateSelector 
-                fromDate={fromDate} 
-                toDate={toDate} 
-                setFromDate={setFromDate} 
-                setToDate={setToDate}
-                onGranularityChange={setGranularity}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4 stats-section relative z-0">
-        <StatCard
-          title="Total Income"
-          value={`Rs.${totalIncome.toLocaleString()}`}
-          change={12.5}
-          icon={DollarSign}
-          
-        />
-        <StatCard
-          title="Average Monthly"
-          value={`Rs.${Math.round(averageIncome).toLocaleString()}`}
-          change={8.2}
-          icon={TrendingUp}
-        />
-        <StatCard
-          title="Best Performance"
-          value={highestMonth.name}
-          change={null}
-          icon={Sparkles}
-        />
-      </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() =>
+                    setChartType(chartType === "bar" ? "area" : "bar")
+                  }
+                  className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors duration-200"
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    {chartType === "bar" ? "Area Chart" : "Bar Chart"}
+                  </span>
+                </button>
 
-      {/* Chart Section */}
-      <div className="px-6 pb-6 chart-section">
-        <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800">
-                Income Trend ({granularity === 'day' ? 'Daily' : granularity === 'week' ? 'Weekly' : 'Monthly'})
-              </h3>
-              <p className="text-sm text-gray-600">
-                {chartData.length} {granularity === 'day' ? 'days' : granularity === 'week' ? 'weeks' : 'months'} of data
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className={`px-3 py-1 rounded-lg text-xs font-medium ${
-                granularity === 'day' ? 'bg-green-100 text-green-700' :
-                granularity === 'week' ? 'bg-blue-100 text-blue-700' :
-                'bg-purple-100 text-purple-700'
-              }`}>
-                {granularity.charAt(0).toUpperCase() + granularity.slice(1)} View
+                <ModernDateSelector
+                  fromDate={fromDate}
+                  toDate={toDate}
+                  setFromDate={setFromDate}
+                  setToDate={setToDate}
+                  onGranularityChange={setGranularity}
+                  selectedOption={selectedOption}
+                  setSelectedOption={setSelectedOption}
+                />
               </div>
             </div>
           </div>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              {chartType === 'bar' ? (
-                <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <XAxis
-                    dataKey="name"
-                    interval={0}
-                    tick={{ fontSize: 12, fill: "#6B7280" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tickFormatter={(value) => `Rs.${value / 1000}K`}
-                    tick={{ fontSize: 12, fill: "#6B7280" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="income" radius={[8, 8, 0, 0]}>
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={getBarColor(entry.income, maxIncome)} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              ) : (
-                <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <defs>
-                    <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3366FF" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#3366FF" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis
-                    dataKey="name"
-                    interval={0}
-                    tick={{ fontSize: 12, fill: "#6B7280" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tickFormatter={(value) => `Rs.${value / 1000}K`}
-                    tick={{ fontSize: 12, fill: "#6B7280" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area
-                    type="monotone"
-                    dataKey="income"
-                    stroke="#3366FF"
-                    strokeWidth={3}
-                    fillOpacity={1}
-                    fill="url(#colorIncome)"
-                  />
-                </AreaChart>
-              )}
-            </ResponsiveContainer>
+
+          <div className="py-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <StatCard
+              title="Total Value"
+              value={`Rs.${totalIncome.toLocaleString()}`}
+              change={null}
+              icon={DollarSign}
+              color="bg-gradient-to-br from-blue-500 to-blue-600"
+              subtitle="Total quotation value"
+            />
+
+            <StatCard
+              title="Total Items"
+              value={totalItems.toLocaleString()}
+              change={null}
+              icon={BarChart3}
+              color="bg-gradient-to-br from-purple-500 to-purple-600"
+              subtitle="Items quoted"
+            />
+            <StatCard
+              title="Unique Customers"
+              value={uniqueCustomers.toLocaleString()}
+              change={null}
+              icon={TrendingUp}
+              color="bg-gradient-to-br from-orange-500 to-orange-600"
+              subtitle="Customer count"
+            />
+          </div>
+
+          <div className="px-6 pb-6">
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Revenue Trend -{" "}
+                    {granularity === "day"
+                      ? "Daily"
+                      : granularity === "week"
+                        ? "Weekly"
+                        : "Monthly"}{" "}
+                    View
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {chartData.length}{" "}
+                    {granularity === "day"
+                      ? "days"
+                      : granularity === "week"
+                        ? "weeks"
+                        : "months"}{" "}
+                    • Total: Rs.{totalIncome.toLocaleString()}
+                  </p>
+                </div>
+                <div
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold ${
+                    granularity === "day"
+                      ? "bg-green-50 text-green-700 border border-green-200"
+                      : granularity === "week"
+                        ? "bg-blue-50 text-blue-700 border border-blue-200"
+                        : "bg-purple-50 text-purple-700 border border-purple-200"
+                  }`}
+                >
+                  {granularity.charAt(0).toUpperCase() + granularity.slice(1)}{" "}
+                  Data
+                </div>
+              </div>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  {chartType === "bar" ? (
+                    <BarChart
+                      data={chartData}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                    >
+                      <XAxis
+                        dataKey="name"
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                        tick={{ fontSize: 11, fill: "#6B7280" }}
+                        axisLine={{ stroke: "#E5E7EB" }}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        tickFormatter={(value) =>
+                          `Rs.${(value / 1000).toFixed(0)}K`
+                        }
+                        tick={{ fontSize: 12, fill: "#6B7280" }}
+                        axisLine={{ stroke: "#E5E7EB" }}
+                        tickLine={false}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Bar dataKey="income" radius={[6, 6, 0, 0]}>
+                        {chartData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={getBarColor(entry.income, maxIncome)}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  ) : (
+                    <AreaChart
+                      data={chartData}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                    >
+                      <defs>
+                        <linearGradient
+                          id="colorIncome"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#3B82F6"
+                            stopOpacity={0.3}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#3B82F6"
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <XAxis
+                        dataKey="name"
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                        tick={{ fontSize: 11, fill: "#6B7280" }}
+                        axisLine={{ stroke: "#E5E7EB" }}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        tickFormatter={(value) =>
+                          `Rs.${(value / 1000).toFixed(0)}K`
+                        }
+                        tick={{ fontSize: 12, fill: "#6B7280" }}
+                        axisLine={{ stroke: "#E5E7EB" }}
+                        tickLine={false}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Area
+                        type="monotone"
+                        dataKey="income"
+                        stroke="#3B82F6"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#colorIncome)"
+                      />
+                    </AreaChart>
+                  )}
+                </ResponsiveContainer>
+              </div>
+            </div>
           </div>
         </div>
       </div>

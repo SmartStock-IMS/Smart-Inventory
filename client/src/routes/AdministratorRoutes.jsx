@@ -16,6 +16,10 @@ import SalesRepList from "../pages/Administrator/sales-rep/SalesRepList.jsx";
 import RepDetails from "../pages/Administrator/sales-rep/RepDetails.jsx";
 import ProductList from "../pages/Administrator/products/ProductList.jsx";
 import Product from "../pages/Administrator/products/Product.jsx";
+import RMList from "../pages/Administrator/RManager/RMList.jsx";
+import RMDetails from "../pages/Administrator/RManager/RMDetails.jsx";
+import CustomerDetails from "../pages/Administrator/customer/CustomerDetails.jsx";
+import CustomerList from "../pages/Administrator/customer/CustomerList.jsx";
 
 function InventoryManagerRoutes() {
   return (
@@ -47,6 +51,12 @@ function InventoryManagerRoutes() {
                     <Route path="/adduser" element={<AddUser />} />
                     <Route path="/userdetails" element={<UserDetails />} />
                     <Route path="/edituser" element={<EditUser />} />
+                    {/* item: resource managers */}
+                    <Route path="/rm-list" element={<RMList />} />
+                    <Route path="/rm-details/:repCode" element={<RMDetails />} />
+                    {/* item: customers */}
+                    <Route path="/customer-list" element={<CustomerList />} />
+                    <Route path="/customer/:user_code" element={<CustomerDetails />} />
                     {/* item: reports */}
                     <Route path="/daily-summary" element={<DailySummary />} />
                     <Route path="/weekly-summary" element={<WeeklySummary />} />

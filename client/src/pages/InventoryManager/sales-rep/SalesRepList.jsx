@@ -8,17 +8,27 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@components/ui/Dialog.jsx";
-import {cn} from "@lib/utils.js";
+import { cn } from "@lib/utils.js";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { Contact, User, Mail, MapPin, Hash, Eye, Trash2, Users, Building, Phone } from "lucide-react";
+import {
+  Contact,
+  User,
+  Mail,
+  MapPin,
+  Hash,
+  Eye,
+  Trash2,
+  Users,
+  Building,
+  Phone,
+} from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
 import axios from "axios";
 
-
-const getSalesRepDetails= async()=>{  
+const getSalesRepDetails = async () => {
   try {
     const token = localStorage.getItem("token");
     const response = await axios.get(
@@ -30,7 +40,10 @@ const getSalesRepDetails= async()=>{
     return { success: true, data: response.data };
   } catch (error) {
     console.error("API error:", error.response?.data || error.message);
-    return { success: false, message: error.response?.data?.message || error.message };
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message,
+    };
   }
 };
 
@@ -46,24 +59,23 @@ const SalesRepList = () => {
 
   const fetchSalesReps = async () => {
     try {
-
       const result = await getSalesRepDetails();
 
       console.log("result: ", result.data.data.users);
-      const data =result.data.data.users.map((user)=>({
-        emp_code:user.sales_staff_id,
+      const data = result.data.data.users.map((user) => ({
+        emp_code: user.sales_staff_id,
         commission_rate: parseFloat(user.performance_rating),
-        target_amount:user.target,
-        achievements:user.achieved,
-        join_date:user.join_date,
-        status:user.status,
-        users:{
-          name:user.full_name,
-          email:user.email,
-          phone:user.phone
-        }
-      }))
-      setSalesReps(data); 
+        target_amount: user.target,
+        achievements: user.achieved,
+        join_date: user.join_date,
+        status: user.status,
+        users: {
+          name: user.full_name,
+          email: user.email,
+          phone: user.phone,
+        },
+      }));
+      setSalesReps(data);
       if (result.success && result.data) {
         //tSalesReps(result.data);
       } else {
@@ -83,15 +95,25 @@ const SalesRepList = () => {
 
   const handleDelete = async (empCode) => {
     try {
-      // Simulate delete operation
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const token = localStorage.getItem("token");
+      const response = await axios.delete(
+        `http://localhost:3000/api/sales-rep/${empCode}`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
+
       toast.success("Sales representative removed successfully");
-      
-      // Remove from current list (mock behavior)
-      setSalesReps(prevReps => prevReps.filter(rep => rep.emp_code !== empCode));
+
+      // Remove from current list after successful deletion
+      setSalesReps((prevReps) =>
+        prevReps.filter((rep) => rep.emp_code !== empCode)
+      );
     } catch (error) {
       console.error("Error remove sales rep: ", error);
-      toast.error("Error removing sales representative");
+      toast.error(
+        error.response?.data?.message || "Error removing sales representative"
+      );
     }
   };
 
@@ -107,10 +129,14 @@ const SalesRepList = () => {
   });
 
   const getInitials = (name) => {
-    return name?.split(' ').map(n => n.charAt(0)).join('').toUpperCase() || '';
+    return (
+      name
+        ?.split(" ")
+        .map((n) => n.charAt(0))
+        .join("")
+        .toUpperCase() || ""
+    );
   };
-
-  
 
   if (loading) {
     return (
@@ -119,7 +145,9 @@ const SalesRepList = () => {
           <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
             <Users className="w-8 h-8 text-white" />
           </div>
-          <p className="text-gray-600 font-medium">Loading sales representatives...</p>
+          <p className="text-gray-600 font-medium">
+            Loading sales representatives...
+          </p>
         </div>
       </div>
     );
@@ -139,7 +167,9 @@ const SalesRepList = () => {
                 <Contact className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold mb-1">Sales Representatives</h2>
+                <h2 className="text-2xl font-bold mb-1">
+                  Sales Representatives
+                </h2>
                 <p className="text-white/80">Manage your sales team members</p>
               </div>
             </div>
@@ -178,12 +208,14 @@ const SalesRepList = () => {
                 <Users className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-800">{filteredSalesReps.length}</p>
+                <p className="text-2xl font-bold text-gray-800">
+                  {filteredSalesReps.length}
+                </p>
                 <p className="text-sm text-gray-600">Active Reps</p>
               </div>
             </div>
           </div>
-        
+
           <div className="bg-white rounded-xl p-4 border-2 border-blue-500 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -191,20 +223,19 @@ const SalesRepList = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-800">
-                  Rs {new Intl.NumberFormat('en', { notation: 'compact' }).format(
+                  Rs{" "}
+                  {new Intl.NumberFormat("en", { notation: "compact" }).format(
                     (salesReps || []).reduce(
                       (sum, rep) => sum + Number(rep.target_amount || 0),
                       0
                     )
                   )}
-
-
                 </p>
                 <p className="text-sm text-gray-600">Total Targets</p>
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-xl p-4 border-2 border-blue-500 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -212,13 +243,13 @@ const SalesRepList = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-800">
-                  Rs {new Intl.NumberFormat('en', { notation: 'compact' }).format(
+                  Rs{" "}
+                  {new Intl.NumberFormat("en", { notation: "compact" }).format(
                     (salesReps || []).reduce(
                       (sum, rep) => sum + Number(rep.achievements || 0),
                       0
                     )
                   )}
-
                 </p>
                 <p className="text-sm text-gray-600">Total Achieved</p>
               </div>
@@ -270,13 +301,18 @@ const SalesRepList = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {filteredSalesReps.map((rep) => (
-                    <tr key={rep.emp_code} className="hover:bg-gray-50 transition-colors duration-200">
+                    <tr
+                      key={rep.emp_code}
+                      className="hover:bg-gray-50 transition-colors duration-200"
+                    >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-sm font-bold">
                             {getInitials(rep.users?.name)}
                           </div>
-                          <span className="font-medium text-gray-800">{rep.emp_code}</span>
+                          <span className="font-medium text-gray-800">
+                            {rep.emp_code}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -284,18 +320,22 @@ const SalesRepList = () => {
                           onClick={() => handleClick(rep.emp_code)}
                           className="text-blue-600 hover:text-blue-800 font-medium hover:underline text-left transition-colors duration-200"
                         >
-                          {rep.users?.name || 'N/A'}
+                          {rep.users?.name || "N/A"}
                         </button>
                       </td>
                       <td className="px-6 py-4">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <Mail className="w-4 h-4 text-gray-400" />
-                            <span className="text-gray-600 text-sm">{rep.users?.email || 'N/A'}</span>
+                            <span className="text-gray-600 text-sm">
+                              {rep.users?.email || "N/A"}
+                            </span>
                           </div>
                           <div className="flex items-center gap-2">
                             <Phone className="w-4 h-4 text-gray-400" />
-                            <span className="text-gray-600 text-sm">{rep.users?.phone || 'N/A'}</span>
+                            <span className="text-gray-600 text-sm">
+                              {rep.users?.phone || "N/A"}
+                            </span>
                           </div>
                         </div>
                       </td>
@@ -307,28 +347,34 @@ const SalesRepList = () => {
                       <td className="px-6 py-4">
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-500">Target:</span>
+                            <span className="text-xs text-gray-500">
+                              Target:
+                            </span>
                             <span className="font-semibold text-gray-800">
                               Rs{(rep.target_amount || 0).toLocaleString()}
                             </span>
                           </div>
                           <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-500">Achieved:</span>
+                            <span className="text-xs text-gray-500">
+                              Achieved:
+                            </span>
                             <span className="font-semibold text-green-600">
                               Rs{(rep.achievements || 0).toLocaleString()}
                             </span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
+                            <div
                               className={`h-2 rounded-full ${
-                                (rep.achievements || 0) >= (rep.target_amount || 0) 
-                                  ? 'bg-green-500' 
-                                  : (rep.achievements || 0) >= (rep.target_amount || 0) * 0.8 
-                                    ? 'bg-yellow-500' 
-                                    : 'bg-red-500'
+                                (rep.achievements || 0) >=
+                                (rep.target_amount || 0)
+                                  ? "bg-green-500"
+                                  : (rep.achievements || 0) >=
+                                      (rep.target_amount || 0) * 0.8
+                                    ? "bg-yellow-500"
+                                    : "bg-red-500"
                               }`}
-                              style={{ 
-                                width: `${Math.min(((rep.achievements || 0) / (rep.target_amount || 1)) * 100, 100)}%` 
+                              style={{
+                                width: `${Math.min(((rep.achievements || 0) / (rep.target_amount || 1)) * 100, 100)}%`,
                               }}
                             ></div>
                           </div>
@@ -336,14 +382,23 @@ const SalesRepList = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-center">
-                          <div className={`inline-flex px-3 py-1 rounded-full text-xs font-medium border ${
-                            (rep.achievements || 0) >= (rep.target_amount || 0) 
-                              ? 'bg-green-100 text-green-800 border-green-200' 
-                              : (rep.achievements || 0) >= (rep.target_amount || 0) * 0.8 
-                                ? 'bg-yellow-100 text-yellow-800 border-yellow-200' 
-                                : 'bg-red-100 text-red-800 border-red-200'
-                          }`}>
-                            {Math.round(((rep.achievements || 0) / (rep.target_amount || 1)) * 100)}%
+                          <div
+                            className={`inline-flex px-3 py-1 rounded-full text-xs font-medium border ${
+                              (rep.achievements || 0) >=
+                              (rep.target_amount || 0)
+                                ? "bg-green-100 text-green-800 border-green-200"
+                                : (rep.achievements || 0) >=
+                                    (rep.target_amount || 0) * 0.8
+                                  ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                                  : "bg-red-100 text-red-800 border-red-200"
+                            }`}
+                          >
+                            {Math.round(
+                              ((rep.achievements || 0) /
+                                (rep.target_amount || 1)) *
+                                100
+                            )}
+                            %
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
                             {rep.commission_rate || 0}% commission
@@ -369,7 +424,9 @@ const SalesRepList = () => {
                             <DialogContent className="">
                               <DialogHeader>
                                 <DialogTitle>
-                                  <p className="text-center">Confirm removing Sales Representative</p>
+                                  <p className="text-center">
+                                    Confirm removing Sales Representative
+                                  </p>
                                 </DialogTitle>
                                 <DialogDescription>
                                   <p className="mt-1 text-center text-base font-normal">
@@ -382,7 +439,7 @@ const SalesRepList = () => {
                                   <button
                                     className={cn(
                                       "w-1/5 border p-2 rounded-md bg-gray-950 text-white",
-                                      "hover:bg-gray-800",
+                                      "hover:bg-gray-800"
                                     )}
                                     onClick={() => handleDelete(rep.emp_code)}
                                   >
@@ -409,8 +466,12 @@ const SalesRepList = () => {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <Users className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-              <p className="text-gray-600 font-medium">No sales representatives found</p>
-              <p className="text-sm text-gray-500 mt-2">Try adjusting your search criteria</p>
+              <p className="text-gray-600 font-medium">
+                No sales representatives found
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Try adjusting your search criteria
+              </p>
             </div>
           </div>
         )}
