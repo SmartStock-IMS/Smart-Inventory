@@ -808,7 +808,7 @@ const OrderDetails = ({ item, changeOpen = () => {} }) => {
 
         {/* Action Buttons: Accept, Reject, Create Quotation */}
         <div className="mt-8 flex flex-row gap-4 justify-end">
-          {orderStatus === "approved" ? (
+          {orderStatus === "approved" || orderStatus === "inprogress" || orderStatus === "completed" ? (
             <button
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition"
               onClick={() => {
