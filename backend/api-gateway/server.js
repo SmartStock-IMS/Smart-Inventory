@@ -29,12 +29,17 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 1000, // limit each IP to 1000 requests per windowMs
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
 });
-app.use(limiter);
+
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(limiter);
+}
+
 
 // JWT Authentication middleware
 const authenticateToken = (req, res, next) => {
