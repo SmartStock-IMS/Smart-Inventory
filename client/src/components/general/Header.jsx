@@ -7,7 +7,7 @@ import { HiX } from "react-icons/hi";
 import { useAuth } from "../../context/auth/AuthContext.jsx";
 
 const Header = () => {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const pathname = useLocation();
   const navigate = useNavigate();
@@ -161,6 +161,21 @@ const Header = () => {
                 ) : (
                   <HiMenu size={24} className="text-slate-700" />
                 )}
+              </motion.button>
+
+              {/* Profile Button */}
+              <motion.button
+                onClick={() => navigate('/profile')}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="ml-3 lg:ml-4 p-2 rounded-xl hover:bg-slate-100 transition-colors flex items-center gap-2"
+              >
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center">
+                    <div className="w-2 h-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full" />
+                  </div>
+                </div>
+                <span className="hidden lg:block text-sm font-medium text-slate-700">Profile</span>
               </motion.button>
             </div>
           </div>

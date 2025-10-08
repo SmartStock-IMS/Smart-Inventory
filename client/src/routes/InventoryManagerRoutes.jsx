@@ -30,6 +30,7 @@ import WeeklySummary from "../pages/InventoryManager/reports/WeeklySummary.jsx";
 import YearlySummary from "../pages/InventoryManager/reports/YearlySummary.jsx";
 import QBExport from "../pages/InventoryManager/reports/QBExport.jsx";
 import BulkList from "../pages/InventoryManager/products/BulkList.jsx";
+import Profile from "../pages/auth/Profile.jsx";
 
 function InventoryManagerRoutes() {
   return (
@@ -49,6 +50,7 @@ function InventoryManagerRoutes() {
                   <Routes>
                     {/* item: dashboard */}
                     <Route path="/" element={<DashboardHome />} />
+                    <Route path="/profile" element={<Profile />} />
                     <Route path="/orders" element={<OrderSummary />} />
                     {/* item: products */}
                     <Route path="/addproduct" element={<AddProduct />} />

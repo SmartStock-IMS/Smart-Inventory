@@ -6,7 +6,7 @@ const router = express.Router();
 
 // Routes
 router.get('/', userController.getAllUsers);
-//router.get('/profile', userController.getUserProfile);
+router.get('/profile/:id', userController.getUserProfile);
 router.get('/sales-staff', userController.getSalesStaff);
 router.get('/resource-manager', userController.getResourceManager);
 router.get('/:id', userController.getUserById);

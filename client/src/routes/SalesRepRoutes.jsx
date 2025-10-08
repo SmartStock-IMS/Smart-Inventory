@@ -10,16 +10,20 @@ import OrderConfirmation from "../components/order/OrderConfirmation";
 import Product from "../pages/SalesRep/product/Product";
 import History from "../pages/SalesRep/history/History.jsx";
 import AddCustomer from "../pages/SalesRep/customer/AddCustomer";
+import Profile from "../pages/auth/Profile";
 import { CartProvider } from "../context/cart/CartContext";
+import { ThemeProvider } from "../context/theme/ThemeContext";
 
 function MainRoutes() {
   return (
-    <>
+    <ThemeProvider>
       <CartProvider>
         <Header />
         <Routes>
           {/* route: homepage */}
           <Route path="/" element={<Home />} />
+          {/* route: profile */}
+          <Route path="/profile" element={<Profile />} />
           {/* route: order */}
           <Route path="/order" element={<Order />}>
             <Route path="add-items" element={<AddItems />} />
@@ -36,7 +40,7 @@ function MainRoutes() {
           <Route path="/history" element={<History />} />
         </Routes>
       </CartProvider>
-    </>
+    </ThemeProvider>
   );
 }
 

@@ -1,4 +1,46 @@
 import api from "@lib/api";
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+// Profile Management Functions
+export const getUserProfile = async (userId) => {
+  try {
+    const token = localStorage.getItem("token");
+    console.log('getUserProfile called with userId:', userId);
+    console.log('Token available:', !!token);
+    
+    if (!token) {
+      return { success: false, message: "No token found, please login." };
+    }
+    
+    const response = await axios.get(
+      `${API_URL}/users/profile/${userId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    console.log('getUserProfile response status:', response.status);
+    console.log('getUserProfile response data:', response.data);
+
+    if (response.status === 200 && response.data.success) {
+      return {
+        success: true,
+        user: response.data.data.user,
+        data: response.data.data,
+      };
+    } else {
+      return { success: false, error: response.data.message || response.statusText };
+    }
+  } catch (error) {
+    console.error('getUserProfile error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || error.message,
+    };
+  }
+};
 
 // Existing functions
 export const createCustomer = async (customerData) => {

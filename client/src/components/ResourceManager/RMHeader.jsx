@@ -151,11 +151,14 @@ const RMHeader = () => {
             </button>
 
             {/* Profile Section - Simplified for mobile */}
-            <div className={`flex items-center gap-2 p-2 rounded-lg transition-colors duration-200 cursor-pointer group ${
-              isDarkMode 
-                ? 'hover:bg-gray-800' 
-                : 'hover:bg-gray-100'
-            }`}>
+            <div 
+              onClick={() => navigate('/resourcemanager/profile')}
+              className={`flex items-center gap-2 p-2 rounded-lg transition-colors duration-200 cursor-pointer group ${
+                isDarkMode 
+                  ? 'hover:bg-gray-800' 
+                  : 'hover:bg-gray-100'
+              }`}
+            >
               <div className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors duration-200 ${
                 isDarkMode
                   ? 'bg-blue-900 group-hover:bg-blue-800'

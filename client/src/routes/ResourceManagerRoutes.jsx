@@ -6,6 +6,7 @@ import ResourceOrders from "../pages/ResourceManager/ResourceOrders.jsx";
 import VehicleManagement from "../pages/ResourceManager/VehicleManagement.jsx";
 import { ThemeProvider, useTheme } from "../context/theme/ThemeContext.jsx";
 import { VehicleProvider } from "../context/vehicle/VehicleContext.jsx";
+import Profile from "../pages/auth/Profile.jsx";
 
 function ResourceManagerContent() {
   const { isDarkMode } = useTheme();
@@ -23,6 +24,7 @@ function ResourceManagerContent() {
             <div className="min-h-full p-2 lg:p-4">
               <Routes>
                 <Route path="/" element={<RMHome />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/resources" element={<Resources />} />
                 <Route path="/orders" element={<ResourceOrders />} />
                 <Route path="/vehicles" element={<VehicleManagement />} />
