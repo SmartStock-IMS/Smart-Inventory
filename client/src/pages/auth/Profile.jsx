@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/auth/AuthContext';
 import { useTheme } from '../../context/theme/ThemeContext';
-import { getUserProfile } from '../../services/user-services';
+import { getUserProfile, updateUserProfile, changeUserPassword } from '../../services/user-services';
 import { 
   User, 
   Mail, 
@@ -12,7 +12,10 @@ import {
   Loader,
   AlertCircle,
   Clock,
-  UserCheck
+  UserCheck,
+  Edit3,
+  Lock,
+  Settings
 } from 'lucide-react';
 
 const Profile = () => {
@@ -21,6 +24,25 @@ const Profile = () => {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Modal states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  
+  // Edit form state
+  const [editForm, setEditForm] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: ''
+  });
+  
+  // Password form state
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
 
   const isSalesRep = user?.role === 'sales_rep';
   const containerClasses = `min-h-screen ${isSalesRep ? 'pt-24' : ''} ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`;
@@ -64,6 +86,107 @@ const Profile = () => {
     } catch (error) {
       console.error('Profile fetch error:', error);
       setError('Error loading profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handler functions
+  const handleEditDetails = () => {
+    if (profileData) {
+      setEditForm({
+        first_name: profileData.first_name || profileData.firstName || '',
+        last_name: profileData.last_name || profileData.lastName || '',
+        email: profileData.email || '',
+        phone: profileData.phone || ''
+      });
+      setShowEditModal(true);
+    }
+  };
+
+  const handlePasswordChange = () => {
+    setPasswordForm({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+    setShowPasswordModal(true);
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      
+      const userId = user.user_code || user.userCode || user.userid || user.id;
+      console.log('Saving profile for userId:', userId);
+      console.log('Profile data:', editForm);
+      
+      const response = await updateUserProfile(userId, editForm);
+      
+      if (response.success) {
+        // Update the local state with the response data
+        setProfileData(prev => ({
+          ...prev,
+          ...editForm,
+          ...response.user // Include any additional data from the server
+        }));
+        
+        setShowEditModal(false);
+        alert('Profile updated successfully!');
+      } else {
+        console.error('Profile update failed:', response);
+        alert(response.message || response.error || 'Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Profile update error:', error);
+      alert('Error updating profile. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSavePassword = async (e) => {
+    e.preventDefault();
+    
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      alert('New passwords do not match');
+      return;
+    }
+    
+    if (passwordForm.newPassword.length < 6) {
+      alert('New password must be at least 6 characters long');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      
+      const userId = user.user_code || user.userCode || user.userid || user.id;
+      console.log('Changing password for userId:', userId);
+      
+      const passwordData = {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
+      };
+      
+      const response = await changeUserPassword(userId, passwordData);
+      
+      if (response.success) {
+        setShowPasswordModal(false);
+        setPasswordForm({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        });
+        alert('Password changed successfully!');
+      } else {
+        console.error('Password change failed:', response);
+        alert(response.message || response.error || 'Failed to change password');
+      }
+    } catch (error) {
+      console.error('Password change error:', error);
+      alert('Error changing password. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -159,6 +282,33 @@ const Profile = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <button 
+            onClick={handleEditDetails}
+            className={`flex-1 flex items-center justify-center px-4 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl ${
+              isDarkMode 
+                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
+          >
+            <Edit3 className="w-5 h-5 mr-2" />
+            Edit Details
+          </button>
+          
+          <button 
+            onClick={handlePasswordChange}
+            className={`flex-1 flex items-center justify-center px-4 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl ${
+              isDarkMode 
+                ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
+                : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+            }`}
+          >
+            <Lock className="w-5 h-5 mr-2" />
+            Change Password
+          </button>
         </div>
 
         {/* Information Cards Grid */}
@@ -290,6 +440,195 @@ const Profile = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Details Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className={`rounded-2xl w-full max-w-md shadow-2xl ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <div className="p-6">
+              <h3 className={`text-xl font-bold mb-4 ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>Edit Profile Details</h3>
+              
+              <form onSubmit={handleSaveProfile} className="space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>First Name</label>
+                  <input
+                    type="text"
+                    value={editForm.first_name}
+                    onChange={(e) => setEditForm(prev => ({...prev, first_name: e.target.value}))}
+                    className={`w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  />
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>Last Name</label>
+                  <input
+                    type="text"
+                    value={editForm.last_name}
+                    onChange={(e) => setEditForm(prev => ({...prev, last_name: e.target.value}))}
+                    className={`w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  />
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>Email</label>
+                  <input
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm(prev => ({...prev, email: e.target.value}))}
+                    className={`w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  />
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>Phone</label>
+                  <input
+                    type="tel"
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm(prev => ({...prev, phone: e.target.value}))}
+                    className={`w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  />
+                </div>
+                
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                      isDarkMode 
+                        ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
+                        : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                    }`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change Password Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className={`rounded-2xl w-full max-w-md shadow-2xl ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <div className="p-6">
+              <h3 className={`text-xl font-bold mb-4 ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>Change Password</h3>
+              
+              <form onSubmit={handleSavePassword} className="space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>Current Password</label>
+                  <input
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm(prev => ({...prev, currentPassword: e.target.value}))}
+                    className={`w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>New Password</label>
+                  <input
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm(prev => ({...prev, newPassword: e.target.value}))}
+                    className={`w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className={`block text-sm font-medium mb-1 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>Confirm New Password</label>
+                  <input
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm(prev => ({...prev, confirmPassword: e.target.value}))}
+                    className={`w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                    required
+                  />
+                </div>
+                
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordModal(false)}
+                    className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                      isDarkMode 
+                        ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
+                        : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                    }`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Change Password
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
