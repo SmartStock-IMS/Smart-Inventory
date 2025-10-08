@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import { InputWithLabel } from "@components/ui/InputWithLabel";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getCustomerByUserCode } from "@services/customer-services.js";
 import { FaSpinner } from "react-icons/fa";
 import { cn } from "@lib/utils.js";
@@ -9,7 +9,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuth } from "../../../context/auth/AuthContext.jsx";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import html2canvas from "html2canvas";
 import { ChevronLeft, Calendar, Hash, User, Users, DollarSign, Package, Activity } from "lucide-react";
 import {Link} from "react-router-dom";
 
@@ -26,80 +26,33 @@ const OrderDetails = ({ item, changeOpen }) => {
   const [quotationStatus, setQuotationStatus] = useState(item.status);
   const [invoiceTerm, setInvoiceTerm] = useState(item.payment_term);
   const [company, setCompany] = useState(item.company);
+  const invoiceRef = useRef();
 
   useEffect(() => {
+    console.log("=== DEBUG INFO ===");
     console.log("item: ", item);
-    // Use hardcoded customer data with realistic information based on customer_id
-    const getCustomerData = (customerId) => {
-      const customerDatabase = {
-        "CUST-001": {
-          first_name: "Priya",
-          last_name: "Fernando",
-          email: "priya.fernando@gmail.com",
-          address_line1: "No. 45, Galle Road",
-          address_line2: "Mount Lavinia",
-          city: "Colombo",
-          province: "Western",
-          postal_code: "10370",
-          contact1: "+94 77 123 4567",
-          contact2: "+94 71 987 6543"
-        },
-        "CUST-002": {
-          first_name: "Samantha",
-          last_name: "Perera",
-          email: "samantha.perera@hotmail.com",
-          address_line1: "123 Kandy Road",
-          address_line2: "Malabe",
-          city: "Colombo",
-          province: "Western",
-          postal_code: "10115",
-          contact1: "+94 76 234 5678",
-          contact2: "+94 70 876 5432"
-        },
-        "CUST-003": {
-          first_name: "Nimal",
-          last_name: "Silva",
-          email: "nimal.silva@yahoo.com",
-          address_line1: "67 High Level Road",
-          address_line2: "Nugegoda",
-          city: "Colombo",
-          province: "Western",
-          postal_code: "10250",
-          contact1: "+94 75 345 6789",
-          contact2: "+94 72 765 4321"
-        },
-        "CUST-004": {
-          first_name: "Kamala",
-          last_name: "Wijesinghe",
-          email: "kamala.w@gmail.com",
-          address_line1: "89 Baseline Road",
-          address_line2: "Colombo 09",
-          city: "Colombo",
-          province: "Western",
-          postal_code: "00900",
-          contact1: "+94 77 456 7890",
-          contact2: "+94 71 654 3210"
-        },
-        "CUST-005": {
-          first_name: "Ruwan",
-          last_name: "Jayawardena",
-          email: "ruwan.j@outlook.com",
-          address_line1: "156 Negombo Road",
-          address_line2: "Wattala",
-          city: "Gampaha",
-          province: "Western",
-          postal_code: "11300",
-          contact1: "+94 76 567 8901",
-          contact2: "+94 70 543 2109"
+    console.log("item.status: ", item.status);
+    console.log("quotationStatus: ", quotationStatus);
+    console.log("Status type:", typeof item.status);
+    console.log("Status trimmed:", item.status?.trim());
+    console.log("=================");
+    
+    // Fetch customer data from backend
+    const fetchCustomerData = async () => {
+      try {
+        const response = await getCustomerByUserCode(item.customer_id);
+        if (response.success) {
+          setCustomerData(response.data);
         }
-      };
-      
-      return customerDatabase[customerId] || customerDatabase["CUST-001"];
+      } catch (error) {
+        console.error("Error fetching customer data:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
     
     setUserType(user?.type || "002");
-    setCustomerData(getCustomerData(item.customer_id));
-    setIsLoading(false);
+    fetchCustomerData();
   }, [item, user]);
 
   const handleQuotationStatusChange = async () => {
@@ -135,155 +88,241 @@ const OrderDetails = ({ item, changeOpen }) => {
 
   const handleDownloadInvoice = async () => {
     try {
-      const response = await getInvoice(item.quotation_id);
-      if (response.success) {
-        const invoiceId = response.data.invoice.invoice_no;
-        await downloadInvoice(invoiceId, customerData);
+      const input = invoiceRef.current;
+      
+      if (!input) {
+        console.error("Invoice element not found");
+        return;
       }
+
+      // Show loading state
+      toast.info('Generating Invoice PDF...');
+
+      // Temporarily make visible and position off-screen
+      const originalStyle = input.style.cssText;
+      input.style.cssText = 'position: absolute; top: -9999px; left: -9999px; width: 210mm; background: white; padding: 20px;';
+      input.classList.remove('hidden');
+      
+      // Force the header to show "INVOICE" by temporarily modifying the content
+      const headerElement = input.querySelector('h1');
+      const originalHeaderText = headerElement ? headerElement.textContent : '';
+      if (headerElement) {
+        headerElement.textContent = 'INVOICE';
+      }
+      
+      // Wait a moment for rendering
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Configure canvas for good quality
+      const canvas = await html2canvas(input, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: input.scrollWidth,
+        height: input.scrollHeight,
+      });
+
+      // Restore original styling and content
+      input.style.cssText = originalStyle;
+      input.classList.add('hidden');
+      if (headerElement) {
+        headerElement.textContent = originalHeaderText;
+      }
+
+      // Create PDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      // If content fits in one page, add it directly
+      if (imgHeight <= pdfHeight) {
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.8), 'JPEG', 0, 0, imgWidth, imgHeight);
+      } else {
+        // Handle multi-page documents
+        let currentY = 0;
+        let pageNumber = 0;
+        const pageHeightInPixels = (pdfHeight * canvas.height) / imgHeight;
+        
+        while (currentY < canvas.height) {
+          if (pageNumber > 0) {
+            pdf.addPage();
+          }
+          
+          const sectionHeight = Math.min(pageHeightInPixels, canvas.height - currentY);
+          
+          // Create canvas for this page section
+          const pageCanvas = document.createElement('canvas');
+          const pageCtx = pageCanvas.getContext('2d');
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = sectionHeight;
+          
+          // Draw the section
+          pageCtx.drawImage(
+            canvas, 
+            0, currentY, 
+            canvas.width, sectionHeight,
+            0, 0, 
+            canvas.width, sectionHeight
+          );
+          
+          // Calculate proportional height for PDF
+          const pdfSectionHeight = (sectionHeight * imgWidth) / canvas.width;
+          
+          // Add to PDF
+          pdf.addImage(
+            pageCanvas.toDataURL('image/jpeg', 0.75),
+            'JPEG', 
+            0, 0, 
+            imgWidth, pdfSectionHeight
+          );
+          
+          currentY += sectionHeight;
+          pageNumber++;
+          
+          // Safety break
+          if (pageNumber > 10) break;
+        }
+      }
+
+      // Generate filename
+      const filename = `Invoice_${item.quotation_id}_${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      // Save PDF
+      pdf.save(filename);
+      
+      toast.success('Invoice downloaded successfully!');
+      
     } catch (error) {
-      console.error(error);
+      console.error('Error generating Invoice PDF:', error);
+      toast.error('Failed to generate Invoice PDF. Please try again.');
     }
   };
 
-  const downloadInvoice = async (invoiceId, customerData) => {
-    const doc = new jsPDF();
-    
-    // Set page margins
-    const margin = 14;
-    const pageWidth = doc.internal.pageSize.getWidth();
-    
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text("INVOICE", pageWidth / 2, 20, { align: "center" });
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    const invoiceInfoX = pageWidth - margin;
-    doc.text(`INVOICE DATE: ${new Date().toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'})}`, invoiceInfoX, 30, { align: "right" });
-    doc.text(`INVOICE # ${invoiceId}`, invoiceInfoX, 35, { align: "right" });
-    
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text("Bill To:", margin, 35);
-    doc.text(`${customerData?.first_name || ""} ${customerData?.last_name || ""}`, margin, 45);
-    doc.text(`${customerData?.address_line1 || ""}`, margin, 50);
-    if (customerData?.address_line2) {
-      doc.text(`${customerData?.address_line2 || ""}`, margin, 55);
-      doc.text(`${customerData?.city || ""}, ${customerData?.province || ""}`, margin, 60);
-      doc.text(`${customerData?.postal_code || ""}`, margin, 65);
-    } else {
-      doc.text(`${customerData?.city || ""}, ${customerData?.province || ""}`, margin, 55);
-      doc.text(`${customerData?.postal_code || ""}`, margin, 60);
-    }
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(`TERMS: ${item.payment_term}`, invoiceInfoX, 50, { align: "right" });
-    doc.text(`DUE DATE: ${new Date(item.quotation_due_date).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'})}`, invoiceInfoX, 55, { align: "right" });
-    doc.text(`REP: ${item.sales_rep_id}`, invoiceInfoX, 60, { align: "right" });
-    doc.text(`VIA:`, invoiceInfoX, 65, { align: "right" });
-  
-    const tableColumn = [
-      "ITEM CODE",
-      "DESCRIPTION",
-      "QUANTITY",
-      "UNIT PRICE",
-      "AMOUNT"
-    ];
-    
-    const tableRows = item.quotationItems.map((itemData) => {
-      const unitPrice = new Intl.NumberFormat('en-LK', {
-        style: 'currency',
-        currency: 'LKR',
-        minimumFractionDigits: 2
-      }).format(itemData.unit_price);
-
-      const totalAmount = new Intl.NumberFormat('en-LK', {
-        style: 'currency',
-        currency: 'LKR',
-        minimumFractionDigits: 2
-      }).format(itemData.total_amount);
-
-      return [
-        itemData.item_code,
-        itemData.description,
-        itemData.item_qty,
-        unitPrice,
-        totalAmount,
-      ];
-    });
-    
-    autoTable(doc, {
-      head: [tableColumn],
-      body: tableRows,
-      startY: 75,
-      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-      margin: { left: margin, right: margin },
-      styles: { cellPadding: 3, fontSize: 9 },
-      columnStyles: {
-        0: { cellWidth: 30 },
-        1: { cellWidth: 'auto' },
-        2: { cellWidth: 25, halign: 'center' },
-        3: { cellWidth: 30, halign: 'right' },
-        4: { cellWidth: 30, halign: 'right' }
+  const downloadPDF = async () => {
+    try {
+      const input = invoiceRef.current;
+      
+      if (!input) {
+        console.error("Invoice element not found");
+        return;
       }
-    });
-  
-    const finalY = doc.lastAutoTable.finalY + 15;
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("Total", pageWidth - 80, finalY);
-    doc.text("Balance Due", pageWidth - 80, finalY + 8);
-    doc.text("Customer Total Balance", pageWidth - 80, finalY + 16);
-    
-    doc.text(`LKR ${Number(item.net_total).toLocaleString('en-LK', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    })}`, pageWidth - margin, finalY, { align: "right" });
-    doc.text("LKR 0.00", pageWidth - margin, finalY + 8, { align: "right" });
-    doc.text("LKR 0.00", pageWidth - margin, finalY + 16, { align: "right" });
-  
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "italic");
-    doc.text("Note : Thanks For your business", margin, finalY + 30);
-    doc.text("Account Name : Trollious Cosmetics (Pvt) Ltd", margin, finalY + 36);
-    doc.text("Account Number : 1000429495", margin, finalY + 42);
-    doc.text("Bank : Commercial Bank", margin, finalY + 48);
-    doc.text("Branch : Panadura City Office", margin, finalY + 54);
-  
-    const signatureY = finalY + 70;
-    
-    doc.setDrawColor(100, 100, 100);
-    doc.setLineDashPattern([1, 1], 0);
-    
-    doc.line(margin, signatureY, margin + 60, signatureY);
-    doc.setFontSize(8);
-    doc.text("Approved Signature", margin, signatureY + 5);
-    
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.text("TROLLIOUS COSMETICS (PVT) LTD.", margin, signatureY + 15);
-    
-    doc.setLineDashPattern([1, 1], 0);
-    doc.line(pageWidth/2 - 30, signatureY, pageWidth/2 + 30, signatureY);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.text("Customer Signature", pageWidth/2, signatureY + 5, { align: "center" });
-    
-    doc.setLineDashPattern([1, 1], 0);
-    doc.line(pageWidth - margin - 60, signatureY, pageWidth - margin, signatureY);
-    doc.text("Authorised Signature", pageWidth - margin - 30, signatureY + 5, { align: "center" });
-    
-    const companyInfoY = signatureY + 25;
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text("No 182,", margin, companyInfoY);
-    doc.text("Kuruppumulla Road,", margin, companyInfoY + 5);
-    doc.text("Panadura, 12500", margin, companyInfoY + 10);
-    doc.text("0707 577 500 / 502", margin, companyInfoY + 15);
-  
-    doc.save(`invoice_${invoiceId}.pdf`);
+
+      // Determine if it's quotation or invoice based on status
+      const currentStatus = (quotationStatus || item.status || '').toLowerCase().trim();
+      const isInvoice = currentStatus === 'accepted' || currentStatus === 'inprogress' || currentStatus === 'completed';
+      const documentType = isInvoice ? 'Invoice' : 'Quotation';
+
+      // Show loading state
+      toast.info(`Generating ${documentType} PDF...`);
+
+      // Temporarily make the element visible for capture
+      const originalStyle = input.style.cssText;
+      input.style.cssText = 'position: absolute; top: -9999px; left: -9999px; width: 210mm; background: white; padding: 20px;';
+      input.classList.remove('hidden');
+      
+      // Wait a moment for rendering
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Configure canvas for good quality
+      const canvas = await html2canvas(input, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: input.scrollWidth,
+        height: input.scrollHeight,
+      });
+
+      // Restore original styling (hide again)
+      input.style.cssText = originalStyle;
+      input.classList.add('hidden');
+
+      // Create PDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      // If content fits in one page, add it directly
+      if (imgHeight <= pdfHeight) {
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.8), 'JPEG', 0, 0, imgWidth, imgHeight);
+      } else {
+        // Handle multi-page documents
+        let currentY = 0;
+        let pageNumber = 0;
+        const pageHeightInPixels = (pdfHeight * canvas.height) / imgHeight;
+        
+        while (currentY < canvas.height) {
+          if (pageNumber > 0) {
+            pdf.addPage();
+          }
+          
+          const sectionHeight = Math.min(pageHeightInPixels, canvas.height - currentY);
+          
+          // Create canvas for this page section
+          const pageCanvas = document.createElement('canvas');
+          const pageCtx = pageCanvas.getContext('2d');
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = sectionHeight;
+          
+          // Draw the section
+          pageCtx.drawImage(
+            canvas, 
+            0, currentY, 
+            canvas.width, sectionHeight,
+            0, 0, 
+            canvas.width, sectionHeight
+          );
+          
+          // Calculate proportional height for PDF
+          const pdfSectionHeight = (sectionHeight * imgWidth) / canvas.width;
+          
+          // Add to PDF
+          pdf.addImage(
+            pageCanvas.toDataURL('image/jpeg', 0.75),
+            'JPEG', 
+            0, 0, 
+            imgWidth, pdfSectionHeight
+          );
+          
+          currentY += sectionHeight;
+          pageNumber++;
+          
+          // Safety break
+          if (pageNumber > 10) break;
+        }
+      }
+
+      // Generate filename
+      const filename = `${documentType}_${item.quotation_id}_${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      // Save PDF
+      pdf.save(filename);
+      
+      toast.success(`${documentType} downloaded successfully!`);
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF. Please try again.');
+    }
   };
 
   const getStatusColor = (status) => {
@@ -770,25 +809,311 @@ const OrderDetails = ({ item, changeOpen }) => {
           </div>
         </div>
 
-        {/* Download invoice */}
-        {userType === "002" && (
-          <div>
-            {isDownload || quotationStatus === 'Generate Invoice' && (
-              <div className="w-full mt-2 flex flex-row items-center justify-end">
-                <button
-                  className={cn(
-                    "w-fit py-2 px-6 bg-black rounded-md shadow-lg text-white",
-                    "hover:bg-black/80",
-                  )}
-                  onClick={handleDownloadInvoice}
-                >
-                  Download
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Action Buttons at Bottom */}
+        <div className="mt-6 flex flex-wrap gap-3 justify-end">
+          {/* Download Button - Always visible, text and function changes based on status */}
+          {(() => {
+            const currentStatus = (quotationStatus || item.status || '').toLowerCase().trim();
+            const isInvoiceStatus = currentStatus === 'accepted' || currentStatus === 'inprogress' || currentStatus === 'completed';
+            const buttonText = isInvoiceStatus ? 'Download Invoice' : 'Download Quotation';
+            
+            return (
+              <button
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                onClick={isInvoiceStatus ? handleDownloadInvoice : downloadPDF}
+                disabled={isSubmit}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                {buttonText}
+              </button>
+            );
+          })()}
+
+          {/* Accept Button - Only show when status is exactly "Pending" */}
+          {(() => {
+            const currentStatus = (quotationStatus || item.status || '').toLowerCase().trim();
+            const isPending = currentStatus === 'pending';
+            
+            return isPending && (
+              <button
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                onClick={async () => {
+                  setIsSubmit(true);
+                  try {
+                    const statusData = {
+                      status: 'Accepted',
+                      payment_term: invoiceTerm,
+                      company: company,
+                    };
+                    const response = await updateQuotationStatus(item.quotation_id, statusData);
+                    if (response.success) {
+                      setQuotationStatus('Accepted');
+                      toast.success('Order accepted successfully!');
+                    }
+                  } catch (error) {
+                    toast.error('Failed to accept order');
+                    console.error(error);
+                  } finally {
+                    setIsSubmit(false);
+                  }
+                }}
+                disabled={isSubmit}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Accept Order
+                {isSubmit && <FaSpinner className="ml-2 animate-spin" />}
+              </button>
+            );
+          })()}
+
+          {/* Reject Button - Only show when status is exactly "Pending" */}
+          {(() => {
+            const currentStatus = (quotationStatus || item.status || '').toLowerCase().trim();
+            const isPending = currentStatus === 'pending';
+            
+            return isPending && (
+              <button
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                onClick={async () => {
+                  setIsSubmit(true);
+                  try {
+                    const statusData = {
+                      status: 'Rejected',
+                      payment_term: invoiceTerm,
+                      company: company,
+                    };
+                    const response = await updateQuotationStatus(item.quotation_id, statusData);
+                    if (response.success) {
+                      setQuotationStatus('Rejected');
+                      toast.success('Order rejected successfully!');
+                    }
+                  } catch (error) {
+                    toast.error('Failed to reject order');
+                    console.error(error);
+                  } finally {
+                    setIsSubmit(false);
+                  }
+                }}
+                disabled={isSubmit}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Reject Order
+                {isSubmit && <FaSpinner className="ml-2 animate-spin" />}
+              </button>
+            );
+          })()}
+        </div>
       </div>
+
+      {/* Hidden Quotation/Invoice Content for PDF Generation */}
+      <div ref={invoiceRef} className="hidden">
+        <div className="p-8 bg-white" style={{ width: '210mm', minHeight: '297mm' }}>
+          {/* Header Section */}
+          <div className="bg-black text-white p-6 rounded-lg mb-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold text-white">
+                  {(() => {
+                    const currentStatus = (quotationStatus || item.status || '').toLowerCase().trim();
+                    const isInvoice = currentStatus === 'accepted' || currentStatus === 'inprogress' || currentStatus === 'completed';
+                    return isInvoice ? 'INVOICE' : 'QUOTATION';
+                  })()}
+                </h1>
+                <p className="text-gray-300 mt-2">TROLLIOUS COSMETICS (PVT) LTD.</p>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-white">#{item.quotation_id}</div>
+                <div className="text-gray-300 mt-1">
+                  Date: {new Date(item.quotation_date || new Date()).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Company and Customer Information */}
+          <div className="grid grid-cols-2 gap-8 mb-8">
+            {/* From Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">FROM</h3>
+              <div className="text-gray-700">
+                <p className="font-bold text-lg">TROLLIOUS COSMETICS (PVT) LTD.</p>
+                <p>No 182, Kuruppumulla Road</p>
+                <p>Panadura, 12500</p>
+                <p>Phone: 0707 577 500 / 502</p>
+                <p className="mt-2 text-sm text-gray-600">Sales Rep: {item.sales_rep_id}</p>
+              </div>
+            </div>
+
+            {/* To Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">TO</h3>
+              <div className="text-gray-700">
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <FaSpinner className="animate-spin" />
+                    <span>Loading customer details...</span>
+                  </div>
+                ) : (
+                  <>
+                    <p className="font-bold text-lg">
+                      {customerData?.first_name || ''} {customerData?.last_name || ''}
+                    </p>
+                    <p>Customer ID: {item.customer_id}</p>
+                    <p>{customerData?.address_line1 || ''}</p>
+                    {customerData?.address_line2 && <p>{customerData.address_line2}</p>}
+                    <p>{customerData?.city || ''}, {customerData?.province || ''}</p>
+                    <p>{customerData?.postal_code || ''}</p>
+                    {customerData?.phone && <p>Phone: {customerData.phone}</p>}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Order Details */}
+          <div className="mb-6">
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div className="bg-gray-50 p-3 rounded">
+                <span className="font-semibold text-gray-700">Due Date:</span>
+                <p className="mt-1">
+                  {new Date(item.quotation_due_date || new Date()).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded">
+                <span className="font-semibold text-gray-700">Payment Terms:</span>
+                <p className="mt-1">{item.payment_term || 'Cash'}</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded">
+                <span className="font-semibold text-gray-700">Company:</span>
+                <p className="mt-1">{item.company || 'Trollius'}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Items Table */}
+          <div className="mb-8">
+            <table className="w-full border-collapse border border-gray-300">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-gray-300 p-3 text-left font-semibold">Item Code</th>
+                  <th className="border border-gray-300 p-3 text-left font-semibold">Description</th>
+                  <th className="border border-gray-300 p-3 text-center font-semibold">Quantity</th>
+                  <th className="border border-gray-300 p-3 text-right font-semibold">Unit Price</th>
+                  <th className="border border-gray-300 p-3 text-right font-semibold">Total Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {item.quotationItems.map((quotationItem, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="border border-gray-300 p-3 font-medium">{quotationItem.item_code}</td>
+                    <td className="border border-gray-300 p-3">{quotationItem.description}</td>
+                    <td className="border border-gray-300 p-3 text-center">{quotationItem.item_qty}</td>
+                    <td className="border border-gray-300 p-3 text-right">
+                      Rs. {quotationItem.unit_price.toLocaleString()}
+                    </td>
+                    <td className="border border-gray-300 p-3 text-right font-semibold">
+                      Rs. {quotationItem.total_amount.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Totals Section */}
+          <div className="flex justify-end mb-8">
+            <div className="w-80">
+              <div className="bg-gray-50 border border-gray-300 rounded-lg p-4">
+                <div className="flex justify-between items-center py-2 border-b border-gray-300">
+                  <span className="font-medium">Sub Total:</span>
+                  <span className="font-semibold">Rs. {item.sub_total.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-gray-300">
+                  <span className="font-medium">Discount ({item.discount}%):</span>
+                  <span className="font-semibold">Rs. {((item.sub_total * item.discount) / 100).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center py-3 bg-black text-white px-4 -mx-4 -mb-4 rounded-b-lg">
+                  <span className="font-bold text-lg">Net Total:</span>
+                  <span className="font-bold text-xl">Rs. {item.net_total.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Terms and Conditions */}
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">
+              Terms & Conditions
+            </h3>
+            <div className="text-sm text-gray-700 space-y-2">
+              <p>• Payment is due within {item.payment_term || 'agreed terms'}</p>
+              <p>• All prices are in Sri Lankan Rupees (LKR)</p>
+              <p>• Goods once sold will not be taken back or exchanged</p>
+              <p>• Interest will be charged on overdue amounts</p>
+              <p>• All disputes are subject to Panadura jurisdiction</p>
+            </div>
+          </div>
+
+          {/* Bank Details */}
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">
+              Bank Details
+            </h3>
+            <div className="text-sm text-gray-700 grid grid-cols-2 gap-4">
+              <div>
+                <p><span className="font-medium">Account Name:</span> Trollious Cosmetics (Pvt) Ltd</p>
+                <p><span className="font-medium">Account Number:</span> 1000429495</p>
+              </div>
+              <div>
+                <p><span className="font-medium">Bank:</span> Commercial Bank</p>
+                <p><span className="font-medium">Branch:</span> Panadura City Office</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Signature Section */}
+          <div className="mt-12">
+            <div className="grid grid-cols-3 gap-8 text-center">
+              <div>
+                <div className="border-b border-gray-400 mb-2 h-12"></div>
+                <p className="text-sm font-medium">Approved Signature</p>
+                <p className="text-xs text-gray-600 mt-1">TROLLIOUS COSMETICS (PVT) LTD.</p>
+              </div>
+              <div>
+                <div className="border-b border-gray-400 mb-2 h-12"></div>
+                <p className="text-sm font-medium">Customer Signature</p>
+                <p className="text-xs text-gray-600 mt-1">Date: _______________</p>
+              </div>
+              <div>
+                <div className="border-b border-gray-400 mb-2 h-12"></div>
+                <p className="text-sm font-medium">Authorized Signature</p>
+                <p className="text-xs text-gray-600 mt-1">Finance Department</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-8 text-center text-sm text-gray-600 border-t border-gray-300 pt-4">
+            <p className="font-medium">Thank you for your business!</p>
+            <p className="mt-2">For any queries, please contact us at 0707 577 500 / 502</p>
+          </div>
+        </div>
+      </div>
+
       <ToastContainer autoClose={2000} />
     </div>
   );
@@ -800,6 +1125,13 @@ OrderDetails.propTypes = {
     sales_rep_id: PropTypes.string,
     quotation_id: PropTypes.string,
     status: PropTypes.string,
+    quotation_date: PropTypes.string,
+    quotation_due_date: PropTypes.string,
+    sub_total: PropTypes.number,
+    discount: PropTypes.number,
+    net_total: PropTypes.number,
+    payment_term: PropTypes.string,
+    company: PropTypes.string,
     quotationItems: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.number,
@@ -811,13 +1143,8 @@ OrderDetails.propTypes = {
         description: PropTypes.string,
       }),
     ),
-    quotation_due_date: PropTypes.string,
-    sub_total: PropTypes.number,
-    discount: PropTypes.number,
-    net_total: PropTypes.number,
-    payment_term: PropTypes.string,
-    company: PropTypes.string,
   }).isRequired,
+  changeOpen: PropTypes.func.isRequired,
 };
 
 export default OrderDetails;
