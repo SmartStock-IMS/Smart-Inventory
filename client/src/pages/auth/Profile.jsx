@@ -22,7 +22,6 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Check if user is SalesRep to add top padding for fixed header
   const isSalesRep = user?.role === 'sales_rep';
   const containerClasses = `min-h-screen ${isSalesRep ? 'pt-24' : ''} ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`;
   const centerClasses = `min-h-screen ${isSalesRep ? 'pt-24' : ''} flex items-center justify-center ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`;
@@ -73,11 +72,11 @@ const Profile = () => {
   if (loading) {
     return (
       <div className={centerClasses}>
-        <div className={`text-center p-8 rounded-lg ${
+        <div className={`text-center p-8 rounded-2xl shadow-xl ${
           isDarkMode ? 'bg-gray-800 text-gray-200' : 'bg-white text-gray-800'
         }`}>
-          <Loader className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
-          <p>Loading profile...</p>
+          <Loader className="w-10 h-10 animate-spin mx-auto mb-4 text-blue-500" />
+          <p className="text-lg font-medium">Loading profile...</p>
         </div>
       </div>
     );
@@ -86,14 +85,14 @@ const Profile = () => {
   if (error) {
     return (
       <div className={centerClasses}>
-        <div className={`text-center p-8 rounded-lg ${
+        <div className={`text-center p-8 rounded-2xl shadow-xl ${
           isDarkMode ? 'bg-gray-800 text-gray-200' : 'bg-white text-gray-800'
         }`}>
-          <AlertCircle className="w-8 h-8 mx-auto mb-4 text-red-500" />
-          <h2 className="text-xl font-semibold mb-4">Error: {error}</h2>
+          <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
+          <h2 className="text-2xl font-bold mb-4">Error: {error}</h2>
           <button 
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            className="px-6 py-3 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-400 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
           >
             Retry
           </button>
@@ -105,11 +104,11 @@ const Profile = () => {
   if (!profileData) {
     return (
       <div className={centerClasses}>
-        <div className={`text-center p-8 rounded-lg ${
+        <div className={`text-center p-8 rounded-2xl shadow-xl ${
           isDarkMode ? 'bg-gray-800 text-gray-200' : 'bg-white text-gray-800'
         }`}>
-          <User className="w-8 h-8 mx-auto mb-4 text-gray-500" />
-          <p>No profile data available</p>
+          <User className="w-12 h-12 mx-auto mb-4 text-gray-500" />
+          <p className="text-lg">No profile data available</p>
         </div>
       </div>
     );
@@ -117,126 +116,174 @@ const Profile = () => {
   
   return (
     <div className={containerClasses}>
-      <div className="max-w-6xl mx-auto p-6">
-        {/* Header */}
-        <div className={`rounded-lg p-6 mb-6 ${
-          isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Hero Card with Profile Header */}
+        <div className={`relative rounded-2xl overflow-hidden shadow-lg mb-6 ${
+          isDarkMode ? 'bg-gradient-to-br from-gray-800 to-gray-900' : 'bg-gradient-to-br from-white to-gray-50'
         }`}>
-          <div className="flex items-center space-x-6">
-            {/* Avatar */}
-            <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-              {(profileData.first_name?.charAt(0) || profileData.firstName?.charAt(0) || 'U')}{(profileData.last_name?.charAt(0) || profileData.lastName?.charAt(0) || '')}
-            </div>
-            
-            {/* Basic Info */}
-            <div className="flex-1">
-              <h1 className={`text-2xl font-bold mb-2 ${
-                isDarkMode ? 'text-gray-100' : 'text-gray-900'
-              }`}>
-                {profileData.first_name || profileData.firstName || 'Unknown'} {profileData.last_name || profileData.lastName || 'User'}
-              </h1>
-              <p className={`text-lg mb-1 ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-600'
-              }`}>
-                @{profileData.username || 'Unknown'}
-              </p>
-              <div className="flex items-center space-x-4">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                  isDarkMode 
-                    ? 'bg-blue-900 text-blue-200' 
-                    : 'bg-blue-100 text-blue-800'
+          {/* Blue accent bar */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-blue-500"></div>
+          
+          <div className="p-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
+              {/* Avatar with gradient border */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-blue-500 rounded-2xl blur opacity-40"></div>
+                <div className="relative w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-500 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                  {(profileData.first_name?.charAt(0) || profileData.firstName?.charAt(0) || 'U')}{(profileData.last_name?.charAt(0) || profileData.lastName?.charAt(0) || '')}
+                </div>
+              </div>
+              
+              {/* Profile Info */}
+              <div className="flex-1 text-center sm:text-left">
+                <h1 className={`text-2xl font-bold mb-1 ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
                 }`}>
-                  <Shield className="w-4 h-4 mr-1" />
-                  {profileData.role || profileData.user_type || 'User'}
-                </span>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                  isDarkMode 
-                    ? 'bg-green-900 text-green-200' 
-                    : 'bg-green-100 text-green-800'
+                  {profileData.first_name || profileData.firstName || 'Unknown'} {profileData.last_name || profileData.lastName || 'User'}
+                </h1>
+                <p className={`text-base mb-3 ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
                 }`}>
-                  <UserCheck className="w-4 h-4 mr-1" />
-                  Active
-                </span>
+                  @{profileData.username || 'Unknown'}
+                </p>
+                <div className="flex flex-wrap justify-center sm:justify-start gap-2">
+                  <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-blue-500 text-white shadow">
+                    <Shield className="w-3 h-3 mr-1" />
+                    {profileData.role || profileData.user_type || 'User'}
+                  </span>
+                  <span className="inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold bg-blue-400 text-white shadow">
+                    <UserCheck className="w-3 h-3 mr-1" />
+                    Active
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Profile Information Grid */}
-        <div className="grid grid-cols-1 gap-6">
-          {/* Personal Information */}
-          <div className={`rounded-lg p-6 ${
-            isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+        {/* Information Cards Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Personal Information Card */}
+          <div className={`rounded-2xl p-5 shadow-lg ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
           }`}>
-            <h2 className={`text-xl font-semibold mb-4 flex items-center ${
-              isDarkMode ? 'text-gray-100' : 'text-gray-900'
-            }`}>
-              <User className="w-5 h-5 mr-2" />
-              Personal Information
-            </h2>
+            <div className="flex items-center mb-4">
+              <div className="w-9 h-9 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center mr-3 shadow">
+                <User className="w-5 h-5 text-white" />
+              </div>
+              <h2 className={`text-lg font-bold ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>
+                Personal Information
+              </h2>
+            </div>
             
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <Mail className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-                <div>
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Email</p>
-                  <p className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-                    {profileData.email || 'Not provided'}
-                  </p>
+            <div className="space-y-3">
+              <div className="group">
+                <div className={`flex items-start space-x-3 p-3 rounded-xl transition-all duration-300 ${
+                  isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                }`}>
+                  <div className="w-8 h-8 bg-blue-400 bg-opacity-10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-xs font-semibold mb-0.5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Email Address
+                    </p>
+                    <p className={`text-sm font-medium truncate ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                      {profileData.email || 'Not provided'}
+                    </p>
+                  </div>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-3">
-                <Phone className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-                <div>
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Phone</p>
-                  <p className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-                    {profileData.phone || 'Not provided'}
-                  </p>
+              <div className="group">
+                <div className={`flex items-start space-x-3 p-3 rounded-xl transition-all duration-300 ${
+                  isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                }`}>
+                  <div className="w-8 h-8 bg-blue-400 bg-opacity-10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Phone className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`text-xs font-semibold mb-0.5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Phone Number
+                    </p>
+                    <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                      {profileData.phone || 'Not provided'}
+                    </p>
+                  </div>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-3">
-                <MapPin className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-                <div>
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Address</p>
-                  <p className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-                    {profileData.address || 'Not provided'}
-                  </p>
+              <div className="group">
+                <div className={`flex items-start space-x-3 p-3 rounded-xl transition-all duration-300 ${
+                  isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                }`}>
+                  <div className="w-8 h-8 bg-blue-400 bg-opacity-10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`text-xs font-semibold mb-0.5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Address
+                    </p>
+                    <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                      {profileData.address || 'Not provided'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Account Information */}
-          <div className={`rounded-lg p-6 ${
-            isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+          {/* Account Information Card */}
+          <div className={`rounded-2xl p-5 shadow-lg ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
           }`}>
-            <h2 className={`text-xl font-semibold mb-4 flex items-center ${
-              isDarkMode ? 'text-gray-100' : 'text-gray-900'
-            }`}>
-              <Clock className="w-5 h-5 mr-2" />
-              Account Information
-            </h2>
+            <div className="flex items-center mb-4">
+              <div className="w-9 h-9 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center mr-3 shadow">
+                <Clock className="w-5 h-5 text-white" />
+              </div>
+              <h2 className={`text-lg font-bold ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>
+                Account Information
+              </h2>
+            </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-center space-x-3">
-                <Calendar className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-                <div>
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Account Created</p>
-                  <p className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-                    {profileData.created_at ? new Date(profileData.created_at).toLocaleDateString() : 'Unknown'}
-                  </p>
+            <div className="space-y-3">
+              <div className="group">
+                <div className={`flex items-start space-x-3 p-3 rounded-xl transition-all duration-300 ${
+                  isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                }`}>
+                  <div className="w-8 h-8 bg-blue-400 bg-opacity-10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Calendar className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`text-xs font-semibold mb-0.5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Account Created
+                    </p>
+                    <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                      {profileData.created_at ? new Date(profileData.created_at).toLocaleDateString() : 'Unknown'}
+                    </p>
+                  </div>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-3">
-                <Clock className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-                <div>
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Last Updated</p>
-                  <p className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
-                    {profileData.updated_at ? new Date(profileData.updated_at).toLocaleDateString() : 'Unknown'}
-                  </p>
+              <div className="group">
+                <div className={`flex items-start space-x-3 p-3 rounded-xl transition-all duration-300 ${
+                  isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                }`}>
+                  <div className="w-8 h-8 bg-blue-400 bg-opacity-10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`text-xs font-semibold mb-0.5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Last Updated
+                    </p>
+                    <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                      {profileData.updated_at ? new Date(profileData.updated_at).toLocaleDateString() : 'Unknown'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
