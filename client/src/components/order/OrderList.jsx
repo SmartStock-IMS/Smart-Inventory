@@ -135,7 +135,7 @@ const OrderList = () => {
   }, []);
 
   const handleClickOpenOrder = async () => {
-    navigate("/order/view-quotation");
+    navigate("../view-quotation");
   };
 
   return (

@@ -195,7 +195,7 @@ const YearlySummary = () => {
   return (
     <div className="w-full h-full p-6 bg-gradient-to-br from-slate-50 to-white rounded-xl shadow-lg">
       {/* Enhanced Header */}
-      <div className="mb-8 p-6 bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 rounded-xl shadow-xl">
+      <div className="mb-8 p-6 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl shadow-xl">
         <div className="flex flex-row items-center justify-between text-white">
           {/* Title */}
           <div className="flex flex-row items-center gap-4">
@@ -204,7 +204,7 @@ const YearlySummary = () => {
             </div>
             <div>
               <h2 className="text-2xl font-bold tracking-wide">Yearly Summary</h2>
-              <p className="text-purple-100 text-sm">Annual business performance analysis</p>
+              <p className="text-blue-100 text-sm">Annual business performance analysis</p>
             </div>
           </div>
           {/* Export Button */}
@@ -222,43 +222,43 @@ const YearlySummary = () => {
 
       {/* Quick Stats Cards */}
       <div className="grid grid-cols-4 gap-6 mb-8">
-        <div className="bg-gradient-to-r from-purple-500 to-indigo-500 p-4 rounded-xl text-white shadow-lg">
+        <div className="bg-gradient-to-r from-blue-400 to-blue-500 p-4 rounded-xl text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-purple-100 text-sm">Annual Quotations</p>
+              <p className="text-blue-100 text-sm">Annual Quotations</p>
               <p className="text-2xl font-bold">{summaryStats.total_quotations}</p>
             </div>
-            <FileText className="w-8 h-8 text-purple-200" />
+            <FileText className="w-8 h-8 text-blue-200" />
           </div>
         </div>
         
-        <div className="bg-gradient-to-r from-emerald-500 to-green-500 p-4 rounded-xl text-white shadow-lg">
+        <div className="bg-gradient-to-r from-blue-400 to-blue-500 p-4 rounded-xl text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-emerald-100 text-sm">Annual Value</p>
+              <p className="text-blue-100 text-sm">Annual Value</p>
               <p className="text-2xl font-bold">Rs {summaryStats.total_value.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
             </div>
-            <TrendingUp className="w-8 h-8 text-emerald-200" />
+            <TrendingUp className="w-8 h-8 text-blue-200" />
           </div>
         </div>
         
-        <div className="bg-gradient-to-r from-pink-500 to-rose-500 p-4 rounded-xl text-white shadow-lg">
+        <div className="bg-gradient-to-r from-blue-400 to-blue-500 p-4 rounded-xl text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-pink-100 text-sm">Total Items</p>
+              <p className="text-blue-100 text-sm">Total Items</p>
               <p className="text-2xl font-bold">{summaryStats.total_items}</p>
             </div>
-            <Package className="w-8 h-8 text-pink-200" />
+            <Package className="w-8 h-8 text-blue-200" />
           </div>
         </div>
         
-        <div className="bg-gradient-to-r from-orange-500 to-red-500 p-4 rounded-xl text-white shadow-lg">
+        <div className="bg-gradient-to-r from-blue-400 to-blue-500 p-4 rounded-xl text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-orange-100 text-sm">Total Customers</p>
+              <p className="text-blue-100 text-sm">Total Customers</p>
               <p className="text-2xl font-bold">{summaryStats.unique_customers}</p>
             </div>
-            <Users className="w-8 h-8 text-orange-200" />
+            <Users className="w-8 h-8 text-blue-200" />
           </div>
         </div>
       </div>

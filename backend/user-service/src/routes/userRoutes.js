@@ -6,11 +6,12 @@ const router = express.Router();
 
 // Routes
 router.get('/', userController.getAllUsers);
-//router.get('/profile', userController.getUserProfile);
+router.get('/profile/:id', userController.getUserProfile);
 router.get('/sales-staff', userController.getSalesStaff);
 router.get('/resource-manager', userController.getResourceManager);
 router.get('/:id', userController.getUserById);
 router.put('/:id', userController.updateUser);
+router.put('/password/:id', userController.changePassword);
 router.delete('/:id', userController.deleteUser);
 
 // Resource Manager specific routes

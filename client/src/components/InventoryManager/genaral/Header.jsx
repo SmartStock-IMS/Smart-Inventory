@@ -1,8 +1,10 @@
 import { SearchIcon, BellIcon, UserIcon, SunIcon, MoonIcon, Sparkles } from "lucide-react";
 import { useTheme } from "../../../context/theme/ThemeContext";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
   const { isDarkMode, toggleTheme } = useTheme();
+  const navigate = useNavigate();
 
   return (
     <header className={`h-full w-full transition-colors duration-300 ${
@@ -94,11 +96,14 @@ const Header = () => {
           </button>
 
           {/* Profile Section */}
-          <div className={`flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-lg transition-colors duration-200 cursor-pointer group ml-1 sm:ml-2 ${
-            isDarkMode 
-              ? 'hover:bg-gray-800' 
-              : 'hover:bg-gray-100'
-          }`}>
+          <div 
+            onClick={() => navigate('/inventorymanager/profile')}
+            className={`flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 rounded-lg transition-colors duration-200 cursor-pointer group ml-1 sm:ml-2 ${
+              isDarkMode 
+                ? 'hover:bg-gray-800' 
+                : 'hover:bg-gray-100'
+            }`}
+          >
             <div className={`h-6 w-6 sm:h-8 sm:w-8 rounded-full flex items-center justify-center transition-colors duration-200 ${
               isDarkMode
                 ? 'bg-blue-900 group-hover:bg-blue-800'

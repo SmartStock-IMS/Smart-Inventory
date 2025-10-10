@@ -20,6 +20,7 @@ import RMList from "../pages/Administrator/RManager/RMList.jsx";
 import RMDetails from "../pages/Administrator/RManager/RMDetails.jsx";
 import CustomerDetails from "../pages/Administrator/customer/CustomerDetails.jsx";
 import CustomerList from "../pages/Administrator/customer/CustomerList.jsx";
+import Profile from "../pages/auth/Profile.jsx";
 
 function InventoryManagerRoutes() {
   return (
@@ -39,6 +40,7 @@ function InventoryManagerRoutes() {
                   <Routes>
                     {/* item: dashboard */}
                     <Route path="/" element={<DashboardHome />} />
+                    <Route path="/profile" element={<Profile />} />
                     <Route path="/orders" element={<OrderSummary />} />
                     <Route path="/sales-rep" element={<SalesRepList />} />
                     <Route path="/sales-rep/:repCode" element={<RepDetails />} />

@@ -5,9 +5,10 @@ import { navigation } from "../../constants";
 import { HiMenu } from "react-icons/hi";
 import { HiX } from "react-icons/hi";
 import { useAuth } from "../../context/auth/AuthContext.jsx";
+import { getDashboardUrl } from "../../utils/authUtils";
 
 const Header = () => {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const pathname = useLocation();
   const navigate = useNavigate();
@@ -15,6 +16,30 @@ const Header = () => {
 
   const toggleNavigation = () => {
     setOpenNavigation(!openNavigation);
+  };
+
+  // Get the correct profile URL based on user role
+  const getProfileUrl = () => {
+    if (!user) return '/profile';
+    
+    const userRole = user.type || user.role;
+    const dashboardUrl = getDashboardUrl(userRole);
+    
+    if (dashboardUrl === '/') {
+      // For root level (sales staff), return /profile directly
+      return '/profile';
+    } else {
+      // For other roles, concatenate base URL with /profile
+      return `${dashboardUrl}/profile`;
+    }
+  };
+
+  // Get the correct base URL for navigation based on user role
+  const getBaseUrl = () => {
+    if (!user) return '';
+    
+    const userRole = user.type || user.role;
+    return getDashboardUrl(userRole);
   };
 
   useEffect(() => {
@@ -47,12 +72,28 @@ const Header = () => {
     open: { opacity: 1, x: 0 },
   };
 
+  // Handle navigation with role-based URL prefixing
   const handleNavigation = (id, url) => {
     if (id === "4") {
       logout(); // init logout in auth context
       console.log("user logged out");
+      return;
     }
-    navigate(url); // navigate to url
+    
+    const baseUrl = getBaseUrl();
+    let fullUrl;
+    
+    if (baseUrl === '/') {
+      // For root level (sales staff), use absolute navigation
+      fullUrl = url.startsWith('/') ? url : `/${url}`;
+    } else {
+      // For other roles, concatenate base URL with the route
+      fullUrl = `${baseUrl}${url}`;
+    }
+    
+    console.log("🔄 Navigating to:", fullUrl, "for user role:", user?.type || user?.role);
+    // Use replace: true to prevent stacking paths
+    navigate(fullUrl, { replace: true });
   };
 
   return (
@@ -82,7 +123,12 @@ const Header = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="cursor-pointer flex items-center"
-              onClick={() => navigate("/")}
+              onClick={() => {
+                const baseUrl = getBaseUrl();
+                const homeUrl = baseUrl ? `${baseUrl}/` : '/';
+                console.log("🏠 Navigating to home:", homeUrl, "for user role:", user?.type || user?.role);
+                navigate(homeUrl);
+              }}
             >
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
@@ -161,6 +207,21 @@ const Header = () => {
                 ) : (
                   <HiMenu size={24} className="text-slate-700" />
                 )}
+              </motion.button>
+
+              {/* Profile Button */}
+              <motion.button
+                onClick={() => navigate(getProfileUrl())}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="ml-3 lg:ml-4 p-2 rounded-xl hover:bg-slate-100 transition-colors flex items-center gap-2"
+              >
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center">
+                    <div className="w-2 h-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full" />
+                  </div>
+                </div>
+                <span className="hidden lg:block text-sm font-medium text-slate-700">Profile</span>
               </motion.button>
             </div>
           </div>

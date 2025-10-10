@@ -170,7 +170,7 @@ const Home = () => {
       name: product.variants?.[0]?.name || product.category
     };
     console.log("product selected:", productWithName);
-    navigate("/product", { state: productWithName });
+    navigate("product", { state: productWithName });
   }, [navigate]);
 
   const clearFilters = useCallback(() => {

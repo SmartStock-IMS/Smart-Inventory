@@ -1,6 +1,7 @@
 import {useEffect, useState} from "react";
 import {FaSpinner} from "react-icons/fa";
 import { NotebookPen, Download, Calendar, Filter, TrendingUp, FileText, Users, Package } from "lucide-react";
+import { authenticatedFetch } from "../../../lib/api-utils";
 
 const DailySummary = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -19,13 +20,8 @@ const DailySummary = () => {
 
   // API call functions
   const fetchDailySummary = async (date, status) => {
-    const token = localStorage.getItem('token'); // Adjust based on your auth implementation
     const statusParam = status === "All" ? "" : `&status=${status}`; // Pass empty string for "All"
-    const response = await fetch(`http://localhost:3000/api/reports/daily-summary?date=${date}${statusParam}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` 
-      },
+    const response = await authenticatedFetch(`/api/reports/daily-summary?date=${date}${statusParam}`, {
       method: 'GET'
     });
     const result = await response.json();
@@ -33,12 +29,7 @@ const DailySummary = () => {
   };
 
   const fetchDailySummaryStats = async (date) => {
-    const token = localStorage.getItem('token'); // Adjust based on your auth implementation
-    const response = await fetch(`http://localhost:3000/api/reports/daily-summary-stats?date=${date}`,{
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` 
-      },
+    const response = await authenticatedFetch(`/api/reports/daily-summary-stats?date=${date}`, {
       method: 'GET'
     });
     const result = await response.json();
@@ -46,12 +37,7 @@ const DailySummary = () => {
   };
 
   const fetchDailyStatusOptions = async (date) => {
-    const token = localStorage.getItem('token'); // Adjust based on your auth implementation
-    const response = await fetch(`http://localhost:3000/api/reports/daily-status-options?date=${date}`,{
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` 
-      },
+    const response = await authenticatedFetch(`/api/reports/daily-status-options?date=${date}`, {
       method: 'GET'
     });
     const result = await response.json();
@@ -203,7 +189,7 @@ const DailySummary = () => {
   return (
     <div className="w-full h-full p-6 bg-gradient-to-br from-slate-50 to-white rounded-xl shadow-lg">
       {/* Enhanced Header */}
-      <div className="mb-8 p-6 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-xl shadow-xl">
+      <div className="mb-8 p-6 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl shadow-xl">
         <div className="flex flex-row items-center justify-between text-white">
           {/* Title */}
           <div className="flex flex-row items-center gap-4">
@@ -212,7 +198,7 @@ const DailySummary = () => {
             </div>
             <div>
               <h2 className="text-2xl font-bold tracking-wide">Daily Summary</h2>
-              <p className="text-indigo-100 text-sm">Real-time business insights</p>
+              <p className="text-blue-100 text-sm">Real-time business insights</p>
             </div>
           </div>
           {/* Export Button */}
@@ -230,7 +216,7 @@ const DailySummary = () => {
 
       {/* Quick Stats Cards */}
       <div className="grid grid-cols-4 gap-6 mb-8">
-        <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-4 rounded-xl text-white shadow-lg">
+        <div className="bg-gradient-to-r from-blue-400 to-blue-500 p-4 rounded-xl text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100 text-sm">Total Quotations</p>
@@ -240,33 +226,33 @@ const DailySummary = () => {
           </div>
         </div>
         
-        <div className="bg-gradient-to-r from-emerald-500 to-green-500 p-4 rounded-xl text-white shadow-lg">
+        <div className="bg-gradient-to-r from-blue-400 to-blue-500 p-4 rounded-xl text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-emerald-100 text-sm">Total Value</p>
+              <p className="text-blue-100 text-sm">Total Value</p>
               <p className="text-2xl font-bold">Rs {formatCurrency(summaryStats.total_value)}</p>
             </div>
-            <TrendingUp className="w-8 h-8 text-emerald-200" />
+            <TrendingUp className="w-8 h-8 text-blue-200" />
           </div>
         </div>
         
-        <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-4 rounded-xl text-white shadow-lg">
+        <div className="bg-gradient-to-r from-blue-400 to-blue-500 p-4 rounded-xl text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-purple-100 text-sm">Total Items</p>
+              <p className="text-blue-100 text-sm">Total Items</p>
               <p className="text-2xl font-bold">{summaryStats.total_items}</p>
             </div>
-            <Package className="w-8 h-8 text-purple-200" />
+            <Package className="w-8 h-8 text-blue-200" />
           </div>
         </div>
         
-        <div className="bg-gradient-to-r from-orange-500 to-red-500 p-4 rounded-xl text-white shadow-lg">
+        <div className="bg-gradient-to-r from-blue-400 to-blue-500 p-4 rounded-xl text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-orange-100 text-sm">Unique Customers</p>
+              <p className="text-blue-100 text-sm">Unique Customers</p>
               <p className="text-2xl font-bold">{summaryStats.unique_customers}</p>
             </div>
-            <Users className="w-8 h-8 text-orange-200" />
+            <Users className="w-8 h-8 text-blue-200" />
           </div>
         </div>
       </div>

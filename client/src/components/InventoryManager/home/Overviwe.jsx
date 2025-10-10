@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { User, Users, HandCoins, ChartNoAxesGantt, TrendingUp, Award, Sparkles, Calendar } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
-import axios from "axios";
+import api from "../../../lib/api";
 
 // // Mock service function for demo
 // const getOverviewData = async (period) => {
@@ -26,18 +26,10 @@ import axios from "axios";
 
 const getOverviewData = async (period) => {
   try {
-    const token = localStorage.getItem("token");
-    const response = await axios.get("http://localhost:3000/api/customers", {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    const response = await api.get("/customers");
     const totalCustomers = response.data.data.customers[0].total_count;
 
-    const response2 = await axios.get(
-      "http://localhost:3000/api/users/sales-staff",
-      {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      }
-    );
+    const response2 = await api.get("/users/sales-staff");
 
     const rankedUsers = response2.data.data.users
       .sort(

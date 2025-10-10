@@ -2,14 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, ExternalLink, Trash2, List, Sparkles, Package, Scale, Eye, AlertCircle, CheckCircle, Filter, Grid3X3, TableProperties, Edit3 } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
-import axios from "axios";
+import api from "../../../lib/api";
 
 const getProducts = async () => {
   try {
-    const token = localStorage.getItem("token");
-    const response = await axios.get('http://localhost:3000/api/products', {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    const response = await api.get('/api/products');
     return { success: true, data: response.data };
   } catch (error) {
     console.error('Error fetching products:', error);
@@ -19,9 +16,7 @@ const getProducts = async () => {
 
 const getAllProducts = async (page = 1, limit = 15) => {
   try {
-    const token = localStorage.getItem("token");
-    const response = await axios.get('http://localhost:3000/api/products', {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    const response = await api.get('/api/products', {
       params: {
         page: page,
         limit: limit,
@@ -49,11 +44,8 @@ const getAllProducts = async (page = 1, limit = 15) => {
 
 const deleteProductsByCategory = async (categoryName) => {
   try {
-    const token = localStorage.getItem("token");
     // First, get all products to find products in this category
-    const productsResponse = await axios.get('http://localhost:3000/api/products', {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    const productsResponse = await api.get('/api/products');
     
     if (productsResponse.data?.data?.products) {
       const productsInCategory = productsResponse.data.data.products.filter(
@@ -66,9 +58,7 @@ const deleteProductsByCategory = async (categoryName) => {
       
       // Delete each product in the category
       const deletePromises = productsInCategory.map(product => 
-        axios.delete(`http://localhost:3000/api/products/${product.product_id}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        })
+        api.delete(`/api/products/${product.product_id}`)
       );
       
       await Promise.all(deletePromises);
