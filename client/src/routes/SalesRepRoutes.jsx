@@ -18,13 +18,12 @@ function MainRoutes() {
   console.log("🛍️ SalesRepRoutes component rendering");
   
   return (
-    <div>
-      <h1 style={{color: 'red', padding: '20px'}}>Sales Rep Routes Working!</h1>
-      <p>If you see this, the routing is working</p>
+    <div className="min-h-screen bg-gray-50">
       <ThemeProvider>
         <CartProvider>
           <Header />
-          <Routes>
+          <div className="pt-20 px-4">
+            <Routes>
             {/* route: homepage */}
             <Route path="/" element={<Home />} />
             {/* route: profile */}
@@ -44,6 +43,7 @@ function MainRoutes() {
             <Route path="/product" element={<Product />} />
             <Route path="/history" element={<History />} />
           </Routes>
+          </div>
         </CartProvider>
       </ThemeProvider>
     </div>
