@@ -6,7 +6,10 @@ import api from "../../../lib/api";
 
 const getProducts = async () => {
   try {
-    const response = await api.get('/api/products');
+    const token = localStorage.getItem("token");
+    const response = await api.get('/products', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
     return { success: true, data: response.data };
   } catch (error) {
     console.error('Error fetching products:', error);
@@ -16,7 +19,9 @@ const getProducts = async () => {
 
 const getAllProducts = async (page = 1, limit = 15) => {
   try {
-    const response = await api.get('/api/products', {
+    const token = localStorage.getItem("token");
+    const response = await api.get('/products', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
       params: {
         page: page,
         limit: limit,
@@ -44,8 +49,11 @@ const getAllProducts = async (page = 1, limit = 15) => {
 
 const deleteProductsByCategory = async (categoryName) => {
   try {
+    const token = localStorage.getItem("token");
     // First, get all products to find products in this category
-    const productsResponse = await api.get('/api/products');
+    const productsResponse = await api.get('/products', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
     
     if (productsResponse.data?.data?.products) {
       const productsInCategory = productsResponse.data.data.products.filter(
@@ -58,7 +66,9 @@ const deleteProductsByCategory = async (categoryName) => {
       
       // Delete each product in the category
       const deletePromises = productsInCategory.map(product => 
-        api.delete(`/api/products/${product.product_id}`)
+        api.delete(`/products/${product.product_id}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
       );
       
       await Promise.all(deletePromises);
@@ -160,18 +170,70 @@ useEffect(() => {
         setDataSource('api');
         return true;
       } else {
-        setAllProducts([]);}
+        setAllProducts([]);
+      }
     } catch (error) {
       console.error("Error fetching products:", error);
       setAllProducts([]);
     } finally {
       setIsLoading(false); // ✅ important to hide loader
     }
-
-};
-fetchAndProcessProducts();
+  };
+  
+  fetchAndProcessProducts();
 }, []);
 
+
+  const fetchAndProcessProducts = async () => {
+    try {
+      setIsLoading(true);
+      const response = await getProducts();
+      
+      if (response.success && response.data?.data?.products) {
+        const apiProducts = response.data.data.products;
+        console.log('API Products Response:', apiProducts);
+        
+        // Group products by category
+        const categoryGroups = {};
+        apiProducts.forEach(product => {
+          const categoryName = product.category_name;
+          if (!categoryGroups[categoryName]) {
+            categoryGroups[categoryName] = [];
+          }
+          categoryGroups[categoryName].push(product);
+        });
+        
+        // Create one representative product per category
+        const mappedCategories = Object.keys(categoryGroups).map(categoryName => {
+          const products = categoryGroups[categoryName];
+          
+          return {
+            id: `category_${categoryName}`,
+            name: categoryName,
+            main_image: getCategoryImage(categoryName),
+            no_variants: products.length,
+            variants: [],
+            description: `${categoryName} category with ${products.length} products`,
+            category_name: categoryName,
+            product_count: products.length,
+            isApiData: true // Flag to identify API data
+          };
+        });
+        
+        console.log('Mapped categories from API:', mappedCategories);
+        setAllProducts(mappedCategories);
+        setDataSource('api');
+        return true;
+      } else {
+        setAllProducts([]);
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      setAllProducts([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleRemoveProduct = async (categoryName) => {
     // Prevent deletion if not using API data
