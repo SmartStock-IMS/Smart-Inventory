@@ -18,14 +18,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
 
-          {/* Root Route - Redirects to appropriate dashboard based on user role */}
-          <Route path="/" element={<RoleBasedRedirect />} />
-
-          {/* Protected Routes */}
-          <Route element={<ProtectedRoutes allowedRoles={['sales_staff', 'sales_rep']} />}>
-            <Route path="/sales/*" element={<SalesRepRoutes />} />
-          </Route>
-          
+          {/* Protected Routes - Order matters! More specific routes first */}
           <Route element={<ProtectedRoutes allowedRoles={['inventory_manager']} />}>
             <Route path="/inventorymanager/*" element={<InventoryManagerRoutes />} />
           </Route>
@@ -38,8 +31,10 @@ function App() {
             <Route path="/resourcemanager/*" element={<ResourceManagerRoutes />} />
           </Route>
 
-          {/* Fallback Route - Redirect to login for any unmatched routes */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          {/* Sales Rep Routes - At root level, must be last to avoid conflicts */}
+          <Route element={<ProtectedRoutes allowedRoles={['sales_staff', 'sales_rep']} />}>
+            <Route path="*" element={<SalesRepRoutes />} />
+          </Route>
         </Routes>
       </Router>
     </AuthContextProvider>

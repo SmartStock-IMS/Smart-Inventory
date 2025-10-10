@@ -244,7 +244,7 @@ const BillingDetails = () => {
         // Proceed to confirmation after short delay
         setTimeout(() => {
           reset();
-          navigate("confirmation");
+          navigate("/order/confirmation");
         }, 1500);
       } else {
         throw new Error(result?.message || "Failed to create quotation");
@@ -270,7 +270,7 @@ const BillingDetails = () => {
         <h1 className="text-2xl font-bold text-red-800">BillingDetails - No Cart State</h1>
         <p>Cart state is: {JSON.stringify(cartState)}</p>
         <button 
-          onClick={() => navigate("../add-items")} 
+          onClick={() => navigate("/order/add-items")} 
           className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
         >
           Go Back to Add Items

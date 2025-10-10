@@ -7,12 +7,12 @@ export const getDashboardUrl = (userRole) => {
   const roleMapping = {
     'admin': '/administrator',
     'inventory_manager': '/inventorymanager',
-    'sales_staff': '/sales',
-    'sales_rep': '/sales',
+    'sales_staff': '/',
+    'sales_rep': '/',
     'resource_manager': '/resourcemanager'
   };
 
-  return roleMapping[userRole] || '/sales';
+  return roleMapping[userRole] || '/';
 };
 
 /**

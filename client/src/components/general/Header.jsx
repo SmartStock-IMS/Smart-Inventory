@@ -24,7 +24,14 @@ const Header = () => {
     
     const userRole = user.type || user.role;
     const dashboardUrl = getDashboardUrl(userRole);
-    return `${dashboardUrl}/profile`;
+    
+    if (dashboardUrl === '/') {
+      // For root level (sales staff), return /profile directly
+      return '/profile';
+    } else {
+      // For other roles, concatenate base URL with /profile
+      return `${dashboardUrl}/profile`;
+    }
   };
 
   // Get the correct base URL for navigation based on user role
@@ -74,9 +81,19 @@ const Header = () => {
     }
     
     const baseUrl = getBaseUrl();
-    const fullUrl = baseUrl ? `${baseUrl}${url}` : url;
+    let fullUrl;
+    
+    if (baseUrl === '/') {
+      // For root level (sales staff), use absolute navigation
+      fullUrl = url.startsWith('/') ? url : `/${url}`;
+    } else {
+      // For other roles, concatenate base URL with the route
+      fullUrl = `${baseUrl}${url}`;
+    }
+    
     console.log("🔄 Navigating to:", fullUrl, "for user role:", user?.type || user?.role);
-    navigate(fullUrl);
+    // Use replace: true to prevent stacking paths
+    navigate(fullUrl, { replace: true });
   };
 
   return (
