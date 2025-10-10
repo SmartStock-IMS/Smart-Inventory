@@ -1,6 +1,7 @@
 import {useEffect, useState} from "react";
 import {FaSpinner} from "react-icons/fa";
 import { NotebookPen, Download, Calendar, Filter, TrendingUp, FileText, Users, Package } from "lucide-react";
+import { authenticatedFetch } from "../../../lib/api-utils";
 
 const DailySummary = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -19,13 +20,8 @@ const DailySummary = () => {
 
   // API call functions
   const fetchDailySummary = async (date, status) => {
-    const token = localStorage.getItem('token'); // Adjust based on your auth implementation
     const statusParam = status === "All" ? "" : `&status=${status}`; // Pass empty string for "All"
-    const response = await fetch(`http://localhost:3000/api/reports/daily-summary?date=${date}${statusParam}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` 
-      },
+    const response = await authenticatedFetch(`/api/reports/daily-summary?date=${date}${statusParam}`, {
       method: 'GET'
     });
     const result = await response.json();
@@ -33,12 +29,7 @@ const DailySummary = () => {
   };
 
   const fetchDailySummaryStats = async (date) => {
-    const token = localStorage.getItem('token'); // Adjust based on your auth implementation
-    const response = await fetch(`http://localhost:3000/api/reports/daily-summary-stats?date=${date}`,{
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` 
-      },
+    const response = await authenticatedFetch(`/api/reports/daily-summary-stats?date=${date}`, {
       method: 'GET'
     });
     const result = await response.json();
@@ -46,12 +37,7 @@ const DailySummary = () => {
   };
 
   const fetchDailyStatusOptions = async (date) => {
-    const token = localStorage.getItem('token'); // Adjust based on your auth implementation
-    const response = await fetch(`http://localhost:3000/api/reports/daily-status-options?date=${date}`,{
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` 
-      },
+    const response = await authenticatedFetch(`/api/reports/daily-status-options?date=${date}`, {
       method: 'GET'
     });
     const result = await response.json();

@@ -16,7 +16,7 @@ import {
   Image,
 } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
-import axios from "axios";
+import api from "../../../lib/api";
 import { useLocation, useNavigate } from "react-router-dom";
 import { set } from "react-hook-form";
 
@@ -69,10 +69,7 @@ const InputWithLabel = ({
 
 const getDetails = async () => {
   try {
-    const token = localStorage.getItem("token");
-    const response = await axios.get("http://localhost:3000/api/products", {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    const response = await api.get("/api/products");
     return { success: true, data: response.data };
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -82,10 +79,7 @@ const getDetails = async () => {
 
 const updateProduct = async (productCode, data) => {
   try {
-    const token = localStorage.getItem("token");
-    const response = await axios.put(`http://localhost:3000/api/products/${productCode}`, data, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    const response = await api.put(`/api/products/${productCode}`, data);
     return { success: true, message: "Product updated successfully", data: response.data };
   } catch (error) {
     console.error("Error updating product:", error);
@@ -95,10 +89,7 @@ const updateProduct = async (productCode, data) => {
 
 const deleteVariant = async (productCode) => {
   try {
-    const token = localStorage.getItem("token");
-    const response = await axios.delete(`http://localhost:3000/api/products/${productCode}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    const response = await api.delete(`/api/products/${productCode}`);
     console.log(response);
     return { success: true, message: "Product variant deleted successfully", data: response.data };
   } catch (error) {

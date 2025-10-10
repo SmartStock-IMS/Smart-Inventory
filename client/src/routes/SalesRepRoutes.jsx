@@ -5,7 +5,7 @@ import Order from "../pages/SalesRep/order/Order";
 import AddItems from "../components/order/AddItems";
 import ViewQuotation from "../components/order/ViewQuotation";
 import OrderList from "../components/order/OrderList";
-import BillingDetails from "../components/order/BillingDetails";
+import BillingDetails from "../components/order/BillingDetails-simple";
 import OrderConfirmation from "../components/order/OrderConfirmation";
 import Product from "../pages/SalesRep/product/Product";
 import History from "../pages/SalesRep/history/History.jsx";

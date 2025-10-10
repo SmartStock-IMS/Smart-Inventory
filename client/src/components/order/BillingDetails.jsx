@@ -9,14 +9,18 @@ import { useCart } from "../../context/cart/CartContext.jsx";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useForm } from "react-hook-form";
-import { cn } from "@lib/utils.js";
-import generateId from "@lib/generate-id.js";
+import { cn } from "../../lib/utils.js";
+import generateId from "../../lib/generate-id.js";
 import { FaSpinner, FaSearch, FaUser, FaPlus, FaMapMarkerAlt, FaStickyNote, FaArrowRight } from "react-icons/fa";
 import { jwtDecode } from "jwt-decode";
 
 const BillingDetails = () => {
+  console.log("🛒 BillingDetails component rendering");
+  
   const navigate = useNavigate();
   const { setCustomer, cartState } = useCart();
+  
+  console.log("🛒 Cart state in BillingDetails:", cartState);
   
   // Form handling
   const {
@@ -240,7 +244,7 @@ const BillingDetails = () => {
         // Proceed to confirmation after short delay
         setTimeout(() => {
           reset();
-          navigate("/order/confirmation");
+          navigate("confirmation");
         }, 1500);
       } else {
         throw new Error(result?.message || "Failed to create quotation");
@@ -255,6 +259,25 @@ const BillingDetails = () => {
 
   // Always show step 2 of 3 for BillingDetails
   let progress = 2 / 3;
+
+  console.log("🛒 About to render BillingDetails, progress:", progress);
+
+  // Test render - if you see this, the component is working
+  if (!cartState) {
+    console.log("🛒 No cart state found, showing fallback");
+    return (
+      <div className="min-h-screen bg-red-100 p-8">
+        <h1 className="text-2xl font-bold text-red-800">BillingDetails - No Cart State</h1>
+        <p>Cart state is: {JSON.stringify(cartState)}</p>
+        <button 
+          onClick={() => navigate("../add-items")} 
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Go Back to Add Items
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-6 sm:py-8">

@@ -10,8 +10,18 @@ export const userLogin = async (email, password) => {
     });
 
     if (response.status === 200 && response.data.success) {
+      console.log("🔍 Login response data:", response.data.data);
+      
       // Store the token from the backend response
-      localStorage.setItem("token", response.data.data.token);
+      // The token might be in different fields based on the response structure
+      const token = response.data.data.accessToken || response.data.data.token;
+      if (token) {
+        localStorage.setItem("token", token);
+        console.log("✅ Token stored successfully:", token.substring(0, 20) + "...");
+      } else {
+        console.error("❌ No token found in response:", response.data.data);
+      }
+      
       return {
         success: true,
         user: response.data.data,

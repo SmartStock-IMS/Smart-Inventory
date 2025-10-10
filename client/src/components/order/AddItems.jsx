@@ -173,7 +173,7 @@ const AddItems = () => {
     
     console.log("cart state: ", cartState);
     setCartState(cartState);
-    navigate("/order/billing-details");
+    navigate("billing-details");
   }, [selectedItems.size, items, cartSelectedItems, discount, subtotal, total, setCartState, navigate]);
 
   const formatCurrency = useCallback((amount) => 

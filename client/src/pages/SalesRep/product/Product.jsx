@@ -124,7 +124,7 @@ const Product = () => {
 
   const handleViewOrder = useCallback(() => {
     console.log("Navigating to order summary");
-    navigate("/order/add-items");
+    navigate("../order/add-items");
   }, [navigate]);
 
   const handleGoBack = useCallback(() => {

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { isDarkMode } = useTheme();
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -49,45 +49,78 @@ const Profile = () => {
   const centerClasses = `min-h-screen ${isSalesRep ? 'pt-24' : ''} flex items-center justify-center ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`;
 
   useEffect(() => {
-    console.log('Profile useEffect - user:', user);
+    console.log('Profile useEffect - authLoading:', authLoading, 'user:', user);
+    console.log('Profile useEffect - user object keys:', user ? Object.keys(user) : 'null');
     
-    if (user) {
-      const userId = user.user_code || user.userCode || user.userid || user.id;
-      console.log('Profile useEffect - extracted userId:', userId);
-      
-      if (userId) {
-        fetchUserProfile(userId);
-      } else {
-        setLoading(false);
-        setError('No user ID found in user object');
-      }
-    } else {
+    // Wait for auth to finish loading
+    if (authLoading) {
+      console.log('⏳ Auth still loading, waiting...');
+      setLoading(true);
+      return;
+    }
+    
+    // Don't proceed if user is still loading
+    if (!user) {
+      console.log('❌ No user found after auth loaded');
       setLoading(false);
       setError('No user found');
+      return;
     }
-  }, [user]);
+
+    // Try multiple possible user ID fields and fallback to localStorage
+    let userId = user.user_code || user.userCode || user.userid || user.id;
+    console.log('Profile useEffect - extracted userId from user object:', userId);
+    
+    // If no userId found in user object, try localStorage as fallback
+    if (!userId) {
+      console.log('⚠️ No userId in user object, checking localStorage...');
+      try {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          userId = parsedUser.user_code || parsedUser.userCode || parsedUser.userid || parsedUser.id;
+          console.log('📦 Found userId in localStorage:', userId);
+        }
+      } catch (e) {
+        console.error('Error parsing stored user:', e);
+      }
+    }
+    
+    if (userId) {
+      console.log('✅ Using userId for profile fetch:', userId);
+      fetchUserProfile(userId);
+    } else {
+      console.error('❌ No user ID found in user object or localStorage');
+      setLoading(false);
+      setError('No user ID found. Please log out and log in again.');
+    }
+  }, [user, authLoading]);
 
   const fetchUserProfile = async (userId) => {
     try {
       setLoading(true);
       setError(null);
       
-      console.log('Fetching profile for userId:', userId);
+      console.log('🔄 Fetching profile for userId:', userId);
+      console.log('🔄 Current user object:', user);
+      console.log('🔄 Current profileData:', profileData);
+      
       const response = await getUserProfile(userId);
-      console.log('Profile API response:', response);
+      console.log('📡 Profile API response:', response);
       
       if (response.success && response.user) {
-        console.log('Setting profile data:', response.user);
+        console.log('✅ Setting profile data:', response.user);
         setProfileData(response.user);
       } else {
+        console.error('❌ Profile fetch failed:', response);
         setError('Failed to load profile data');
-        console.error('Profile fetch failed:', response);
       }
     } catch (error) {
-      console.error('Profile fetch error:', error);
+      console.error('❌ Profile fetch error:', error);
       setError('Error loading profile');
     } finally {
       setLoading(false);
+      console.log('🏁 Profile fetch completed');
     }
   };
 

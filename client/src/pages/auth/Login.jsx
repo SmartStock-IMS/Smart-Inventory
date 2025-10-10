@@ -5,6 +5,7 @@ import { useAuth } from "../../context/auth/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
 import { FaSpinner, FaUser, FaLock, FaShieldAlt } from "react-icons/fa";
 import { cn } from "@lib/utils";
+import { getDashboardUrl } from "../../utils/authUtils.js";
 import axios from "axios";
 
 const SalesRepLogin = () => {
@@ -22,30 +23,31 @@ const SalesRepLogin = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const response = await axios.post("http://localhost:3000/api/auth/login", {
-        email,
-        password
-      });
-      const result = response.data;
-      if (result.success && result.data && result.data.accessToken) {
-        localStorage.setItem("token", result.data.accessToken);
-        localStorage.setItem("refreshToken", result.data.refreshToken);
-        localStorage.setItem("user", JSON.stringify(result.data.user));
+      console.log("🔄 Starting login process...");
+      // Use the AuthContext login function for proper state management
+      const result = await login(email, password);
+      
+      console.log("🔄 Login result:", result);
+      
+      if (result && result.success) {
+        console.log("✅ Login successful!");
         toast.success("Login successful!");
-        const role = result.data.user.role;
-        if (role === "admin") {
-          navigate("/administrator");
-        } else if (role === "inventory_manager") {
-          navigate("/inventorymanager");
-        } else if (role === "sales_staff") {
-          navigate("/");
-        } else if (role === "resource_manager") {
-          navigate("/resourcemanager");
-        } else {
-          navigate("/");
-        }
+        
+        // Extract user data from the result
+        const userData = result.user?.user || result.user;
+        const role = userData?.role || userData?.type;
+        
+        console.log("🔄 User role:", role, "User data:", userData);
+        
+        // Use utility function to get the appropriate dashboard URL
+        const dashboardUrl = getDashboardUrl(role);
+        console.log("🔄 Redirecting user to:", dashboardUrl, "based on role:", role);
+        
+        // Navigate to the appropriate dashboard
+        navigate(dashboardUrl, { replace: true });
       } else {
-        toast.error(result.message || "Login failed");
+        console.error("❌ Login failed:", result);
+        toast.error(result?.message || "Login failed");
       }
     } catch (error) {
       toast.error("Server error or invalid credentials");

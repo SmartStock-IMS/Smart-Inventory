@@ -5,6 +5,7 @@ import { navigation } from "../../constants";
 import { HiMenu } from "react-icons/hi";
 import { HiX } from "react-icons/hi";
 import { useAuth } from "../../context/auth/AuthContext.jsx";
+import { getDashboardUrl } from "../../utils/authUtils";
 
 const Header = () => {
   const { logout, user } = useAuth();
@@ -15,6 +16,23 @@ const Header = () => {
 
   const toggleNavigation = () => {
     setOpenNavigation(!openNavigation);
+  };
+
+  // Get the correct profile URL based on user role
+  const getProfileUrl = () => {
+    if (!user) return '/profile';
+    
+    const userRole = user.type || user.role;
+    const dashboardUrl = getDashboardUrl(userRole);
+    return `${dashboardUrl}/profile`;
+  };
+
+  // Get the correct base URL for navigation based on user role
+  const getBaseUrl = () => {
+    if (!user) return '';
+    
+    const userRole = user.type || user.role;
+    return getDashboardUrl(userRole);
   };
 
   useEffect(() => {
@@ -47,12 +65,18 @@ const Header = () => {
     open: { opacity: 1, x: 0 },
   };
 
+  // Handle navigation with role-based URL prefixing
   const handleNavigation = (id, url) => {
     if (id === "4") {
       logout(); // init logout in auth context
       console.log("user logged out");
+      return;
     }
-    navigate(url); // navigate to url
+    
+    const baseUrl = getBaseUrl();
+    const fullUrl = baseUrl ? `${baseUrl}${url}` : url;
+    console.log("🔄 Navigating to:", fullUrl, "for user role:", user?.type || user?.role);
+    navigate(fullUrl);
   };
 
   return (
@@ -82,7 +106,12 @@ const Header = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="cursor-pointer flex items-center"
-              onClick={() => navigate("/")}
+              onClick={() => {
+                const baseUrl = getBaseUrl();
+                const homeUrl = baseUrl ? `${baseUrl}/` : '/';
+                console.log("🏠 Navigating to home:", homeUrl, "for user role:", user?.type || user?.role);
+                navigate(homeUrl);
+              }}
             >
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
@@ -165,7 +194,7 @@ const Header = () => {
 
               {/* Profile Button */}
               <motion.button
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate(getProfileUrl())}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="ml-3 lg:ml-4 p-2 rounded-xl hover:bg-slate-100 transition-colors flex items-center gap-2"
