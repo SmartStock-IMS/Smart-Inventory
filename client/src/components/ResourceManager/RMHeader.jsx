@@ -3,8 +3,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiMenu } from "react-icons/hi";
 import { HiX } from "react-icons/hi";
-import { BellIcon, UserIcon, SunIcon, MoonIcon, Sparkles } from "lucide-react";
+import { BellIcon, UserIcon, SunIcon, MoonIcon, Sparkles, LogOut } from "lucide-react";
 import { useTheme } from "../../context/theme/ThemeContext";
+import { useAuth } from "../../context/auth/AuthContext";
 
 const navItems = [
   { id: "1", title: "Dashboard", url: "/resourcemanager" },
@@ -15,6 +16,7 @@ const navItems = [
 
 const RMHeader = () => {
   const { isDarkMode, toggleTheme } = useTheme();
+  const { logout } = useAuth();
   const pathname = useLocation();
   const navigate = useNavigate();
   const [openNavigation, setOpenNavigation] = useState(false);
@@ -70,32 +72,32 @@ const RMHeader = () => {
           ? 'bg-gray-900 border-gray-700' 
           : 'bg-white border-gray-200'
       } border-b shadow-sm`}>
-        <nav className="h-20 px-3 sm:px-4 lg:px-6 flex items-center justify-between gap-2 sm:gap-4">
-          {/* Logo/Brand Section - Optimized for Mobile */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
-              <Sparkles className="w-4 h-4 text-white" />
+        <nav className="h-20 px-6 sm:px-8 lg:px-12 flex items-center justify-between gap-4 sm:gap-6">
+          {/* Logo/Brand Section */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <Sparkles className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
             </div>
-            <div className="block">
-              <h1 className="text-base sm:text-lg md:text-xl font-bold bg-gradient-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent">
-                ResourcePro
+            <div className="hidden sm:block">
+              <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                Smart Stock
               </h1>
-              <p className={`text-xs transition-colors duration-300 hidden sm:block ${
+              <p className={`text-xs transition-colors duration-300 ${
                 isDarkMode ? 'text-slate-400' : 'text-gray-500'
               }`}>Management System</p>
             </div>
           </div>
 
           {/* Right Section: Prioritized for Mobile/Tablet */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-3 sm:gap-4 lg:gap-5">
             {/* Tablet Navigation - Show on medium screens and up */}
-            <nav className="hidden md:flex items-center space-x-1">
+            <nav className="hidden md:flex items-center space-x-2 lg:space-x-3">
               {navItems.map((item) => (
                 <motion.a
                   key={item.id}
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className={`relative px-3 py-2 text-xs font-medium rounded-lg cursor-pointer transition-all duration-200 ${
+                  className={`relative px-4 py-2.5 text-sm font-medium rounded-lg cursor-pointer transition-all duration-200 ${
                     item.url === pathname.pathname
                       ? "bg-gradient-to-r from-blue-400 to-blue-500 text-white shadow-lg"
                       : isDarkMode 
@@ -173,6 +175,22 @@ const RMHeader = () => {
               }`}>RM</span>
             </div>
 
+            {/* Logout Button */}
+            <button 
+              onClick={() => {
+                logout();
+                navigate('/login');
+              }}
+              className={`p-2 rounded-lg transition-colors duration-200 group ${
+                isDarkMode 
+                  ? 'hover:bg-red-900/20 text-gray-400 hover:text-red-400' 
+                  : 'hover:bg-red-50 text-gray-600 hover:text-red-600'
+              }`}
+              title="Logout"
+            >
+              <LogOut className="h-5 w-5 transition-colors duration-200" />
+            </button>
+
             {/* Mobile Menu Button - Only show on small/medium screens */}
             <motion.button
               whileHover={{ scale: 1.1 }}
@@ -239,25 +257,35 @@ const RMHeader = () => {
                 }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
                         <Sparkles className="w-5 h-5 text-white" />
                       </div>
                       <div>
                         <p className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                          ResourcePro
+                          Smart Stock
                         </p>
                         <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          Mobile Optimized
+                          Management System
                         </p>
                       </div>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      isDarkMode 
-                        ? 'bg-blue-900 text-blue-200' 
-                        : 'bg-blue-100 text-blue-700'
-                    }`}>
-                      v2.0
-                    </div>
+                    
+                    {/* Mobile Logout Button */}
+                    <button 
+                      onClick={() => {
+                        logout();
+                        navigate('/login');
+                        setOpenNavigation(false);
+                      }}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 ${
+                        isDarkMode 
+                          ? 'bg-red-900/20 text-red-400 hover:bg-red-900/30' 
+                          : 'bg-red-50 text-red-600 hover:bg-red-100'
+                      }`}
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span className="text-sm font-medium">Logout</span>
+                    </button>
                   </div>
                 </div>
               </div>

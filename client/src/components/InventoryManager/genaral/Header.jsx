@@ -20,7 +20,7 @@ const Header = () => {
           </div>
           <div className="hidden sm:block">
             <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              InventoryPro
+              Smart Stock
             </h1>
             <p className={`text-xs transition-colors duration-300 ${
               isDarkMode ? 'text-slate-400' : 'text-gray-500'

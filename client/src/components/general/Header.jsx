@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { navigation } from "../../constants";
 import { HiMenu } from "react-icons/hi";
 import { HiX } from "react-icons/hi";
+import { Sparkles } from "lucide-react";
 import { useAuth } from "../../context/auth/AuthContext.jsx";
 import { getDashboardUrl } from "../../utils/authUtils";
 
@@ -118,55 +119,18 @@ const Header = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             
-            {/* Brand Logo Section */}
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="cursor-pointer flex items-center"
-              onClick={() => {
-                const baseUrl = getBaseUrl();
-                const homeUrl = baseUrl ? `${baseUrl}/` : '/';
-                console.log("🏠 Navigating to home:", homeUrl, "for user role:", user?.type || user?.role);
-                navigate(homeUrl);
-              }}
-            >
-              <div className="flex flex-col">
-                <div className="flex items-center gap-2">
-                  {/* Creative Icon */}
-                  <div className="relative">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                      <div className="w-6 h-6 bg-white rounded-md flex items-center justify-center">
-                        <div className="w-3 h-3 bg-gradient-to-br from-blue-600 to-purple-600 rounded-sm" />
-                      </div>
-                    </div>
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
-                  </div>
-                  
-                  {/* Brand Text */}
-                  <div className="hidden sm:block">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-                        InventoryPro
-                      </span>
-                      <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                    </div>
-                    <div className="text-xs text-slate-500 font-medium tracking-wide -mt-1">
-                      Management System
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Mobile Brand Text */}
-                <div className="sm:hidden">
-                  <div className="text-lg font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-                    InventoryPro
-                  </div>
-                  <div className="text-xs text-slate-500 font-medium -mt-1">
-                    Management
-                  </div>
-                </div>
+            {/* Logo/Brand Section */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Sparkles className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
-            </motion.div>
+              <div className="hidden sm:block">
+                <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                  Smart Stock
+                </h1>
+                <p className="text-xs text-gray-500">Management System</p>
+              </div>
+            </div>
 
             <div className="flex items-center">
               {/* Desktop Navigation */}
