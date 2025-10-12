@@ -3,27 +3,6 @@ import { User, Users, HandCoins, ChartNoAxesGantt, TrendingUp, Award, Sparkles, 
 import { FaSpinner } from "react-icons/fa";
 import api from "../../../lib/api";
 
-// // Mock service function for demo
-// const getOverviewData = async (period) => {
-//   // Simulate API delay
-//   await new Promise(resolve => setTimeout(resolve, 1500));
-  
-//   // Generate mock data based on period
-//   const baseData = {
-//     totalCustomers: Math.floor(Math.random() * 500) + 100,
-//     totalIncome: Math.floor(Math.random() * 5000000) + 1000000,
-//     bestSalesReps: [
-//       { sales_rep_id: 1, name: "Alice Johnson" },
-//       { sales_rep_id: 2, name: "Bob Smith" },
-//       { sales_rep_id: 3, name: "Carol Davis" },
-//       { sales_rep_id: 4, name: "David Wilson" },
-//       { sales_rep_id: 5, name: "Eva Brown" }
-//     ]
-//   };
-  
-//   return { success: true, data: baseData };
-// };
-
 const getOverviewData = async (period) => {
   try {
     const response = await api.get("/customers");
@@ -38,10 +17,21 @@ const getOverviewData = async (period) => {
       )
       .map((user, i) => ({ ...user, rank: i + 1 }));
 
+      const responseIncome = await axios.get(
+      "http://localhost:3000/api/reports/yearly-summary?year=2025",
+      { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+    );
+
+    // Calculate total income from all records (use only approved/completed)
+    const incomeData = responseIncome.data.data || [];
+    const totalIncome = incomeData
+      .filter((item) => item.status !== "rejeced")
+      .reduce((sum, item) => sum + parseFloat(item.net_total || 0), 0);
+
 
     const baseData = {
       totalCustomers: totalCustomers,
-      totalIncome: Math.floor(Math.random() * 5000000) + 1000000,
+      totalIncome,
       bestSalesReps: rankedUsers.slice(0, 5).map((u, i) => ({
         sales_rep_id: i + 1,
         name: u.full_name,
@@ -251,7 +241,7 @@ const Overview = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-800">Top Sales Representatives</h3>
-                  <p className="text-sm text-gray-600">Monthly best performers</p>
+                  <p className="text-sm text-gray-600">Best performers</p>
                 </div>
               </div>
             </div>
