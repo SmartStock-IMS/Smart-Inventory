@@ -8,7 +8,7 @@ import axios from "axios";
 const getProducts = async () => {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.get('http://localhost:3000/api/products', {
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/products`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     return { success: true, data: response.data };
@@ -21,7 +21,7 @@ const getProducts = async () => {
 const getAllProducts = async (page = 1, limit = 15) => {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.get('http://localhost:3000/api/products', {
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/products`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       params: {
         page: page,
@@ -52,7 +52,7 @@ const deleteProductsByCategory = async (categoryName) => {
   try {
     const token = localStorage.getItem("token");
     // First, get all products to find products in this category
-    const productsResponse = await axios.get('http://localhost:3000/api/products', {
+    const productsResponse = await axios.get(`${import.meta.env.VITE_API_URL}/products`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     
@@ -63,7 +63,7 @@ const deleteProductsByCategory = async (categoryName) => {
       
       // Delete each product in the category
       const deletePromises = productsInCategory.map(product => 
-        axios.delete(`http://localhost:3000/api/products/${product.product_id}`, {
+        axios.delete(`${import.meta.env.VITE_API_URL}/products/${product.product_id}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         })
       );

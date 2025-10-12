@@ -8,7 +8,7 @@ import axios from "axios";
 const fetchAllProducts = async () => {
   try {
     const token = localStorage.getItem('token');
-    const res = await axios.get('http://localhost:3000/api/products', {
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/products`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       params: { page: 1, limit: 500 }
     });

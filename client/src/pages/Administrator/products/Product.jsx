@@ -70,7 +70,7 @@ const InputWithLabel = ({
 const getDetails = async () => {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.get("http://localhost:3000/api/products", {
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/products`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     return { success: true, data: response.data };
@@ -83,7 +83,7 @@ const getDetails = async () => {
 const updateProduct = async (productCode, data) => {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.put(`http://localhost:3000/api/products/${productCode}`, data, {
+    const response = await axios.put(`${import.meta.env.VITE_API_URL}/products/${productCode}`, data, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     console.log("Update response:", response);
@@ -97,7 +97,7 @@ const updateProduct = async (productCode, data) => {
 const deleteVariant = async (productCode) => {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.delete(`http://localhost:3000/api/products/${productCode}`, {
+    const response = await axios.delete(`${import.meta.env.VITE_API_URL}/products/${productCode}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     return { success: true, message: "Product variant deleted successfully", data: response.data };

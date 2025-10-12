@@ -77,7 +77,7 @@ const Avatar = ({
 
 
 // Fixed API service with proper data handling
-const API_URL = "http://localhost:3000/api/customers";
+const API_URL = `${import.meta.env.VITE_API_URL}/customers`;
 
 const createCustomer = async (payload) => {
   try {

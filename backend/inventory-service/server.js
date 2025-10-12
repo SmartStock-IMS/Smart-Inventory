@@ -17,7 +17,6 @@ app.use(helmet());
 // CORS
 app.use(cors({
   origin: [
-    'http://localhost:5173',
     process.env.GATEWAY_URL // Vite frontend
   ],
   credentials: true

@@ -36,13 +36,13 @@ import axios from "axios";
 const getOverviewData = async (period) => {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.get("http://localhost:3000/api/customers", {
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/customers`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     const totalCustomers = response.data.data.customers[0].total_count;
 
     const response2 = await axios.get(
-      "http://localhost:3000/api/users/sales-staff",
+      `${import.meta.env.VITE_API_URL}/users/sales-staff`,
       {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       }

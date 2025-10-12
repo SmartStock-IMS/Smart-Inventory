@@ -292,7 +292,7 @@ const OrderDetails = ({ item, changeOpen = () => {} }) => {
     setIsUpdatingStatus(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:3000/api/orders/status/${item.order_id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/orders/status/${item.order_id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

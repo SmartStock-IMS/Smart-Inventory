@@ -69,7 +69,7 @@ const VehicleManagement = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:3000/api/resources/vehicle', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/resources/vehicle`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ const VehicleManagement = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/resources/vehicle', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/resources/vehicle`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -155,7 +155,7 @@ const VehicleManagement = () => {
   const handleUpdateVehicle = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/resources/vehicle/${editingVehicle.vehicle_id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/resources/vehicle/${editingVehicle.vehicle_id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -192,7 +192,7 @@ const VehicleManagement = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/resources/vehicle/${vehicleId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/resources/vehicle/${vehicleId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

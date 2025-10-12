@@ -36,7 +36,7 @@ const History = () => {
     if (!salesRepId) return;
     setIsLoading(true);
     const token = localStorage.getItem("token");
-    fetch(`http://localhost:3000/api/orders/by-sales-rep/${salesRepId}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/orders/by-sales-rep/${salesRepId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
