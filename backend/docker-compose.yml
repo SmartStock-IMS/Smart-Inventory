@@ -1,22 +1,6 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15
-    container_name: smartstock-postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
-    networks:
-      - smartstock-network
-
   # API Gateway
   api-gateway:
     build: ./api-gateway
@@ -47,16 +31,14 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=3001
-      - DB_HOST=postgres
-      - DB_PORT=5432
+      - DB_HOST=<your-db-host>
+      - DB_PORT=<your-db-port>
       - DB_NAME=smartstock_users
-      - DB_USER=postgres
-      - DB_PASSWORD=password
+      - DB_USER=<your-db-user>
+      - DB_PASSWORD=<your-db-password>
       - JWT_SECRET=your-super-secret-jwt-key-for-user-service
       - JWT_REFRESH_SECRET=your-super-secret-refresh-key-for-user-service
       - GATEWAY_URL=http://api-gateway:3000
-    depends_on:
-      - postgres
     networks:
       - smartstock-network
 
@@ -69,14 +51,12 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=3002
-      - DB_HOST=postgres
-      - DB_PORT=5432
+      - DB_HOST=<your-db-host>
+      - DB_PORT=<your-db-port>
       - DB_NAME=smartstock_inventory
-      - DB_USER=postgres
-      - DB_PASSWORD=password
+      - DB_USER=<your-db-user>
+      - DB_PASSWORD=<your-db-password>
       - GATEWAY_URL=http://api-gateway:3000
-    depends_on:
-      - postgres
     networks:
       - smartstock-network
 
@@ -89,21 +69,17 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=3003
-      - DB_HOST=postgres
-      - DB_PORT=5432
+      - DB_HOST=<your-db-host>
+      - DB_PORT=<your-db-port>
       - DB_NAME=smartstock_orders
-      - DB_USER=postgres
-      - DB_PASSWORD=password
+      - DB_USER=<your-db-user>
+      - DB_PASSWORD=<your-db-password>
       - GATEWAY_URL=http://api-gateway:3000
       - INVENTORY_SERVICE_URL=http://inventory-service:3002
     depends_on:
-      - postgres
       - inventory-service
     networks:
       - smartstock-network
-
-volumes:
-  postgres_data:
 
 networks:
   smartstock-network:
