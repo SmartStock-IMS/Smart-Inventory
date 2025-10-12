@@ -1,19 +1,20 @@
-
 services:
   # API Gateway
   api-gateway:
     build: ./api-gateway
     container_name: smartstock-api-gateway
     ports:
-      - "3000:3000"
+      - "${API_GATEWAY_PORT:-3000}:3000"
+    env_file:
+      - .env
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV:-development}
       - PORT=3000
-      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
-      - USER_SERVICE_URL=http://user-service:3001
-      - INVENTORY_SERVICE_URL=http://inventory-service:3002
-      - ORDER_SERVICE_URL=http://order-service:3003
-      - FRONTEND_URL=http://client:5173
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      - USER_SERVICE_URL=${USER_SERVICE_URL:-http://user-service:3001}
+      - INVENTORY_SERVICE_URL=${INVENTORY_SERVICE_URL:-http://inventory-service:3002}
+      - ORDER_SERVICE_URL=${ORDER_SERVICE_URL:-http://order-service:3003}
+      - FRONTEND_URL=${FRONTEND_URL:-http://client:5173}
     depends_on:
       - user-service
       - inventory-service
@@ -26,18 +27,20 @@ services:
     build: ./user-service
     container_name: smartstock-user-service
     ports:
-      - "3001:3001"
+      - "${USER_SERVICE_PORT:-3001}:3001"
+    env_file:
+      - .env
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV:-development}
       - PORT=3001
-      - DB_HOST=<your-db-host>
-      - DB_PORT=<your-db-port>
-      - DB_NAME=smartstock_users
-      - DB_USER=<your-db-user>
-      - DB_PASSWORD=<your-db-password>
-      - JWT_SECRET=your-super-secret-jwt-key-for-user-service
-      - JWT_REFRESH_SECRET=your-super-secret-refresh-key-for-user-service
-      - GATEWAY_URL=http://api-gateway:3000
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME:-smartstock_users}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-for-user-service}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-your-super-secret-refresh-key-for-user-service}
+      - GATEWAY_URL=${GATEWAY_URL:-http://api-gateway:3000}
     networks:
       - smartstock-network
 
@@ -46,16 +49,18 @@ services:
     build: ./inventory-service
     container_name: smartstock-inventory-service
     ports:
-      - "3002:3002"
+      - "${INVENTORY_SERVICE_PORT:-3002}:3002"
+    env_file:
+      - .env
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV:-development}
       - PORT=3002
-      - DB_HOST=<your-db-host>
-      - DB_PORT=<your-db-port>
-      - DB_NAME=smartstock_inventory
-      - DB_USER=<your-db-user>
-      - DB_PASSWORD=<your-db-password>
-      - GATEWAY_URL=http://api-gateway:3000
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME:-smartstock_inventory}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - GATEWAY_URL=${GATEWAY_URL:-http://api-gateway:3000}
     networks:
       - smartstock-network
 
@@ -64,17 +69,19 @@ services:
     build: ./order-service
     container_name: smartstock-order-service
     ports:
-      - "3003:3003"
+      - "${ORDER_SERVICE_PORT:-3003}:3003"
+    env_file:
+      - .env
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV:-development}
       - PORT=3003
-      - DB_HOST=<your-db-host>
-      - DB_PORT=<your-db-port>
-      - DB_NAME=smartstock_orders
-      - DB_USER=<your-db-user>
-      - DB_PASSWORD=<your-db-password>
-      - GATEWAY_URL=http://api-gateway:3000
-      - INVENTORY_SERVICE_URL=http://inventory-service:3002
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME:-smartstock_orders}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - GATEWAY_URL=${GATEWAY_URL:-http://api-gateway:3000}
+      - INVENTORY_SERVICE_URL=${INVENTORY_SERVICE_URL:-http://inventory-service:3002}
     depends_on:
       - inventory-service
     networks:
@@ -87,7 +94,9 @@ services:
       dockerfile: Dockerfile
     container_name: smartstock-client
     ports:
-      - "5173:5173"
+      - "${CLIENT_PORT:-5173}:5173"
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
     networks:
