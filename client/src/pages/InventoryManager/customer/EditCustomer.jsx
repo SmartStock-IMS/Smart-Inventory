@@ -101,7 +101,7 @@ const EditCustomer = () => {
 
         // Fetch all customers
         const response = await axios.get(
-          "http://localhost:3000/api/customers",
+          `${import.meta.env.VITE_API_URL}/customers`,
           {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           }
@@ -188,7 +188,7 @@ const EditCustomer = () => {
 
       // Update customer - adjust endpoint based on your actual API
       const response = await axios.put(
-        `http://localhost:3000/api/customers/${formData.customer_id}`,
+        `${import.meta.env.VITE_API_URL}/customers/${formData.customer_id}`,
         payload,
         {
           headers: token ? { Authorization: `Bearer ${token}` } : {},

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaSpinner, FaSearch, FaFilter, FaTh, FaList } from "react-icons/fa";
 
 // API base URL
-const API_BASE_URL = "http://localhost:3000/api";
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}`;
 
 const Home = () => {
   const navigate = useNavigate();
@@ -114,7 +114,7 @@ const Home = () => {
   // Helper function to get default image based on category
   const getDefaultImage = (categoryName) => {
     const imageMap = {
-      'Black Pepper': 'https://images.unsplash.com/photo-1599909533096-d0417a0bbb5c?w=400&h=400&fit=crop',
+      'Black Pepper': 'https://www.istockphoto.com/photo/ground-black-pepper-gm979264404-266116930?searchscope=image%2Cfilm',
       'Cardamom': 'https://images.unsplash.com/photo-1609501676725-7186f08b4e57?w=400&h=400&fit=crop',
       'Cinnamon': 'https://images.unsplash.com/photo-1588346828312-7dca30804b73?w=400&h=400&fit=crop',
       'Spices': 'https://images.unsplash.com/photo-1596040798370-7d01bd6461ae?w=400&h=400&fit=crop',

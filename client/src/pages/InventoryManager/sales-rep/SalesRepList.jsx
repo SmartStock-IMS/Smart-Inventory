@@ -32,7 +32,7 @@ const getSalesRepDetails = async () => {
   try {
     const token = localStorage.getItem("token");
     const response = await axios.get(
-      "http://localhost:3000/api/users/sales-staff",
+      `${import.meta.env.VITE_API_URL}/users/sales-staff`,
       {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       }
@@ -97,7 +97,7 @@ const SalesRepList = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.delete(
-        `http://localhost:3000/api/sales-rep/${empCode}`,
+        `${import.meta.env.VITE_API_URL}/sales-rep/${empCode}`,
         {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         }

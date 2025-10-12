@@ -19,7 +19,7 @@ const CustomerDetails = () => {
         
         // Fetch all customers
         const customersResponse = await axios.get(
-          "http://localhost:3000/api/customers",
+          `${import.meta.env.VITE_API_URL}/customers`,
           {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           }
@@ -40,7 +40,7 @@ const CustomerDetails = () => {
         
         // Fetch all orders/quotations
         const ordersResponse = await axios.get(
-          "http://localhost:3000/api/orders/all-data",
+          `${import.meta.env.VITE_API_URL}/orders/all-data`,
           {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           }

@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
 
-const API_BASE_URL = "http://localhost:3000/api/reports";
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/reports`;
 
 const formatDateForAPI = (date) => {
   const year = date.getFullYear();

@@ -154,7 +154,7 @@ const ResourceOrders = () => {
         return [];
       }
 
-      const response = await fetch(`http://localhost:3000/api/orders/by-resource-manager/${rmId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/orders/by-resource-manager/${rmId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -266,7 +266,7 @@ const ResourceOrders = () => {
     try {
       // Call the API to update order status to completed
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/orders/status/${orderToComplete.quotation_id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/orders/status/${orderToComplete.quotation_id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

@@ -23,22 +23,22 @@ const YearlySummary = () => {
 
         // Fetch all data concurrently
         const [summaryResult, statsResult, breakdownResult, statusResult] = await Promise.all([
-          fetch(`http://localhost:3000/api/reports/yearly-summary?year=${selectedYear}&status=${statusFilter === "All" ? "" : statusFilter}`, {
+          fetch(`${import.meta.env.VITE_API_URL}/reports/yearly-summary?year=${selectedYear}&status=${statusFilter === "All" ? "" : statusFilter}`, {
             headers: {
               'authorization': `Bearer ${localStorage.getItem('token')}`
             }
           }).then(res => res.json()),
-          fetch(`http://localhost:3000/api/reports/yearly-summary-stats?year=${selectedYear}&status=${statusFilter === "All" ? "" : statusFilter}`, {
+          fetch(`${import.meta.env.VITE_API_URL}/reports/yearly-summary-stats?year=${selectedYear}&status=${statusFilter === "All" ? "" : statusFilter}`, {
             headers: {
               'authorization': `Bearer ${localStorage.getItem('token')}`
             }
           }).then(res => res.json()),
-          fetch(`http://localhost:3000/api/reports/monthly-breakdown?year=${selectedYear}&status=${statusFilter === "All" ? "" : statusFilter}`, {
+          fetch(`${import.meta.env.VITE_API_URL}/reports/monthly-breakdown?year=${selectedYear}&status=${statusFilter === "All" ? "" : statusFilter}`, {
             headers: {
               'authorization': `Bearer ${localStorage.getItem('token')}`
             }
           }).then(res => res.json()),
-          fetch(`http://localhost:3000/api/reports/yearly-status-options?year=${selectedYear}`, {
+          fetch(`${import.meta.env.VITE_API_URL}/reports/yearly-status-options?year=${selectedYear}`, {
             headers: {
               'authorization': `Bearer ${localStorage.getItem('token')}`
             }

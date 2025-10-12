@@ -65,7 +65,7 @@ const fetchCategories = async () => {
     const token = localStorage.getItem('token');
     if (!token) return [];
 
-    const response = await fetch('http://localhost:3000/api/categories', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/categories`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -90,7 +90,7 @@ const addProduct = async (payload) => {
       throw new Error('Authentication token not found');
     }
 
-    const response = await fetch('http://localhost:3000/api/products', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/products`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

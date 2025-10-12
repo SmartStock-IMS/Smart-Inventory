@@ -31,7 +31,7 @@ const getAllRMs = async () => {
   try {
     const token = localStorage.getItem("token");
     const response = await axios.get(
-      "http://localhost:3000/api/users/resource-manager",
+      `${import.meta.env.VITE_API_URL}/users/resource-manager`,
       {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       }

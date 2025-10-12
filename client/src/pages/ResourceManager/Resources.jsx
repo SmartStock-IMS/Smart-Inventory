@@ -86,7 +86,7 @@ const ResourceOrders = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:3000/api/resources/vehicle', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/resources/vehicle`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -125,7 +125,7 @@ const ResourceOrders = () => {
         return;
       }
 
-      const response = await fetch(`http://localhost:3000/api/resources/stock-movement/inprogress/${rmId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/resources/stock-movement/inprogress/${rmId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -242,7 +242,7 @@ const ResourceOrders = () => {
 
         // Call the stock movement API
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:3000/api/resources/stock-movement', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/resources/stock-movement`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -295,7 +295,7 @@ const ResourceOrders = () => {
         return;
       }
 
-      const response = await fetch(`http://localhost:3000/api/resources/stock-movement/${movementId}/complete`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/resources/stock-movement/${movementId}/complete`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
