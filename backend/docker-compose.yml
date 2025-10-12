@@ -14,7 +14,7 @@ services:
       - USER_SERVICE_URL=http://user-service:3001
       - INVENTORY_SERVICE_URL=http://inventory-service:3002
       - ORDER_SERVICE_URL=http://order-service:3003
-      - FRONTEND_URL=http://localhost:5173
+      - FRONTEND_URL=http://client:5173
     depends_on:
       - user-service
       - inventory-service
@@ -78,6 +78,19 @@ services:
       - INVENTORY_SERVICE_URL=http://inventory-service:3002
     depends_on:
       - inventory-service
+    networks:
+      - smartstock-network
+
+  # React Client
+  client:
+    build:
+      context: ../client
+      dockerfile: Dockerfile
+    container_name: smartstock-client
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=production
     networks:
       - smartstock-network
 
