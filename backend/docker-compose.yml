@@ -89,7 +89,7 @@ services:
 
   # React Client (pulled from Docker Hub)
   client:
-    image: YOUR_DOCKERHUB_USERNAME/smartstock-client:v1.0.0   # <-- replace with your image name and tag
+    image: nipungunarathna/smartstock-client:v1.0.0  
     container_name: smartstock-client
     ports:
       - "${CLIENT_PORT:-80}:80"   # assuming client image runs with NGINX on port 80
