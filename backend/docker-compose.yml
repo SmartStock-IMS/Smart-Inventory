@@ -1,36 +1,20 @@
-version: '3.8'
-
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15
-    container_name: smartstock-postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
-    networks:
-      - smartstock-network
-
   # API Gateway
   api-gateway:
     build: ./api-gateway
     container_name: smartstock-api-gateway
     ports:
-      - "3000:3000"
+      - "${API_GATEWAY_PORT:-3000}:3000"
+    env_file:
+      - .env
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV:-development}
       - PORT=3000
-      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
-      - USER_SERVICE_URL=http://user-service:3001
-      - INVENTORY_SERVICE_URL=http://inventory-service:3002
-      - ORDER_SERVICE_URL=http://order-service:3003
-      - FRONTEND_URL=http://localhost:5173
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      - USER_SERVICE_URL=${USER_SERVICE_URL:-http://user-service:3001}
+      - INVENTORY_SERVICE_URL=${INVENTORY_SERVICE_URL:-http://inventory-service:3002}
+      - ORDER_SERVICE_URL=${ORDER_SERVICE_URL:-http://order-service:3003}
+      - FRONTEND_URL=${FRONTEND_URL:-http://client:5173}
     depends_on:
       - user-service
       - inventory-service
@@ -43,20 +27,20 @@ services:
     build: ./user-service
     container_name: smartstock-user-service
     ports:
-      - "3001:3001"
+      - "${USER_SERVICE_PORT:-3001}:3001"
+    env_file:
+      - .env
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV:-development}
       - PORT=3001
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=smartstock_users
-      - DB_USER=postgres
-      - DB_PASSWORD=password
-      - JWT_SECRET=your-super-secret-jwt-key-for-user-service
-      - JWT_REFRESH_SECRET=your-super-secret-refresh-key-for-user-service
-      - GATEWAY_URL=http://api-gateway:3000
-    depends_on:
-      - postgres
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME:-smartstock_users}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-for-user-service}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-your-super-secret-refresh-key-for-user-service}
+      - GATEWAY_URL=${GATEWAY_URL:-http://api-gateway:3000}
     networks:
       - smartstock-network
 
@@ -65,18 +49,18 @@ services:
     build: ./inventory-service
     container_name: smartstock-inventory-service
     ports:
-      - "3002:3002"
+      - "${INVENTORY_SERVICE_PORT:-3002}:3002"
+    env_file:
+      - .env
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV:-development}
       - PORT=3002
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=smartstock_inventory
-      - DB_USER=postgres
-      - DB_PASSWORD=password
-      - GATEWAY_URL=http://api-gateway:3000
-    depends_on:
-      - postgres
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME:-smartstock_inventory}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - GATEWAY_URL=${GATEWAY_URL:-http://api-gateway:3000}
     networks:
       - smartstock-network
 
@@ -85,25 +69,38 @@ services:
     build: ./order-service
     container_name: smartstock-order-service
     ports:
-      - "3003:3003"
+      - "${ORDER_SERVICE_PORT:-3003}:3003"
+    env_file:
+      - .env
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV:-development}
       - PORT=3003
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=smartstock_orders
-      - DB_USER=postgres
-      - DB_PASSWORD=password
-      - GATEWAY_URL=http://api-gateway:3000
-      - INVENTORY_SERVICE_URL=http://inventory-service:3002
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME:-smartstock_orders}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - GATEWAY_URL=${GATEWAY_URL:-http://api-gateway:3000}
+      - INVENTORY_SERVICE_URL=${INVENTORY_SERVICE_URL:-http://inventory-service:3002}
     depends_on:
-      - postgres
       - inventory-service
     networks:
       - smartstock-network
 
-volumes:
-  postgres_data:
+  # React Client
+  client:
+    build:
+      context: ../client
+      dockerfile: Dockerfile
+    container_name: smartstock-client
+    ports:
+      - "${CLIENT_PORT:-5173}:5173"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    networks:
+      - smartstock-network
 
 networks:
   smartstock-network:

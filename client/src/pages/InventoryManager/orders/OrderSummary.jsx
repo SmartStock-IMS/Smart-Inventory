@@ -146,7 +146,7 @@ const OrderSummary = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:3000/api/orders/all-data', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/orders/all-data`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -180,7 +180,7 @@ const OrderSummary = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:3000/api/users/resource-manager', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/resource-manager`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -404,7 +404,7 @@ const OrderSummary = () => {
       
       // Call the API to assign the order
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/orders/assign', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/orders/assign`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -512,7 +512,7 @@ const OrderSummary = () => {
       
       // Call the API to assign the order
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/orders/assign', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/orders/assign`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

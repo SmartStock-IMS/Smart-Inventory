@@ -36,13 +36,13 @@ import axios from "axios";
 const getOverviewData = async (period) => {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.get("http://localhost:3000/api/customers", {
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/customers`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     const totalCustomers = response.data.data.customers[0].total_count;
 
     const response2 = await axios.get(
-      "http://localhost:3000/api/users/sales-staff",
+      `${import.meta.env.VITE_API_URL}/users/sales-staff`,
       {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       }
@@ -55,10 +55,22 @@ const getOverviewData = async (period) => {
       )
       .map((user, i) => ({ ...user, rank: i + 1 }));
 
+      const responseIncome = await axios.get(
+      "http://localhost:3000/api/reports/yearly-summary?year=2025",
+      { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+    );
+
+    // Calculate total income from all records (use only approved/completed)
+    const incomeData = responseIncome.data.data || [];
+    const totalIncome = incomeData
+      .filter((item) => item.status !== "rejeced")
+      .reduce((sum, item) => sum + parseFloat(item.net_total || 0), 0);
+
+
 
     const baseData = {
       totalCustomers: totalCustomers,
-      totalIncome: Math.floor(Math.random() * 5000000) + 1000000,
+      totalIncome,
       bestSalesReps: rankedUsers.slice(0, 5).map((u, i) => ({
         sales_rep_id: i + 1,
         name: u.full_name,
@@ -300,7 +312,7 @@ const Overview = () => {
                     Top Sales Representatives
                   </h3>
                   <p className="text-sm text-gray-600">
-                    Monthly best performers
+                    Best performers
                   </p>
                 </div>
               </div>

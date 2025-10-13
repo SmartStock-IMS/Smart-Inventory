@@ -21,7 +21,7 @@ const DailySummary = () => {
   const fetchDailySummary = async (date, status) => {
     const token = localStorage.getItem('token'); // Adjust based on your auth implementation
     const statusParam = status === "All" ? "" : `&status=${status}`; // Pass empty string for "All"
-    const response = await fetch(`http://localhost:3000/api/reports/daily-summary?date=${date}${statusParam}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/reports/daily-summary?date=${date}${statusParam}`, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}` 
@@ -34,7 +34,7 @@ const DailySummary = () => {
 
   const fetchDailySummaryStats = async (date) => {
     const token = localStorage.getItem('token'); // Adjust based on your auth implementation
-    const response = await fetch(`http://localhost:3000/api/reports/daily-summary-stats?date=${date}`,{
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/reports/daily-summary-stats?date=${date}`,{
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}` 
@@ -47,7 +47,7 @@ const DailySummary = () => {
 
   const fetchDailyStatusOptions = async (date) => {
     const token = localStorage.getItem('token'); // Adjust based on your auth implementation
-    const response = await fetch(`http://localhost:3000/api/reports/daily-status-options?date=${date}`,{
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/reports/daily-status-options?date=${date}`,{
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}` 

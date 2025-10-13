@@ -78,7 +78,7 @@ const Avatar = memo(
 Avatar.displayName = "Avatar";
 
 // Fixed API service with proper data handling
-const API_URL = "http://localhost:3000/api/auth/register";
+const API_URL = `${import.meta.env.VITE_API_URL}/auth/register`;
 
 const createSalesRep = async (salesRepData) => {
   try {

@@ -13,7 +13,7 @@ const createCustomer = async (data) => {
     throw new Error('Authentication token not found');
   }
 
-  const response = await fetch('http://localhost:3000/api/customers', {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/customers`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -24,7 +24,7 @@ import axios from "axios";
 const getAllCustomersNoPage = async () => {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.get("http://localhost:3000/api/customers", {
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/customers`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     console.log("API response:", response.data.data.customers);

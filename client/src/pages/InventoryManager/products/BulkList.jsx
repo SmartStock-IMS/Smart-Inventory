@@ -83,7 +83,7 @@ const getProductByCode = (productCode) => {
 const fetchAllProducts = async () => {
   try {
     const token = localStorage.getItem('token');
-    const res = await axios.get('http://localhost:3000/api/products', {
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/products`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       params: { page: 1, limit: 500 }
     });
@@ -99,7 +99,7 @@ const updateProductQuantity = async (bulkItems) => {
   try {
     const token = localStorage.getItem('token');
     // fetch current products to get latest stock
-    const listRes = await axios.get('http://localhost:3000/api/products', {
+    const listRes = await axios.get(`${import.meta.env.VITE_API_URL}/products`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       params: { page: 1, limit: 500 }
     });
@@ -124,7 +124,7 @@ const updateProductQuantity = async (bulkItems) => {
         // only change quantity
         quantity: nextQty
       };
-      await axios.put(`http://localhost:3000/api/products/${encodeURIComponent(item.item_code)}`,
+      await axios.put(`${import.meta.env.VITE_API_URL}/products/${encodeURIComponent(item.item_code)}`,
         payload,
         { headers: token ? { Authorization: `Bearer ${token}` } : {} }
       );

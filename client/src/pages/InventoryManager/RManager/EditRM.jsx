@@ -75,7 +75,7 @@ const getRMDetails = async (resourceManagerId) => {
   try {
     const token = localStorage.getItem("token");
     const response = await axios.get(
-      "http://localhost:3000/api/users/resource-manager",
+      `${import.meta.env.VITE_API_URL}/users/resource-manager`,
       {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       }
@@ -125,7 +125,7 @@ const updateRMDetails = async (resourceManagerId, updateData) => {
     console.log("Sending update request:", requestBody);
 
     const response = await axios.put(
-      `http://localhost:3000/api/users/resource-manager/${resourceManagerId}`,
+      `${import.meta.env.VITE_API_URL}/users/resource-manager/${resourceManagerId}`,
       requestBody,
       {
         headers: token ? { Authorization: `Bearer ${token}` } : {},

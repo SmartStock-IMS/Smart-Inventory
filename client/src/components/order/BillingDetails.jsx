@@ -62,7 +62,7 @@ const BillingDetails = () => {
       setIsLoading(true);
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch("http://localhost:3000/api/customers", {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/customers`, {
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json"
@@ -229,7 +229,7 @@ const BillingDetails = () => {
 
       // Call API endpoint
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:3000/api/orders", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/orders`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

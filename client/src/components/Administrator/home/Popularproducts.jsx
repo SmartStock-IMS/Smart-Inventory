@@ -57,7 +57,7 @@ const getPopularProductsDataOriginal = async () => {
   try {
     const token = localStorage.getItem("token");
     const response = await axios.get(
-      "http://localhost:3000/api/products/popular",
+      `${import.meta.env.VITE_API_URL}/products/popular`,
       {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       }

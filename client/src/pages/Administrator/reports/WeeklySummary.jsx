@@ -29,7 +29,7 @@ const WeeklySummary = () => {
   const fetchWeeklySummary = async (weekStartDate, status) => {
     const token = localStorage.getItem('token'); // Adjust based on your auth implementation
     const statusParam = status === "All" ? "" : `&status=${status}`; // Pass empty string for "All"
-    const response = await fetch(`http://localhost:3000/api/reports/weekly-summary?week_start_date=${weekStartDate}${statusParam}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/reports/weekly-summary?week_start_date=${weekStartDate}${statusParam}`, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
@@ -43,7 +43,7 @@ const WeeklySummary = () => {
   const fetchWeeklySummaryStats = async (weekStartDate, status) => {
     const token = localStorage.getItem('token'); // Adjust based on your auth implementation
     const statusParam = status === "All" ? "" : `&status=${status}`; // Pass empty string for "All"
-    const response = await fetch(`http://localhost:3000/api/reports/weekly-summary-stats?week_start_date=${weekStartDate}${statusParam}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/reports/weekly-summary-stats?week_start_date=${weekStartDate}${statusParam}`, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
@@ -56,7 +56,7 @@ const WeeklySummary = () => {
 
   const fetchWeeklyStatusOptions = async (weekStartDate) => {
     const token = localStorage.getItem('token'); // Adjust based on your auth implementation
-    const response = await fetch(`http://localhost:3000/api/reports/weekly-status-options?week_start_date=${weekStartDate}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/reports/weekly-status-options?week_start_date=${weekStartDate}`, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`

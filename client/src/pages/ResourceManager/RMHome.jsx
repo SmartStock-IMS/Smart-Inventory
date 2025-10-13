@@ -36,12 +36,12 @@ function getRMIdFromToken() {
 
 // Get current RM (Test RM - EMP001 from Mumbai Central)
 const getCurrentRM = () => ({
-  id: "EMP001",
-  emp_code: "EMP001", 
-  name: "Arjun Singh",
-  sales_area: "Mumbai Central",
-  email: "arjun.singh@company.com",
-  phone: "+91 98765 43210"
+  id: "",
+  emp_code: "", 
+  name: "",
+  sales_area: "",
+  email: "",
+  phone: ""
 });
 
 // Transform API order data to match the expected format
@@ -302,7 +302,7 @@ const RMHome = () => {
         return [];
       }
 
-      const response = await fetch(`http://localhost:3000/api/orders/by-resource-manager/${rmId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/orders/by-resource-manager/${rmId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -378,7 +378,7 @@ const RMHome = () => {
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold">Delivery Dashboard</h1>
                 <p className="text-blue-100">
-                  Welcome, <strong>{currentRM?.name}</strong> ({currentRM?.emp_code}) • 📍 {currentRM?.sales_area}
+                  Welcome
                 </p>
               </div>
             </div>
