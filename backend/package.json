@@ -1,0 +1,28 @@
+{
+  "name": "smartstock-backend-tests",
+  "version": "1.0.0",
+  "description": "Test runner for SmartStock Backend Microservices",
+  "private": true,
+  "scripts": {
+    "test": "npm run test:all",
+    "test:all": "npm run test:api-gateway && npm run test:inventory && npm run test:order && npm run test:user",
+    "test:api-gateway": "cd api-gateway && npm test",
+    "test:inventory": "cd inventory-service && npm test",
+    "test:order": "cd order-service && npm test",
+    "test:user": "cd user-service && npm test",
+    "test:coverage": "npm run test:coverage:all",
+    "test:coverage:all": "npm run test:coverage:api-gateway && npm run test:coverage:inventory && npm run test:coverage:order && npm run test:coverage:user",
+    "test:coverage:api-gateway": "cd api-gateway && npm run test:coverage",
+    "test:coverage:inventory": "cd inventory-service && npm run test:coverage",
+    "test:coverage:order": "cd order-service && npm run test:coverage",
+    "test:coverage:user": "cd user-service && npm run test:coverage",
+    "install:all": "npm run install:api-gateway && npm run install:inventory && npm run install:order && npm run install:user",
+    "install:api-gateway": "cd api-gateway && npm install",
+    "install:inventory": "cd inventory-service && npm install",
+    "install:order": "cd order-service && npm install",
+    "install:user": "cd user-service && npm install"
+  },
+  "keywords": ["microservices", "testing", "jest"],
+  "author": "SmartStock Team",
+  "license": "ISC"
+}

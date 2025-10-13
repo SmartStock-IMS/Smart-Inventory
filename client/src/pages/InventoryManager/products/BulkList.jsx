@@ -4,15 +4,53 @@ import { FaSpinner } from "react-icons/fa";
 import { Trash2, Plus, Minus, Save, ArrowLeft, Package, ShoppingCart, CheckCircle, AlertCircle, Truck } from "lucide-react";
 import axios from "axios";
 
+// Fetch categories to get Cloudinary images
+const fetchCategories = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return { success: false, data: [] };
+
+    console.log('Fetching categories from API...');
+    const response = await axios.get('http://localhost:3000/api/categories', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log('Categories API response:', response.data);
+    const result = response.data;
+    if (result.success && result.data) {
+      const categories = result.data.categories || [];
+      console.log('Processed categories:', categories);
+      return { success: true, data: categories };
+    }
+    return { success: false, data: [] };
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return { success: false, data: [] };
+  }
+};
+
 // Resolve a single product/variant by product_id from backend list
-const resolveProductById = (allProducts, productId) => {
+const resolveProductById = (allProducts, categories, productId) => {
   const p = (allProducts || []).find(x => x.product_id === productId);
   if (!p) return null;
+  
+  console.log('Resolving product:', p.product_id, 'Category:', p.category_name);
+  
+  // Find the category image from the categories list
+  const category = (categories || []).find(cat => cat.category_name === p.category_name);
+  console.log('Found category:', category);
+  
+  const categoryImage = category?.pic_url; // Only use Cloudinary image from database
+  console.log('Category image URL:', categoryImage);
+  
   return {
     id: p.product_id,
     product_code: p.product_id,
     name: p.name || p.category_name,
-    image: `https://loremflickr.com/300/300/${encodeURIComponent(p.category_name || 'product')}`,
+    image: categoryImage, // Only use database image
     category: p.category_name,
     weight: p.name,
     price: parseFloat(p.selling_price || 0),
@@ -120,6 +158,7 @@ const BulkList = () => {
 
   const [reqData, setReqData] = useState(initialBulkList);
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -127,28 +166,51 @@ const BulkList = () => {
     (async () => {
       try {
         setIsLoading(true);
-        const all = await fetchAllProducts();
-        const list = all.success ? all.data : [];
+        
+        console.log('BulkList: Starting to fetch data...');
+        
+        // Fetch both products and categories
+        const [productsRes, categoriesRes] = await Promise.all([
+          fetchAllProducts(),
+          fetchCategories()
+        ]);
+        
+        console.log('BulkList: Products response:', productsRes);
+        console.log('BulkList: Categories response:', categoriesRes);
+        
+        const productsList = productsRes.success ? productsRes.data : [];
+        const categoriesList = categoriesRes.success ? categoriesRes.data : [];
+        
+        console.log('BulkList: Products list:', productsList.length, 'items');
+        console.log('BulkList: Categories list:', categoriesList.length, 'items');
+        console.log('BulkList: Sample category:', categoriesList[0]);
+        
+        setCategories(categoriesList);
 
         if (initialBulkList && initialBulkList.length > 0) {
+          console.log('BulkList: Initial bulk list:', initialBulkList);
+          
           // Map navigation list to products resolved from backend list
           const bulkProducts = initialBulkList.map(bulkItem => {
-            const p = resolveProductById(list, bulkItem.item_code);
-            if (!p) return null;
+            console.log('BulkList: Resolving bulk item:', bulkItem);
+            const p = resolveProductById(productsList, categoriesList, bulkItem.item_code);
+            if (!p) {
+              console.log('BulkList: Could not resolve product for item_code:', bulkItem.item_code);
+              return null;
+            }
+            console.log('BulkList: Resolved product:', p);
             return { ...p, bulk_qty: bulkItem.quantity };
           }).filter(Boolean);
+          
+          console.log('BulkList: Final bulk products:', bulkProducts);
           setProducts(bulkProducts);
         } else {
+          console.log('BulkList: No initial bulk list provided');
           setProducts([]);
         }
       } catch (error) {
-        console.error("Error loading products:", error);
-        // Fallback to sample products
-        const fallbackProducts = [
-          getProductByCode("TMP003-100G"),
-          getProductByCode("RCP007-250G")
-        ].filter(Boolean).map(product => ({ ...product, bulk_qty: 5 }));
-        setProducts(fallbackProducts);
+        console.error("BulkList: Error loading products:", error);
+        setProducts([]);
       } finally {
         setIsLoading(false);
       }
@@ -318,11 +380,17 @@ const BulkList = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
                           <div className="w-16 h-16 rounded-xl overflow-hidden shadow-sm border border-gray-100">
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="w-full h-full object-cover"
-                            />
+                            {item.image ? (
+                              <img
+                                src={item.image}
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                <Package className="w-6 h-6 text-gray-400" />
+                              </div>
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-gray-800">{item.name}</p>

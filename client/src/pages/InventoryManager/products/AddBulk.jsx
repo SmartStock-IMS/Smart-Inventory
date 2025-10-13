@@ -20,6 +20,31 @@ const fetchAllProducts = async () => {
   }
 };
 
+// Fetch categories to get Cloudinary images
+const fetchCategories = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return { success: false, data: [] };
+
+    const response = await axios.get('http://localhost:3000/api/categories', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const result = response.data;
+    if (result.success && result.data) {
+      const categories = result.data.categories || [];
+      return { success: true, data: categories };
+    }
+    return { success: false, data: [] };
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return { success: false, data: [] };
+  }
+};
+
 // Mock toast function
 const toast = {
   success: (message) => console.log(`✅ ${message}`),
@@ -88,6 +113,7 @@ const cn = (...classes) => classes.filter(Boolean).join(' ');
 const AddBulk = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
+  const [categoriesData, setCategoriesData] = useState([]);
   const [productBulk, setProductBulk] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -99,18 +125,36 @@ const AddBulk = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
+  // Helper function to get category image from database
+  const getCategoryImage = (categoryName) => {
+    const category = categoriesData.find(cat => cat.category_name === categoryName);
+    return category?.pic_url || null;
+  };
+
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
-        const response = await fetchAllProducts();
-        if (response.success) {
-          setProducts(response.data);
+        
+        // Fetch both products and categories
+        const [productsRes, categoriesRes] = await Promise.all([
+          fetchAllProducts(),
+          fetchCategories()
+        ]);
+        
+        if (productsRes.success) {
+          setProducts(productsRes.data);
         } else {
-          console.error("Error fetching products: ", response.message);
+          console.error("Error fetching products: ", productsRes.message);
+        }
+        
+        if (categoriesRes.success) {
+          setCategoriesData(categoriesRes.data);
+        } else {
+          console.error("Error fetching categories: ", categoriesRes.message);
         }
       } catch (error) {
-        console.error("Error getting products.", error);
+        console.error("Error getting products and categories.", error);
       } finally {
         setLoading(false);
       }
@@ -133,7 +177,7 @@ const AddBulk = () => {
           id: p.product_id,
           name: p.name,
           category: name,
-          main_image: `https://loremflickr.com/300/300/${encodeURIComponent(name)}`,
+          main_image: getCategoryImage(name), // Use database image
           variants: [
             { product_id: p.product_id, product_code: p.product_id, weight: p.name, quantity: p.current_stock }
           ],
@@ -149,7 +193,7 @@ const AddBulk = () => {
       : filterCategories;
 
     setFilteredCategories(filteredCategories);
-  }, [products, searchQuery, selectedCategory]);
+  }, [products, searchQuery, selectedCategory, categoriesData]);
 
   // Build categories from backend products (each product is a variant row)
   const categoriesMap = (products || []).reduce((acc, p) => {
@@ -160,7 +204,7 @@ const AddBulk = () => {
       id: p.product_id,
       name: p.name,
       category: key,
-      main_image: `https://loremflickr.com/300/300/${encodeURIComponent(key)}`,
+      main_image: getCategoryImage(key), // Use database image
       variants: [
         { product_id: p.product_id, product_code: p.product_id, weight: p.name, quantity: p.current_stock }
       ],
@@ -243,7 +287,7 @@ const AddBulk = () => {
     }));
     setSelectedProduct({
       name: categoryName,
-      main_image: `https://loremflickr.com/300/300/${encodeURIComponent(categoryName)}`,
+      main_image: getCategoryImage(categoryName), // Use database image
       variants
     });
     setSelectedItemCode(variants?.[0]?.product_code || "");
@@ -362,11 +406,17 @@ const AddBulk = () => {
                     className="w-full bg-white rounded-xl border border-gray-200 hover:border-orange-300 hover:shadow-lg transition-all duration-300 overflow-hidden group-hover:scale-105"
                   >
                     <div className="aspect-square overflow-hidden">
-                      <img
-                        src={`https://loremflickr.com/300/300/${encodeURIComponent(name)}`}
-                        alt={name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
+                      {getCategoryImage(name) ? (
+                        <img
+                          src={getCategoryImage(name)}
+                          alt={name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                          <Package className="w-12 h-12 text-gray-400" />
+                        </div>
+                      )}
                     </div>
                     <div className="p-4">
                       <h4 className="font-medium text-gray-800 text-sm mb-2 line-clamp-2">

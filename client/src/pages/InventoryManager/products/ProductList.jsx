@@ -3,6 +3,32 @@ import { useNavigate } from "react-router-dom";
 import { Search, ExternalLink, Trash2, List, Sparkles, Package, Scale, Eye, AlertCircle, CheckCircle, Filter, Grid3X3, TableProperties, Edit3 } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
 import api from "../../../lib/api";
+import axios from "axios";
+
+// Fetch categories to get Cloudinary images
+const fetchCategories = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return { success: false, data: [] };
+
+    const response = await axios.get('http://localhost:3000/api/categories', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const result = response.data;
+    if (result.success && result.data) {
+      const categories = result.data.categories || [];
+      return { success: true, data: categories };
+    }
+    return { success: false, data: [] };
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return { success: false, data: [] };
+  }
+};
 
 const getProducts = async () => {
   try {
@@ -101,41 +127,47 @@ const ProductList = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [allProducts, setAllProducts] = useState([]);
+  const [categoriesData, setCategoriesData] = useState([]);
   const [viewMode, setViewMode] = useState('table');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
   const [dataSource, setDataSource] = useState('api'); // Track data source
 
-  // Helper function to get category image
-  const getCategoryImage = (name) => {
-    switch (name) {
-      case "Black Pepper":
-        return "https://images.unsplash.com/photo-1591801058986-9e28e68670f7?q=80&w=1228&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-      case "Herbs":
-        return "https://plus.unsplash.com/premium_photo-1693266635481-37de41003239?q=80&w=688&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-      case "Cinnamon":
-        return "https://images.unsplash.com/photo-1601379758962-cadba22b1e3a?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-      case "Cardamom":
-        return "https://images.unsplash.com/photo-1701190588800-67a7007492ad?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-      case "White Pepper":
-        return "https://media.istockphoto.com/id/2159774748/photo/white-pepper-or-peppercorns-in-wooden-spoon-with-bowl.jpg?s=2048x2048&w=is&k=20&c=8E_80C-Xsj_iCRfzfJSwlTKUqmxrGKy5-puKqfc8glc=";
-      case "Blends":
-        return "https://media.istockphoto.com/id/2195466084/photo/curry-powder.jpg?s=2048x2048&w=is&k=20&c=BMSyanE-Q-2Sja8JrSeATaaEHW_R_V_4icRo0H0ioXs=";
-      case "Spices":
-        return "https://images.unsplash.com/photo-1532336414038-cf19250c5757?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-      default:
-        return "https://images.unsplash.com/photo-1532336414038-cf19250c5757?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-    }
-  };
 useEffect(() => {
   // Function to fetch and process products from API
   const fetchAndProcessProducts = async () => {
     try {
       setIsLoading(true);
-      const response = await getProducts();
       
-      if (response.success && response.data?.data?.products) {
-        const apiProducts = response.data.data.products;
+      // Fetch both products and categories
+      const [productsResponse, categoriesResponse] = await Promise.all([
+        getProducts(),
+        fetchCategories()
+      ]);
+      
+      // Set categories data first
+      let categoryData = [];
+      if (categoriesResponse.success) {
+        categoryData = categoriesResponse.data;
+        setCategoriesData(categoryData);
+        console.log('Categories data loaded:', categoryData);
+      }
+      
+      // Helper function to get category image from database
+      const getCategoryImage = (name) => {
+        const category = categoryData.find(cat => cat.category_name === name);
+        if (category?.pic_url) {
+          console.log(`Found image for ${name}:`, category.pic_url);
+          return category.pic_url;
+        }
+        
+        console.log(`No image found for category: ${name}`);
+        // Return null if no database image found (no hardcoded fallbacks)
+        return null;
+      };
+      
+      if (productsResponse.success && productsResponse.data?.data?.products) {
+        const apiProducts = productsResponse.data.data.products;
         console.log('API Products Response:', apiProducts);
         
         // Group products by category
@@ -151,11 +183,12 @@ useEffect(() => {
         // Create one representative product per category
         const mappedCategories = Object.keys(categoryGroups).map(categoryName => {
           const products = categoryGroups[categoryName];
+          const categoryImage = getCategoryImage(categoryName);
           
           return {
             id: `category_${categoryName}`,
             name: categoryName,
-            main_image: getCategoryImage(categoryName),
+            main_image: categoryImage,
             no_variants: products.length,
             variants: [],
             description: `${categoryName} category with ${products.length} products`,
@@ -187,10 +220,36 @@ useEffect(() => {
   const fetchAndProcessProducts = async () => {
     try {
       setIsLoading(true);
-      const response = await getProducts();
       
-      if (response.success && response.data?.data?.products) {
-        const apiProducts = response.data.data.products;
+      // Fetch both products and categories
+      const [productsResponse, categoriesResponse] = await Promise.all([
+        getProducts(),
+        fetchCategories()
+      ]);
+      
+      // Set categories data first
+      let categoryData = [];
+      if (categoriesResponse.success) {
+        categoryData = categoriesResponse.data;
+        setCategoriesData(categoryData);
+        console.log('Categories data loaded:', categoryData);
+      }
+      
+      // Helper function to get category image from database
+      const getCategoryImage = (name) => {
+        const category = categoryData.find(cat => cat.category_name === name);
+        if (category?.pic_url) {
+          console.log(`Found image for ${name}:`, category.pic_url);
+          return category.pic_url;
+        }
+        
+        console.log(`No image found for category: ${name}`);
+        // Return null if no database image found (no hardcoded fallbacks)
+        return null;
+      };
+      
+      if (productsResponse.success && productsResponse.data?.data?.products) {
+        const apiProducts = productsResponse.data.data.products;
         console.log('API Products Response:', apiProducts);
         
         // Group products by category
@@ -206,11 +265,12 @@ useEffect(() => {
         // Create one representative product per category
         const mappedCategories = Object.keys(categoryGroups).map(categoryName => {
           const products = categoryGroups[categoryName];
+          const categoryImage = getCategoryImage(categoryName);
           
           return {
             id: `category_${categoryName}`,
             name: categoryName,
-            main_image: getCategoryImage(categoryName),
+            main_image: categoryImage,
             no_variants: products.length,
             variants: [],
             description: `${categoryName} category with ${products.length} products`,
@@ -334,11 +394,17 @@ useEffect(() => {
       {filteredProducts.map((product, index) => (
         <div key={index} className="bg-white rounded-2xl border border-gray-200 hover:border-orange-300 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group">
           <div className="aspect-square overflow-hidden">
-            <img
-              src={product.main_image}
-              alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-            />
+            {product.main_image ? (
+              <img
+                src={product.main_image}
+                alt={product.name}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                <Package className="w-16 h-16 text-gray-400" />
+              </div>
+            )}
           </div>
           
           <div className="p-6">
@@ -416,11 +482,17 @@ useEffect(() => {
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 rounded-xl overflow-hidden shadow-sm border border-gray-100">
-                      <img
-                        src={product.main_image}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                      />
+                      {product.main_image ? (
+                        <img
+                          src={product.main_image}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                          <Package className="w-4 h-4 text-gray-400" />
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <button
@@ -655,11 +727,17 @@ useEffect(() => {
             <div className="p-6">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 rounded-xl overflow-hidden shadow-sm border border-gray-100">
-                  <img
-                    src={productToDelete.main_image}
-                    alt={productToDelete.name}
-                    className="w-full h-full object-cover"
-                  />
+                  {productToDelete.main_image ? (
+                    <img
+                      src={productToDelete.main_image}
+                      alt={productToDelete.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                      <Package className="w-4 h-4 text-gray-400" />
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-800 mb-1">{productToDelete.name}</h4>

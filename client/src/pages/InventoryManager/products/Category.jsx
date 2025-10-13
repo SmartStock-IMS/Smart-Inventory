@@ -58,7 +58,8 @@ const Category = () => {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/categories`, {
+      console.log('Fetching categories from Category page...');
+      const response = await fetch('http://localhost:3000/api/categories', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -67,8 +68,13 @@ const Category = () => {
       });
 
       const result = await response.json();
+      console.log('Category page API response:', result);
+      
       if (result.success && result.data) {
-        setCategories(result.data.categories || []);
+        const categories = result.data.categories || [];
+        console.log('Categories data structure:', categories);
+        console.log('Sample category:', categories[0]);
+        setCategories(categories);
       }
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -83,17 +89,43 @@ const Category = () => {
     }));
   };
 
-  const handleImageUpload = (file) => {
+  const handleImageUpload = async (file) => {
     if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target.result);
-        setFormData(prev => ({
-          ...prev,
-          pic_url: e.target.result
-        }));
-      };
-      reader.readAsDataURL(file);
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
+
+      try {
+        // Upload to Cloudinary
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:3000/api/categories/upload-image', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          const imageUrl = result.data.imageUrl;
+          setImagePreview(imageUrl);
+          setFormData(prev => ({
+            ...prev,
+            pic_url: imageUrl
+          }));
+          toast.success("Image uploaded successfully!");
+        } else {
+          throw new Error(result.message);
+        }
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        toast.error("Failed to upload image");
+      }
     } else {
       toast.error("Please select a valid image file");
     }
@@ -210,17 +242,43 @@ const Category = () => {
     }));
   };
 
-  const handleEditImageUpload = (file) => {
+  const handleEditImageUpload = async (file) => {
     if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setEditImagePreview(e.target.result);
-        setEditFormData(prev => ({
-          ...prev,
-          pic_url: e.target.result
-        }));
-      };
-      reader.readAsDataURL(file);
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
+
+      try {
+        // Upload to Cloudinary
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:3000/api/categories/upload-image', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          const imageUrl = result.data.imageUrl;
+          setEditImagePreview(imageUrl);
+          setEditFormData(prev => ({
+            ...prev,
+            pic_url: imageUrl
+          }));
+          toast.success("Image uploaded successfully!");
+        } else {
+          throw new Error(result.message);
+        }
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        toast.error("Failed to upload image");
+      }
     } else {
       toast.error("Please select a valid image file");
     }
