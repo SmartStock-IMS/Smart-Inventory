@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState, useEffect } from "react";
-import { Box, Trash2, Upload, Plus, Package, Image, Calendar, Hash, Palette, DollarSign, Archive, Clock, CheckCircle, AlertCircle, Sparkles, Star, ChevronDown } from "lucide-react";
+import { Box, Trash2, Plus, Package, Calendar, Hash, Palette, DollarSign, Archive, Clock, CheckCircle, AlertCircle, Sparkles, Star, ChevronDown } from "lucide-react";
 
 // Category Dropdown Component
 const CategoryDropdown = ({ categories, selectedCategory, onCategoryChange, register, required = false }) => {

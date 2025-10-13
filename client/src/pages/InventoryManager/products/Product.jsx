@@ -19,6 +19,32 @@ import { FaSpinner } from "react-icons/fa";
 import api from "../../../lib/api";
 import { useLocation, useNavigate } from "react-router-dom";
 import { set } from "react-hook-form";
+import axios from "axios";
+
+// Fetch categories to get Cloudinary images
+const fetchCategories = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return { success: false, data: [] };
+
+    const response = await axios.get('http://localhost:3000/api/categories', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const result = response.data;
+    if (result.success && result.data) {
+      const categories = result.data.categories || [];
+      return { success: true, data: categories };
+    }
+    return { success: false, data: [] };
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return { success: false, data: [] };
+  }
+};
 
 // Mock components and services
 const InputWithLabel = ({
@@ -105,7 +131,29 @@ const toast = {
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
 
+// Helper function to get category/product images from database
+const getCategoryImage = (categoryName, categoriesData) => {
+  const category = categoriesData.find(cat => cat.category_name === categoryName);
+  if (category?.pic_url) {
+    return category.pic_url;
+  }
+  
+  // Return null if no database image found (no hardcoded fallbacks)
+  return null;
+};
 
+// Helper function to get variant image (prioritize category Cloudinary image, fallback to null)
+const getVariantImage = (categoryImage, categoryName, categoriesData) => {
+  // Use category image from navigation state first
+  if (categoryImage) return categoryImage;
+  
+  // Use database categories data as fallback
+  const categoryData = categoriesData?.find(cat => cat.category_name === categoryName);
+  if (categoryData?.pic_url) return categoryData.pic_url;
+  
+  // Return null if no image available - will trigger fallback UI
+  return null;
+};
 
 const mockProduct = {
   id: null,
@@ -129,11 +177,12 @@ const ProductPage = () => {
   const categoryImage = categoryData?.categoryImage;
 
   const [isEditing, setIsEditing] = useState(false);
+  const [categoriesData, setCategoriesData] = useState([]);
   // Initialize a minimal product object so header and image render
   const [updatedProduct, setUpdatedProduct] = useState({
     name: categoryName || "",
     no_variants: categoryProducts?.length || 0,
-    main_image: categoryImage || "https://images.unsplash.com/photo-1532336414038-cf19250c5757?w=800",
+    main_image: getVariantImage(categoryImage, categoryName, []),
     category: categoryName || ""
   });
   const [updatedVariants, setUpdatedVariants] = useState(categoryProducts);
@@ -141,6 +190,17 @@ const ProductPage = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [variantToDelete, setVariantToDelete] = useState(null);
   const [details, setDetails] = useState(null);
+  
+  // Fetch categories for image data
+  useEffect(() => {
+    const loadCategories = async () => {
+      const result = await fetchCategories();
+      if (result.success) {
+        setCategoriesData(result.data);
+      }
+    };
+    loadCategories();
+  }, []);
   
   useEffect(() => {
     if (categoryProducts && categoryProducts.length > 0) {
@@ -150,7 +210,7 @@ const ProductPage = () => {
         ...prev,
         name: categoryName || prev.name,
         no_variants: categoryProducts.length,
-        main_image: categoryImage || prev.main_image,
+        main_image: getVariantImage(categoryImage, categoryName, categoriesData),
         category: categoryName || prev.category
       }));
       setDetails({
@@ -159,7 +219,7 @@ const ProductPage = () => {
         totalProducts: categoryProducts.length
       });
     }
-  }, [categoryProducts, categoryName]);
+  }, [categoryProducts, categoryName, categoryImage, categoriesData]);
 
   useEffect(() => {
   console.log('updatedProduct after set:', updatedProduct );
@@ -433,11 +493,17 @@ const ProductPage = () => {
                   </label>
                   <div className="relative">
                     <div className="w-full aspect-square rounded-2xl overflow-hidden shadow-lg border-4 border-gray-100">
-                      <img
-                        src={updatedProduct?.main_image}
-                        alt={updatedProduct?.name}
-                        className="w-full h-full object-cover"
-                      />
+                      {updatedProduct?.main_image ? (
+                        <img
+                          src={updatedProduct?.main_image}
+                          alt={updatedProduct?.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                          <Package className="w-16 h-16 text-gray-400" />
+                        </div>
+                      )}
                     </div>
                     <div
                       className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-medium border ${getCategoryColor(updatedProduct.category)}`}
@@ -524,11 +590,17 @@ const ProductPage = () => {
                     >
                       <td className="px-6 py-4">
                         <div className="w-16 h-16 rounded-xl overflow-hidden shadow-sm border border-gray-100">
-                          <img
-                            src={variant.image}
-                            alt="variant"
-                            className="w-full h-full object-cover"
-                          />
+                          {getVariantImage(categoryImage, categoryName, categoriesData) ? (
+                            <img
+                              src={getVariantImage(categoryImage, categoryName, categoriesData)}
+                              alt={`${categoryName} variant`}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                              <Package className="w-6 h-6 text-gray-400" />
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -721,9 +793,12 @@ const ProductPage = () => {
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 rounded-xl overflow-hidden shadow-sm border border-gray-100">
                   <img
-                    src={variantToDelete.variant.image || updatedProduct.main_image }
-                    alt="variant"
+                    src={getVariantImage(categoryImage, categoryName, categoriesData)}
+                    alt={`${categoryName} variant`}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = getCategoryImage(categoryName, categoriesData);
+                    }}
                   />
                 </div>
                 <div className="flex-1">

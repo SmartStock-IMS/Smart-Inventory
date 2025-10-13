@@ -1,12 +1,57 @@
 const ProductModel = require('../models/productModel');
 const VariantModel = require('../models/variantModel');
 const InventoryModel = require('../models/inventoryModel');
+const cloudinary = require('../config/cloudinary');
 
 const Product = new ProductModel();
 const Variant = new VariantModel();
 const Inventory = new InventoryModel();
 
 class ProductController {
+
+  async uploadProductImage(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: 'No image file provided'
+        });
+      }
+
+      // Upload to Cloudinary
+      const result = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          {
+            resource_type: 'image',
+            folder: 'smartstock/products',
+            transformation: [
+              { width: 800, height: 800, crop: 'limit' },
+              { quality: 'auto' }
+            ]
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        ).end(req.file.buffer);
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Image uploaded successfully',
+        data: {
+          imageUrl: result.secure_url,
+          publicId: result.public_id
+        }
+      });
+    } catch (error) {
+      console.error('Image upload error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to upload image'
+      });
+    }
+  }
 
   async getMostPopularProducts(req, res) {
     try {
@@ -163,28 +208,32 @@ class ProductController {
 
   async getAllCategories(req, res) {
     try {
-      const { page = 1, limit = 10, category, status, search } = req.query;
-      const offset = (page - 1) * limit;
-
-      const filters = {};
-      if (category) filters.category = category;
-      if (status) filters.status = status;
-      if (search) filters.search = search;
-
-      const categories = await Variant.findAll(parseInt(limit), parseInt(offset), filters);
+      console.log('Getting categories...');
+      
+      // Try to get categories using the stored function first
+      let categories;
+      try {
+        categories = await Variant.findAll();
+        console.log('Categories from function:', categories);
+      } catch (functionError) {
+        console.log('Function failed, trying direct query:', functionError.message);
+        
+        // Fallback to direct SQL query
+        categories = await Variant.query(
+          'SELECT category_id, category_name, description, pic_url FROM product_category ORDER BY category_name'
+        );
+        console.log('Categories from direct query:', categories);
+      }
 
       res.status(200).json({
         success: true,
         message: 'Categories retrieved successfully',
         data: {
-          categories: categories,
-          pagination: {
-            page: parseInt(page),
-            limit: parseInt(limit)
-          }
+          categories: categories || []
         }
       });
     } catch (error) {
+      console.error('Error getting categories:', error);
       res.status(500).json({
         success: false,
         message: error.message
