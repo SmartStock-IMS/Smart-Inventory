@@ -6,6 +6,12 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
+ARG VITE_API_URL
+ARG VITE_URL
+
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_URL=$VITE_URL
+
 COPY . .
 RUN npm run build
 
@@ -18,7 +24,7 @@ RUN npm install -g serve
 
 COPY --from=build /app/dist ./dist
 
-EXPOSE 5173
+EXPOSE 80
 
-CMD ["serve", "-s", "dist", "-l", "0.0.0.0:5173"]
+CMD ["serve", "-s", "dist", "-l", "80"]
 
