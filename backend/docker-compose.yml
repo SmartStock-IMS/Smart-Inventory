@@ -89,14 +89,16 @@ services:
 
   # React Client (pulled from Docker Hub)
   client:
-    image: nipungunarathna/smartstock-client:v3.3.0  
+    image: nipungunarathna/smartstock-client:v3.3.0  
     container_name: smartstock-client
     ports:
-      - "${CLIENT_PORT:-80}:80"   # assuming client image runs with NGINX on port 80
+      - "${CLIENT_PORT:-80}:80"
     environment:
       - NODE_ENV=production
-    networks:
-      - smartstock-network
+    # ADD THESE LINES IF THE IMAGE IS CONFIGURED FOR RUNTIME VARIABLES
+    #   - VITE_API_URL=http://51.21.195.226:3000/api
+    #   - VITE_URL=http://51.21.195.226:3000
+
 
 networks:
   smartstock-network:
