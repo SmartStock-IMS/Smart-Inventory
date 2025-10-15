@@ -97,6 +97,9 @@ export const CartProvider = ({ children }) => {
   };
 
   const clearCart = () => {
+    setCart([]);
+    setCustomer({});
+    setCartState(null);
     localStorage.removeItem('cart');
   };
 

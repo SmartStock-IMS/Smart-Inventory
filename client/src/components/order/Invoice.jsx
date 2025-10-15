@@ -2,12 +2,10 @@ import { useRef } from "react";
 import { Download, FileText } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { useCart } from "../../context/cart/CartContext";
 
 // Mock functions for demo
 const generateId = (prefix) => `${prefix}${Date.now()}`;
-const useCart = () => ({
-  clearCart: () => console.log("Cart cleared")
-});
 
 // Mock data for demo
 const mockCartState = {
@@ -40,9 +38,31 @@ const mockQuotationData = {
   quotation_due_date: "2025-02-15"
 };
 
-const Invoice = ({ cartState = mockCartState, billingDetails = mockBillingDetails, quotationData = mockQuotationData }) => {
-  const invoiceRef = useRef();
+const Invoice = ({ cartState = mockCartState, billingDetails = mockBillingDetails, quotationData = mockQuotationData, onNewOrder }) => {
   const { clearCart } = useCart();
+  const invoiceRef = useRef();
+
+  // Function to clean product name by removing duplicate weight information
+  const cleanProductName = (itemName, weight) => {
+    if (!weight) return itemName;
+    
+    // Remove various weight patterns from the product name
+    let cleanedName = itemName;
+    
+    // Pattern 1: Remove exact weight match at the end (e.g., "Goraka 100g" -> "Goraka" when weight is "100g")
+    const exactWeightPattern = new RegExp(`\\s+${weight.replace(/[()]/g, '\\$&')}\\s*$`, 'i');
+    cleanedName = cleanedName.replace(exactWeightPattern, '');
+    
+    // Pattern 2: Remove any weight-like patterns (numbers followed by 'g', 'kg', 'ml', 'l')
+    const genericWeightPattern = /\s+\d+\s*(g|kg|ml|l)\s*$/i;
+    cleanedName = cleanedName.replace(genericWeightPattern, '');
+    
+    // Pattern 3: Remove trailing numbers that might be weights
+    const trailingNumberPattern = /\s+\d+\s*$/;
+    cleanedName = cleanedName.replace(trailingNumberPattern, '');
+    
+    return cleanedName.trim();
+  };
 
   const downloadPDF = async () => {
     try {
@@ -312,14 +332,30 @@ const Invoice = ({ cartState = mockCartState, billingDetails = mockBillingDetail
                       </tr>
                     </thead>
                     <tbody>
-                      {cartState.selectedItems.map((item, index) => (
-                        <tr key={item.id} className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} border-b-2 border-gray-300`}>
-                          <td className="py-4 px-4 font-medium text-black border-r border-gray-300">{item.name}{item.color ? ` (${item.color})` : ''}</td>
-                          <td className="py-4 px-4 text-right text-gray-700 border-r border-gray-300">{item.quantity}</td>
-                          <td className="py-4 px-4 text-right text-gray-700 border-r border-gray-300">Rs.{item.price.toLocaleString()}</td>
-                          <td className="py-4 px-4 text-right font-semibold text-black">Rs.{(item.price * item.quantity).toLocaleString()}</td>
-                        </tr>
-                      ))}
+                      {cartState.selectedItems.map((item, index) => {
+                        // Clean the product name and determine what to show in parentheses
+                        const displayWeight = item.weight || item.color;
+                        
+                        // Always clean the name regardless of whether we have weight/color
+                        let cleanedName = item.name;
+                        
+                        // If we have a weight/color to display, clean the base name
+                        if (displayWeight) {
+                          cleanedName = cleanProductName(item.name, displayWeight);
+                        }
+                        
+                        // Final display name
+                        const displayName = displayWeight ? `${cleanedName} (${displayWeight})` : cleanedName;
+                        
+                        return (
+                          <tr key={item.id} className={`${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} border-b-2 border-gray-300`}>
+                            <td className="py-4 px-4 font-medium text-black border-r border-gray-300">{displayName}</td>
+                            <td className="py-4 px-4 text-right text-gray-700 border-r border-gray-300">{item.quantity}</td>
+                            <td className="py-4 px-4 text-right text-gray-700 border-r border-gray-300">Rs.{item.price.toLocaleString()}</td>
+                            <td className="py-4 px-4 text-right font-semibold text-black">Rs.{(item.price * item.quantity).toLocaleString()}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
