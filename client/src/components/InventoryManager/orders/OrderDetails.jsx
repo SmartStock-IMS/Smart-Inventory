@@ -842,15 +842,27 @@ const OrderDetails = ({ item, changeOpen }) => {
                 onClick={async () => {
                   setIsSubmit(true);
                   try {
-                    const statusData = {
-                      status: 'Accepted',
-                      payment_term: invoiceTerm,
-                      company: company,
-                    };
-                    const response = await updateQuotationStatus(item.quotation_id, statusData);
-                    if (response.success) {
+                    // Call backend API to update order status
+                    const token = localStorage.getItem("token");
+                    const response = await fetch(
+                      `${import.meta.env.VITE_API_URL}/orders/status/${item.order_id}`,
+                      {
+                        method: "PATCH",
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({
+                          status: "approved",
+                        }),
+                      }
+                    );
+                    const result = await response.json();
+                    if (response.ok && result.success) {
                       setQuotationStatus('Accepted');
                       toast.success('Order accepted successfully!');
+                    } else {
+                      throw new Error(result.message || "Failed to accept order");
                     }
                   } catch (error) {
                     toast.error('Failed to accept order');
@@ -881,15 +893,27 @@ const OrderDetails = ({ item, changeOpen }) => {
                 onClick={async () => {
                   setIsSubmit(true);
                   try {
-                    const statusData = {
-                      status: 'Rejected',
-                      payment_term: invoiceTerm,
-                      company: company,
-                    };
-                    const response = await updateQuotationStatus(item.quotation_id, statusData);
-                    if (response.success) {
+                    // Call backend API to update order status
+                    const token = localStorage.getItem("token");
+                    const response = await fetch(
+                      `${import.meta.env.VITE_API_URL}/orders/status/${item.order_id}`,
+                      {
+                        method: "PATCH",
+                        headers: {
+                          "Content-Type": "application/json",
+                          Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({
+                          status: "rejected",
+                        }),
+                      }
+                    );
+                    const result = await response.json();
+                    if (response.ok && result.success) {
                       setQuotationStatus('Rejected');
                       toast.success('Order rejected successfully!');
+                    } else {
+                      throw new Error(result.message || "Failed to reject order");
                     }
                   } catch (error) {
                     toast.error('Failed to reject order');
@@ -1134,7 +1158,7 @@ OrderDetails.propTypes = {
     company: PropTypes.string,
     quotationItems: PropTypes.arrayOf(
       PropTypes.shape({
-        id: PropTypes.number,
+        id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
         quotation_id: PropTypes.string,
         item_code: PropTypes.string,
         item_qty: PropTypes.number,
