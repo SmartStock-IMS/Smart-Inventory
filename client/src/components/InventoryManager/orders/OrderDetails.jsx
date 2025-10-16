@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import { InputWithLabel } from "@components/ui/InputWithLabel";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { getCustomerByUserCode } from "@services/customer-services.js";
 import { FaSpinner } from "react-icons/fa";
 import { cn } from "@lib/utils.js";
@@ -8,6 +8,7 @@ import {updateQuotationStatus, updateQuotationItemsQuantity, getInvoice} from "@
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuth } from "../../../context/auth/AuthContext.jsx";
+import { useTheme } from "../../../context/theme/ThemeContext.jsx";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { ChevronLeft, Calendar, Hash, User, Users, DollarSign, Package, Activity } from "lucide-react";
@@ -16,6 +17,7 @@ import {Link} from "react-router-dom";
 // eslint-disable-next-line react/prop-types
 const OrderDetails = ({ item, changeOpen }) => {
   const { user } = useAuth();
+  const { isDarkMode } = useTheme();
 
   const [userType, setUserType] = useState();
   const [customerData, setCustomerData] = useState({});
@@ -86,17 +88,24 @@ const OrderDetails = ({ item, changeOpen }) => {
     }
   };
 
-  const handleDownloadInvoice = async () => {
+  const handleDownloadInvoice = useCallback(async () => {
     try {
+      // Add loading state to prevent multiple clicks
+      setIsDownload(true);
+      
       const input = invoiceRef.current;
       
       if (!input) {
         console.error("Invoice element not found");
+        toast.error("Invoice element not found");
         return;
       }
 
       // Show loading state
       toast.info('Generating Invoice PDF...');
+
+      // Use setTimeout to ensure DOM updates are processed
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Temporarily make visible and position off-screen
       const originalStyle = input.style.cssText;
@@ -194,26 +203,41 @@ const OrderDetails = ({ item, changeOpen }) => {
         }
       }
 
-      // Generate filename
+      // Generate filename and save PDF
       const filename = `Invoice_${item.quotation_id}_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      // Save PDF
-      pdf.save(filename);
-      
-      toast.success('Invoice downloaded successfully!');
+      // Use setTimeout to ensure PDF generation doesn't block UI
+      setTimeout(() => {
+        pdf.save(filename);
+        toast.success('Invoice downloaded successfully!');
+        // Clean up PDF object
+        pdf = null;
+      }, 100);
       
     } catch (error) {
       console.error('Error generating Invoice PDF:', error);
       toast.error('Failed to generate Invoice PDF. Please try again.');
+    } finally {
+      // Ensure loading state is reset and navigation isn't blocked
+      setTimeout(() => {
+        setIsDownload(false);
+        // Force cleanup of any canvas or PDF-related DOM changes
+        const canvasElements = document.querySelectorAll('canvas[data-html2canvas-ignore]');
+        canvasElements.forEach(canvas => canvas.remove());
+      }, 1000);
     }
-  };
+  }, [item.quotation_id]);
 
-  const downloadPDF = async () => {
+  const downloadPDF = useCallback(async () => {
     try {
+      // Add loading state to prevent multiple clicks
+      setIsDownload(true);
+      
       const input = invoiceRef.current;
       
       if (!input) {
         console.error("Invoice element not found");
+        toast.error("Invoice element not found");
         return;
       }
 
@@ -224,6 +248,9 @@ const OrderDetails = ({ item, changeOpen }) => {
 
       // Show loading state
       toast.info(`Generating ${documentType} PDF...`);
+
+      // Use setTimeout to ensure DOM updates are processed
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Temporarily make the element visible for capture
       const originalStyle = input.style.cssText;
@@ -311,19 +338,30 @@ const OrderDetails = ({ item, changeOpen }) => {
         }
       }
 
-      // Generate filename
+      // Generate filename and save PDF
       const filename = `${documentType}_${item.quotation_id}_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      // Save PDF
-      pdf.save(filename);
-      
-      toast.success(`${documentType} downloaded successfully!`);
+      // Use setTimeout to ensure PDF generation doesn't block UI
+      setTimeout(() => {
+        pdf.save(filename);
+        toast.success(`${documentType} downloaded successfully!`);
+        // Clean up PDF object
+        pdf = null;
+      }, 100);
       
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast.error('Failed to generate PDF. Please try again.');
+    } finally {
+      // Ensure loading state is reset and navigation isn't blocked
+      setTimeout(() => {
+        setIsDownload(false);
+        // Force cleanup of any canvas or PDF-related DOM changes
+        const canvasElements = document.querySelectorAll('canvas[data-html2canvas-ignore]');
+        canvasElements.forEach(canvas => canvas.remove());
+      }, 1000);
     }
-  };
+  }, [item.quotation_id, item.status, quotationStatus]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -337,12 +375,26 @@ const OrderDetails = ({ item, changeOpen }) => {
   };
 
   return (
-    <div className="h-full py-3">
+    <div className={`h-full py-3 transition-colors duration-300 ${
+      isDarkMode ? 'bg-gray-900' : 'bg-white'
+    }`} key={`order-details-${item.quotation_id}`}>
       {/* Quick Action Button - Top */}
       <div className="px-3 mb-4">
         <button
-          className="w-fit flex flex-row items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 border border-blue-200 hover:border-blue-300 rounded-lg transition-all duration-200"
-          onClick={() => changeOpen()}
+          type="button"
+          className={`w-fit flex flex-row items-center gap-2 px-4 py-2 border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
+            isDarkMode
+              ? 'text-blue-400 hover:text-blue-300 hover:bg-gray-800 border-blue-500 hover:border-blue-400'
+              : 'text-blue-600 hover:text-blue-800 hover:bg-blue-50 border-blue-200 hover:border-blue-300'
+          }`}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Force a slight delay to ensure any ongoing operations complete
+            setTimeout(() => {
+              changeOpen();
+            }, 100);
+          }}
         >
           <ChevronLeft className="w-5 h-5" />
           <span className="font-medium">Go Back to Orders</span>
@@ -350,9 +402,17 @@ const OrderDetails = ({ item, changeOpen }) => {
       </div>
 
       {/* Order Summary Information */}
-      <div className="mt-5 px-4 pt-4 pb-4 border rounded-lg">
+      <div className={`mt-5 px-4 pt-4 pb-4 border rounded-lg transition-colors duration-300 ${
+        isDarkMode 
+          ? 'bg-gray-800 border-gray-700' 
+          : 'bg-white border-gray-200'
+      }`}>
         <div className="-mt-6 mb-4">
-          <h2 className="w-fit ms-2 px-3 py-1 bg-white text-lg font-semibold text-gray-800 border rounded-lg shadow-sm">
+          <h2 className={`w-fit ms-2 px-3 py-1 text-lg font-semibold border rounded-lg shadow-sm transition-colors duration-300 ${
+            isDarkMode
+              ? 'bg-gray-800 text-gray-200 border-gray-600'
+              : 'bg-white text-gray-800 border-gray-200'
+          }`}>
             📋 Order Summary Information
           </h2>
         </div>
@@ -466,9 +526,17 @@ const OrderDetails = ({ item, changeOpen }) => {
 
       {/* Resource Manager Information */}
       {item.assignedResourceManager && (
-        <div className="mt-5 px-4 pt-4 pb-4 border rounded-lg">
+        <div className={`mt-5 px-4 pt-4 pb-4 border rounded-lg transition-colors duration-300 ${
+          isDarkMode 
+            ? 'bg-gray-800 border-gray-700' 
+            : 'bg-white border-gray-200'
+        }`}>
           <div className="-mt-6 mb-4">
-            <h2 className="w-fit ms-2 px-3 py-1 bg-white text-lg font-semibold text-gray-800 border rounded-lg shadow-sm">
+            <h2 className={`w-fit ms-2 px-3 py-1 text-lg font-semibold border rounded-lg shadow-sm transition-colors duration-300 ${
+              isDarkMode
+                ? 'bg-gray-800 text-gray-200 border-gray-600'
+                : 'bg-white text-gray-800 border-gray-200'
+            }`}>
               👤 Resource Manager Details
             </h2>
           </div>
@@ -523,7 +591,11 @@ const OrderDetails = ({ item, changeOpen }) => {
       )}
 
       {/* Order */}
-      <div className="mt-8 px-4 pt-2 pb-4 border rounded-lg">
+      <div className={`mt-8 px-4 pt-2 pb-4 border rounded-lg transition-colors duration-300 ${
+        isDarkMode 
+          ? 'bg-gray-800 border-gray-700' 
+          : 'bg-white border-gray-200'
+      }`}>
         {/* Order Title */}
         {/*<div className="-mt-5">*/}
         {/*  <h2 className="w-fit ms-2 px-2 bg-white text-base font-medium">*/}
@@ -536,13 +608,23 @@ const OrderDetails = ({ item, changeOpen }) => {
             {/* Status Selector */}
             <div className="w-1/5">
               <div className="mb-1">
-                <p className="ps-2 font-semibold">Status</p>
+                <p className={`ps-2 font-semibold transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>Status</p>
               </div>
-              <div className="p-2 border border-gray-200 rounded-md">
+              <div className={`p-2 border rounded-md transition-colors duration-300 ${
+                isDarkMode 
+                  ? 'border-gray-600 bg-gray-700' 
+                  : 'border-gray-200 bg-white'
+              }`}>
                 <select
                   name="order-status"
                   id="orderStatus"
-                  className="w-full pe-2 focus-visible:outline-none"
+                  className={`w-full pe-2 focus-visible:outline-none transition-colors duration-300 ${
+                    isDarkMode 
+                      ? 'bg-gray-700 text-gray-200' 
+                      : 'bg-white text-gray-700'
+                  }`}
                   value={quotationStatus}
                   onChange={(e) => {
                     setQuotationStatus(e.target.value);
@@ -579,13 +661,23 @@ const OrderDetails = ({ item, changeOpen }) => {
                   {/* Payment Term */}
                   <div className="w-2/5">
                     <div className="mb-1">
-                      <p className="ps-2 font-semibold">Term</p>
+                      <p className={`ps-2 font-semibold transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>Term</p>
                     </div>
-                    <div className="p-2 border border-gray-200 rounded-md">
+                    <div className={`p-2 border rounded-md transition-colors duration-300 ${
+                      isDarkMode 
+                        ? 'border-gray-600 bg-gray-700' 
+                        : 'border-gray-200 bg-white'
+                    }`}>
                       <select
                         name="invoice-terms"
                         id="invoiceTemrs"
-                        className="w-full pe-2 focus-visible:outline-none"
+                        className={`w-full pe-2 focus-visible:outline-none transition-colors duration-300 ${
+                          isDarkMode 
+                            ? 'bg-gray-700 text-gray-200' 
+                            : 'bg-white text-gray-700'
+                        }`}
                         value={invoiceTerm}
                         onChange={(e) => setInvoiceTerm(e.target.value)}
                       >
@@ -600,13 +692,23 @@ const OrderDetails = ({ item, changeOpen }) => {
                   {/* Company */}
                   <div className="w-2/5">
                     <div className="mb-1">
-                      <p className="ps-2 font-semibold">Company</p>
+                      <p className={`ps-2 font-semibold transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>Company</p>
                     </div>
-                    <div className="p-2 border border-gray-200 rounded-md">
+                    <div className={`p-2 border rounded-md transition-colors duration-300 ${
+                      isDarkMode 
+                        ? 'border-gray-600 bg-gray-700' 
+                        : 'border-gray-200 bg-white'
+                    }`}>
                       <select
                         name="company"
                         id="company"
-                        className="w-full pe-2 focus-visible:outline-none"
+                        className={`w-full pe-2 focus-visible:outline-none transition-colors duration-300 ${
+                          isDarkMode 
+                            ? 'bg-gray-700 text-gray-200' 
+                            : 'bg-white text-gray-700'
+                        }`}
                         value={company}
                         onChange={(e) => setCompany(e.target.value)}
                       >
@@ -624,8 +726,10 @@ const OrderDetails = ({ item, changeOpen }) => {
               {item.status !== quotationStatus && (
                 <button
                   className={cn(
-                    "w-3/4 py-2 px-4 flex flex-row items-center justify-center gap-2 border rounded-md bg-black text-white",
-                    "hover:bg-black/80",
+                    "w-3/4 py-2 px-4 flex flex-row items-center justify-center gap-2 border rounded-md text-white transition-colors duration-300",
+                    isDarkMode
+                      ? "bg-gray-700 hover:bg-gray-600 border-gray-600"
+                      : "bg-black hover:bg-black/80 border-black",
                   )}
                   onClick={handleQuotationStatusChange}
                   disabled={isSubmit}
@@ -644,78 +748,160 @@ const OrderDetails = ({ item, changeOpen }) => {
           </div>
         )}
         {/* Order Table - Enhanced with Product Variant Details */}
-        <div className="mt-3 border rounded-lg border-slate-300 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-slate-300">
-            <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+        <div className={`mt-3 border rounded-lg overflow-hidden transition-colors duration-300 ${
+          isDarkMode 
+            ? 'border-gray-700' 
+            : 'border-slate-300'
+        }`}>
+          <div className={`px-4 py-3 border-b transition-colors duration-300 ${
+            isDarkMode
+              ? 'bg-gradient-to-r from-gray-700 to-gray-800 border-gray-600'
+              : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-slate-300'
+          }`}>
+            <h3 className={`font-semibold flex items-center gap-2 transition-colors duration-300 ${
+              isDarkMode ? 'text-gray-200' : 'text-gray-800'
+            }`}>
               📦 Product Details for Delivery
             </h3>
-            <p className="text-sm text-gray-600 mt-1">Complete variant information for accurate delivery</p>
+            <p className={`text-sm mt-1 transition-colors duration-300 ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>Complete variant information for accurate delivery</p>
           </div>
           
-          <table className="w-full divide-y divide-gray-300 text-sm bg-white">
-            <thead className="bg-gray-50">
-              <tr className="divide-x divide-gray-300">
-                <th className="py-3 px-4 text-left font-medium text-gray-700">Product Code</th>
-                <th className="py-3 px-4 text-left font-medium text-gray-700">Product Name</th>
-                <th className="py-3 px-4 text-left font-medium text-gray-700">Variant Details</th>
-                <th className="py-3 px-4 text-center font-medium text-gray-700">Quantity to Deliver</th>
-                <th className="py-3 px-4 text-right font-medium text-gray-700">Unit Price</th>
-                <th className="py-3 px-4 text-right font-medium text-gray-700">Total Amount</th>
-                <th className="py-3 px-4 text-center font-medium text-gray-700">Delivery Status</th>
+          <table className={`w-full divide-y text-sm transition-colors duration-300 ${
+            isDarkMode 
+              ? 'divide-gray-700 bg-gray-800' 
+              : 'divide-gray-300 bg-white'
+          }`}>
+            <thead className={`transition-colors duration-300 ${
+              isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+            }`}>
+              <tr className={`divide-x transition-colors duration-300 ${
+                isDarkMode ? 'divide-gray-600' : 'divide-gray-300'
+              }`}>
+                <th className={`py-3 px-4 text-left font-medium transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>Product Code</th>
+                <th className={`py-3 px-4 text-left font-medium transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>Product Name</th>
+                <th className={`py-3 px-4 text-left font-medium transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>Variant Details</th>
+                <th className={`py-3 px-4 text-center font-medium transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>Quantity to Deliver</th>
+                <th className={`py-3 px-4 text-right font-medium transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>Unit Price</th>
+                <th className={`py-3 px-4 text-right font-medium transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>Total Amount</th>
+                <th className={`py-3 px-4 text-center font-medium transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>Delivery Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
+            <tbody className={`divide-y transition-colors duration-300 ${
+              isDarkMode 
+                ? 'divide-gray-700 bg-gray-800' 
+                : 'divide-gray-200 bg-white'
+            }`}>
               {item.quotationItems.map((quotationItem, index) => (
-                <tr key={index} className="divide-x divide-gray-200 hover:bg-gray-50 transition-colors">
+                <tr key={index} className={`divide-x transition-colors duration-300 ${
+                  isDarkMode 
+                    ? 'divide-gray-700 hover:bg-gray-700' 
+                    : 'divide-gray-200 hover:bg-gray-50'
+                }`}>
                   <td className="py-4 px-4">
                     <div className="flex flex-col">
-                      <span className="font-medium text-gray-900">{quotationItem.item_code}</span>
-                      <span className="text-xs text-gray-500">SKU</span>
+                      <span className={`font-medium transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                      }`}>{quotationItem.item_code}</span>
+                      <span className={`text-xs transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                      }`}>SKU</span>
                     </div>
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex flex-col">
-                      <span className="font-medium text-gray-900">{quotationItem.description}</span>
-                      <span className="text-xs text-gray-500">Product Name</span>
+                      <span className={`font-medium transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                      }`}>{quotationItem.description}</span>
+                      <span className={`text-xs transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                      }`}>Product Name</span>
                     </div>
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex flex-col gap-2">
                       {/* Product Image */}
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center border">
-                          <span className="text-xs text-gray-500">IMG</span>
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center border transition-colors duration-300 ${
+                          isDarkMode 
+                            ? 'bg-gray-700 border-gray-600' 
+                            : 'bg-gray-100 border-gray-200'
+                        }`}>
+                          <span className={`text-xs transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}>IMG</span>
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium text-gray-700">Variant Info</span>
-                          <span className="text-xs text-gray-500">Color/Weight/Size</span>
+                          <span className={`text-sm font-medium transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}>Variant Info</span>
+                          <span className={`text-xs transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}>Color/Weight/Size</span>
                         </div>
                       </div>
                       {/* Additional variant details */}
                       <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="bg-blue-50 px-2 py-1 rounded">
-                          <span className="text-blue-700 font-medium">Category:</span>
-                          <span className="text-blue-600 ml-1">Cosmetics</span>
+                        <div className={`px-2 py-1 rounded transition-colors duration-300 ${
+                          isDarkMode 
+                            ? 'bg-blue-900/30 text-blue-300' 
+                            : 'bg-blue-50 text-blue-700'
+                        }`}>
+                          <span className="font-medium">Category:</span>
+                          <span className="ml-1">Cosmetics</span>
                         </div>
-                        <div className="bg-green-50 px-2 py-1 rounded">
-                          <span className="text-green-700 font-medium">Weight:</span>
-                          <span className="text-green-600 ml-1">250g</span>
+                        <div className={`px-2 py-1 rounded transition-colors duration-300 ${
+                          isDarkMode 
+                            ? 'bg-green-900/30 text-green-300' 
+                            : 'bg-green-50 text-green-600'
+                        }`}>
+                          <span className="font-medium">Weight:</span>
+                          <span className="ml-1">250g</span>
                         </div>
-                        <div className="bg-purple-50 px-2 py-1 rounded">
-                          <span className="text-purple-700 font-medium">Batch:</span>
-                          <span className="text-purple-600 ml-1">B2024-{index + 1}</span>
+                        <div className={`px-2 py-1 rounded transition-colors duration-300 ${
+                          isDarkMode 
+                            ? 'bg-purple-900/30 text-purple-300' 
+                            : 'bg-purple-50 text-purple-600'
+                        }`}>
+                          <span className="font-medium">Batch:</span>
+                          <span className="ml-1">B2024-{index + 1}</span>
                         </div>
-                        <div className="bg-orange-50 px-2 py-1 rounded">
-                          <span className="text-orange-700 font-medium">Exp:</span>
-                          <span className="text-orange-600 ml-1">Dec 2025</span>
+                        <div className={`px-2 py-1 rounded transition-colors duration-300 ${
+                          isDarkMode 
+                            ? 'bg-orange-900/30 text-orange-300' 
+                            : 'bg-orange-50 text-orange-600'
+                        }`}>
+                          <span className="font-medium">Exp:</span>
+                          <span className="ml-1">Dec 2025</span>
                         </div>
                       </div>
                     </div>
                   </td>
                   <td className="py-4 px-4 text-center">
                     <div className="flex flex-col items-center">
-                      <span className="text-lg font-bold text-gray-900">{quotationItem.item_qty}</span>
-                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                      <span className={`text-lg font-bold transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                      }`}>{quotationItem.item_qty}</span>
+                      <span className={`text-xs px-2 py-1 rounded-full transition-colors duration-300 ${
+                        isDarkMode 
+                          ? 'text-gray-400 bg-gray-700' 
+                          : 'text-gray-500 bg-gray-100'
+                      }`}>
                         units
                       </span>
                       {/* Stock status indicator */}
@@ -727,18 +913,26 @@ const OrderDetails = ({ item, changeOpen }) => {
                   </td>
                   <td className="py-4 px-4 text-right">
                     <div className="flex flex-col items-end">
-                      <span className="font-semibold text-gray-900">
+                      <span className={`font-semibold transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                      }`}>
                         Rs. {quotationItem.unit_price.toLocaleString()}
                       </span>
-                      <span className="text-xs text-gray-500">per unit</span>
+                      <span className={`text-xs transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                      }`}>per unit</span>
                     </div>
                   </td>
                   <td className="py-4 px-4 text-right">
                     <div className="flex flex-col items-end">
-                      <span className="text-lg font-bold text-gray-900">
+                      <span className={`text-lg font-bold transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                      }`}>
                         Rs. {quotationItem.total_amount.toLocaleString()}
                       </span>
-                      <span className="text-xs text-gray-500">line total</span>
+                      <span className={`text-xs transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                      }`}>line total</span>
                     </div>
                   </td>
                   <td className="py-4 px-4 text-center">
@@ -748,7 +942,9 @@ const OrderDetails = ({ item, changeOpen }) => {
                         📋 Ready to Pack
                       </span>
                       {/* Delivery priority */}
-                      <span className="text-xs text-gray-500">
+                      <span className={`text-xs transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                      }`}>
                         Priority: Normal
                       </span>
                     </div>
@@ -759,34 +955,66 @@ const OrderDetails = ({ item, changeOpen }) => {
           </table>
           
           {/* Delivery Summary Section */}
-          <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-4 border-t border-gray-200">
+          <div className={`px-4 py-4 border-t transition-colors duration-300 ${
+            isDarkMode
+              ? 'bg-gradient-to-r from-gray-700 to-gray-800 border-gray-600'
+              : 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200'
+          }`}>
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-4">
-                <div className="bg-white px-3 py-2 rounded-lg border">
-                  <span className="text-sm font-medium text-gray-700">Total Items: </span>
+                <div className={`px-3 py-2 rounded-lg border transition-colors duration-300 ${
+                  isDarkMode 
+                    ? 'bg-gray-800 border-gray-600' 
+                    : 'bg-white border-gray-200'
+                }`}>
+                  <span className={`text-sm font-medium transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>Total Items: </span>
                   <span className="font-bold text-blue-600">{item.quotationItems.reduce((sum, item) => sum + item.item_qty, 0)} units</span>
                 </div>
-                <div className="bg-white px-3 py-2 rounded-lg border">
-                  <span className="text-sm font-medium text-gray-700">Product Variants: </span>
+                <div className={`px-3 py-2 rounded-lg border transition-colors duration-300 ${
+                  isDarkMode 
+                    ? 'bg-gray-800 border-gray-600' 
+                    : 'bg-white border-gray-200'
+                }`}>
+                  <span className={`text-sm font-medium transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>Product Variants: </span>
                   <span className="font-bold text-purple-600">{item.quotationItems.length}</span>
                 </div>
-                <div className="bg-white px-3 py-2 rounded-lg border">
-                  <span className="text-sm font-medium text-gray-700">Estimated Weight: </span>
+                <div className={`px-3 py-2 rounded-lg border transition-colors duration-300 ${
+                  isDarkMode 
+                    ? 'bg-gray-800 border-gray-600' 
+                    : 'bg-white border-gray-200'
+                }`}>
+                  <span className={`text-sm font-medium transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>Estimated Weight: </span>
                   <span className="font-bold text-green-600">{(item.quotationItems.length * 0.25).toFixed(2)} kg</span>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-600">📦 Packaging Notes:</p>
-                <p className="text-xs text-gray-500">Handle with care • Fragile items • Keep upright</p>
+                <p className={`text-sm transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>📦 Packaging Notes:</p>
+                <p className={`text-xs transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-500' : 'text-gray-500'
+                }`}>Handle with care • Fragile items • Keep upright</p>
               </div>
             </div>
           </div>
         </div>
         {/* Order Total */}
-        <div className="mt-2 bg-slate-100 border border-slate-300 rounded-lg font-medium text-black">
+        <div className={`mt-2 border rounded-lg font-medium transition-colors duration-300 ${
+          isDarkMode 
+            ? 'bg-gray-700 border-gray-600 text-gray-200' 
+            : 'bg-slate-100 border-slate-300 text-black'
+        }`}>
           <div className="flex flex-row items-center justify-between">
             <div className="w-fit py-2 px-4 text-start">Sub Total</div>
-            <div className="flex-grow border border-white"></div>
+            <div className={`flex-grow border transition-colors duration-300 ${
+              isDarkMode ? 'border-gray-600' : 'border-white'
+            }`}></div>
             <div className="w-fit py-2 px-4 text-end">
               Rs. {item.sub_total.toLocaleString()}
             </div>
@@ -795,14 +1023,18 @@ const OrderDetails = ({ item, changeOpen }) => {
             <div className="w-fit py-2 px-4 text-start">
               Discount ({item.discount}%)
             </div>
-            <div className="flex-grow border border-white"></div>
+            <div className={`flex-grow border transition-colors duration-300 ${
+              isDarkMode ? 'border-gray-600' : 'border-white'
+            }`}></div>
             <div className="w-fit py-2 px-4 text-end">
               Rs. {(item.sub_total * item.discount) / 100}
             </div>
           </div>
           <div className="flex flex-row items-center justify-between">
             <div className="w-fit py-2 px-4 text-start">Net Total</div>
-            <div className="flex-grow border border-white"></div>
+            <div className={`flex-grow border transition-colors duration-300 ${
+              isDarkMode ? 'border-gray-600' : 'border-white'
+            }`}></div>
             <div className="w-fit py-2 px-4 text-end">
               Rs. {item.net_total.toLocaleString()}
             </div>
@@ -819,14 +1051,41 @@ const OrderDetails = ({ item, changeOpen }) => {
             
             return (
               <button
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
-                onClick={isInvoiceStatus ? handleDownloadInvoice : downloadPDF}
-                disabled={isSubmit}
+                type="button"
+                className={cn(
+                  "flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200",
+                  "focus:outline-none focus:ring-2 focus:ring-blue-500/50",
+                  (isSubmit || isDownload) && "cursor-not-allowed opacity-50"
+                )}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!isSubmit && !isDownload) {
+                    // Mark this as a PDF generation operation
+                    window.pdfGenerationTimer = setTimeout(() => {
+                      if (isInvoiceStatus) {
+                        handleDownloadInvoice();
+                      } else {
+                        downloadPDF();
+                      }
+                    }, 10);
+                  }
+                }}
+                disabled={isSubmit || isDownload}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                {buttonText}
+                {(isSubmit || isDownload) ? (
+                  <>
+                    <FaSpinner className="w-4 h-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    {buttonText}
+                  </>
+                )}
               </button>
             );
           })()}

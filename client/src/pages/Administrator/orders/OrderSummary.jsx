@@ -23,7 +23,7 @@ const OrderSummary = () => {
         setQuotations([]);
         return;
       }
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/orders/all-data`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/orders/all-data?limit=1000&offset=0`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

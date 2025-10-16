@@ -3,16 +3,55 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FaSpinner } from "react-icons/fa";
 import { Trash2, Plus, Minus, Save, ArrowLeft, Package, ShoppingCart, CheckCircle, AlertCircle, Truck } from "lucide-react";
 import axios from "axios";
+import { useTheme } from "../../../context/theme/ThemeContext";
+
+// Fetch categories to get Cloudinary images
+const fetchCategories = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return { success: false, data: [] };
+
+    console.log('Fetching categories from API...');
+    const response = await axios.get('http://localhost:3000/api/categories', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log('Categories API response:', response.data);
+    const result = response.data;
+    if (result.success && result.data) {
+      const categories = result.data.categories || [];
+      console.log('Processed categories:', categories);
+      return { success: true, data: categories };
+    }
+    return { success: false, data: [] };
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return { success: false, data: [] };
+  }
+};
 
 // Resolve a single product/variant by product_id from backend list
-const resolveProductById = (allProducts, productId) => {
+const resolveProductById = (allProducts, categories, productId) => {
   const p = (allProducts || []).find(x => x.product_id === productId);
   if (!p) return null;
+  
+  console.log('Resolving product:', p.product_id, 'Category:', p.category_name);
+  
+  // Find the category image from the categories list
+  const category = (categories || []).find(cat => cat.category_name === p.category_name);
+  console.log('Found category:', category);
+  
+  const categoryImage = category?.pic_url; // Only use Cloudinary image from database
+  console.log('Category image URL:', categoryImage);
+  
   return {
     id: p.product_id,
     product_code: p.product_id,
     name: p.name || p.category_name,
-    image: `https://loremflickr.com/300/300/${encodeURIComponent(p.category_name || 'product')}`,
+    image: categoryImage, // Only use database image
     category: p.category_name,
     weight: p.name,
     price: parseFloat(p.selling_price || 0),
@@ -114,12 +153,14 @@ const toast = {
 const BulkList = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isDarkMode } = useTheme();
   
   // Get bulk list from navigation state
   const initialBulkList = location.state?.bulkList || [];
 
   const [reqData, setReqData] = useState(initialBulkList);
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -127,28 +168,51 @@ const BulkList = () => {
     (async () => {
       try {
         setIsLoading(true);
-        const all = await fetchAllProducts();
-        const list = all.success ? all.data : [];
+        
+        console.log('BulkList: Starting to fetch data...');
+        
+        // Fetch both products and categories
+        const [productsRes, categoriesRes] = await Promise.all([
+          fetchAllProducts(),
+          fetchCategories()
+        ]);
+        
+        console.log('BulkList: Products response:', productsRes);
+        console.log('BulkList: Categories response:', categoriesRes);
+        
+        const productsList = productsRes.success ? productsRes.data : [];
+        const categoriesList = categoriesRes.success ? categoriesRes.data : [];
+        
+        console.log('BulkList: Products list:', productsList.length, 'items');
+        console.log('BulkList: Categories list:', categoriesList.length, 'items');
+        console.log('BulkList: Sample category:', categoriesList[0]);
+        
+        setCategories(categoriesList);
 
         if (initialBulkList && initialBulkList.length > 0) {
+          console.log('BulkList: Initial bulk list:', initialBulkList);
+          
           // Map navigation list to products resolved from backend list
           const bulkProducts = initialBulkList.map(bulkItem => {
-            const p = resolveProductById(list, bulkItem.item_code);
-            if (!p) return null;
+            console.log('BulkList: Resolving bulk item:', bulkItem);
+            const p = resolveProductById(productsList, categoriesList, bulkItem.item_code);
+            if (!p) {
+              console.log('BulkList: Could not resolve product for item_code:', bulkItem.item_code);
+              return null;
+            }
+            console.log('BulkList: Resolved product:', p);
             return { ...p, bulk_qty: bulkItem.quantity };
           }).filter(Boolean);
+          
+          console.log('BulkList: Final bulk products:', bulkProducts);
           setProducts(bulkProducts);
         } else {
+          console.log('BulkList: No initial bulk list provided');
           setProducts([]);
         }
       } catch (error) {
-        console.error("Error loading products:", error);
-        // Fallback to sample products
-        const fallbackProducts = [
-          getProductByCode("TMP003-100G"),
-          getProductByCode("RCP007-250G")
-        ].filter(Boolean).map(product => ({ ...product, bulk_qty: 5 }));
-        setProducts(fallbackProducts);
+        console.error("BulkList: Error loading products:", error);
+        setProducts([]);
       } finally {
         setIsLoading(false);
       }
@@ -207,9 +271,9 @@ const BulkList = () => {
   };
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-blue-50 via-white to-blue-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className={`w-full h-full ${isDarkMode ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-blue-50 via-white to-blue-50'} rounded-3xl border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} shadow-xl overflow-hidden transition-colors duration-300`}>
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-5 relative overflow-hidden">
+      <div className={`${isDarkMode ? 'bg-gradient-to-r from-gray-800 to-gray-700' : 'bg-gradient-to-r from-blue-500 to-blue-400'} text-white p-5 relative overflow-hidden transition-colors duration-300`}>
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-white/10"></div>
         </div>
@@ -277,87 +341,93 @@ const BulkList = () => {
         {isLoading ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+              <div className={`w-16 h-16 ${isDarkMode ? 'bg-gradient-to-r from-gray-600 to-gray-500' : 'bg-gradient-to-r from-green-500 to-emerald-500'} rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse transition-colors duration-300`}>
                 <FaSpinner className="w-8 h-8 text-white animate-spin" />
               </div>
-              <p className="text-gray-600 font-medium">Loading bulk order details...</p>
+              <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} font-medium transition-colors duration-300`}>Loading bulk order details...</p>
             </div>
           </div>
         ) : products.length > 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl border shadow-sm overflow-hidden transition-colors duration-300`}>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-200">
+                <thead className={`${isDarkMode ? 'bg-gradient-to-r from-gray-700 to-gray-600 border-gray-600' : 'bg-gradient-to-r from-green-50 to-emerald-50 border-gray-200'} border-b transition-colors duration-300`}>
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider transition-colors duration-300`}>
                       Product
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider transition-colors duration-300`}>
                       Weight/Size
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider transition-colors duration-300`}>
                       Item Code
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider transition-colors duration-300`}>
                       Price
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider transition-colors duration-300`}>
                       Quantity
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider transition-colors duration-300`}>
                       Total
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider transition-colors duration-300`}>
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className={`${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'} divide-y transition-colors duration-300`}>
                   {products.map((item, index) => (
-                    <tr key={index} className="hover:bg-gray-50 transition-colors duration-200">
+                    <tr key={index} className={`${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors duration-200`}>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
-                          <div className="w-16 h-16 rounded-xl overflow-hidden shadow-sm border border-gray-100">
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="w-full h-full object-cover"
-                            />
+                          <div className={`w-16 h-16 rounded-xl overflow-hidden shadow-sm border ${isDarkMode ? 'border-gray-600' : 'border-gray-100'} transition-colors duration-300`}>
+                            {item.image ? (
+                              <img
+                                src={item.image}
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className={`w-full h-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} flex items-center justify-center transition-colors duration-300`}>
+                                <Package className={`w-6 h-6 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} transition-colors duration-300`} />
+                              </div>
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-800">{item.name}</p>
-                            <p className="text-sm text-gray-500">Stock: {item.current_stock}</p>
+                            <p className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} transition-colors duration-300`}>{item.name}</p>
+                            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} transition-colors duration-300`}>Stock: {item.current_stock}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="font-medium text-gray-800 bg-gray-100 px-3 py-1 rounded-lg">
+                        <span className={`font-medium ${isDarkMode ? 'text-gray-200 bg-gray-700' : 'text-gray-800 bg-gray-100'} px-3 py-1 rounded-lg transition-colors duration-300`}>
                           {item.weight}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="font-mono text-sm bg-gray-100 px-3 py-1 rounded-lg">
+                        <span className={`font-mono text-sm ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-800'} px-3 py-1 rounded-lg transition-colors duration-300`}>
                           {item.product_code}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="font-semibold text-gray-800">Rs{item.price}</span>
+                        <span className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} transition-colors duration-300`}>Rs{item.price}</span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <button
                             onClick={() => updateQuantity(item.product_code, -1)}
-                            className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-full hover:bg-gray-100 transition-colors"
+                            className={`w-8 h-8 flex items-center justify-center border ${isDarkMode ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-100 text-gray-600'} rounded-full transition-colors duration-300`}
                             disabled={item.bulk_qty <= 1}
                           >
                             <Minus className="w-4 h-4" />
                           </button>
-                          <span className="w-12 text-center font-semibold text-lg">
+                          <span className={`w-12 text-center font-semibold text-lg ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} transition-colors duration-300`}>
                             {item.bulk_qty}
                           </span>
                           <button
                             onClick={() => updateQuantity(item.product_code, 1)}
-                            className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-full hover:bg-gray-100 transition-colors"
+                            className={`w-8 h-8 flex items-center justify-center border ${isDarkMode ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-100 text-gray-600'} rounded-full transition-colors duration-300`}
                           >
                             <Plus className="w-4 h-4" />
                           </button>
@@ -371,7 +441,7 @@ const BulkList = () => {
                       <td className="px-6 py-4">
                         <button
                           onClick={() => removeItem(item.product_code)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          className={`p-2 text-red-500 ${isDarkMode ? 'hover:bg-red-900/20' : 'hover:bg-red-50'} rounded-lg transition-colors duration-300`}
                           title="Remove from bulk order"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -386,12 +456,12 @@ const BulkList = () => {
         ) : (
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
-              <AlertCircle className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-              <p className="text-gray-600 font-medium mb-2">No items in bulk order</p>
-              <p className="text-sm text-gray-500 mb-4">Add some products to your bulk order first</p>
+              <AlertCircle className={`w-16 h-16 mx-auto mb-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} transition-colors duration-300`} />
+              <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} font-medium mb-2 transition-colors duration-300`}>No items in bulk order</p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-4 transition-colors duration-300`}>Add some products to your bulk order first</p>
               <Link
                 to="/inventorymanager/bulk"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-colors"
+                className={`inline-flex items-center gap-2 px-6 py-3 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-green-600 hover:bg-green-700'} text-white rounded-xl font-semibold transition-colors duration-300`}
               >
                 <Package className="w-4 h-4" />
                 Add Products
@@ -403,15 +473,15 @@ const BulkList = () => {
 
       {/* Footer Actions */}
       {products.length > 0 && (
-        <div className="h-20 border-t border-gray-200 bg-white">
+        <div className={`h-20 border-t ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'} transition-colors duration-300`}>
           <div className="h-full px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <p className="text-sm text-gray-500">Total Items</p>
-                <p className="text-xl font-bold text-gray-800">{getTotalItems()}</p>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} transition-colors duration-300`}>Total Items</p>
+                <p className={`text-xl font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} transition-colors duration-300`}>{getTotalItems()}</p>
               </div>
               <div className="text-center">
-                <p className="text-sm text-gray-500">Total Value</p>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} transition-colors duration-300`}>Total Value</p>
                 <p className="text-xl font-bold text-green-600">Rs{getTotalValue().toLocaleString()}</p>
               </div>
             </div>
@@ -419,7 +489,7 @@ const BulkList = () => {
             <div className="flex items-center gap-4">
               <Link
                 to="/inventorymanager/bulk"
-                className="px-6 py-3 border border-gray-300 hover:bg-gray-50 rounded-xl font-semibold transition-colors flex items-center gap-2"
+                className={`px-6 py-3 border ${isDarkMode ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-50 text-gray-700'} rounded-xl font-semibold transition-colors duration-300 flex items-center gap-2`}
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back to Products
@@ -427,7 +497,7 @@ const BulkList = () => {
               <button
                 onClick={handleBulkSubmit}
                 disabled={isSubmitting}
-                className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                className={`px-8 py-3 ${isDarkMode ? 'bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500' : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'} text-white rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl`}
               >
                 {isSubmitting ? (
                   <>

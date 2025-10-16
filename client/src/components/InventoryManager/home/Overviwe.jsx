@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { User, Users, HandCoins, ChartNoAxesGantt, TrendingUp, Award, Sparkles, Calendar } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
+import { useTheme } from "../../../context/theme/ThemeContext.jsx";
 import api from "../../../lib/api";
 
 const getOverviewData = async (period) => {
@@ -47,6 +48,7 @@ const getOverviewData = async (period) => {
 };
 
 const Overview = () => {
+  const { isDarkMode } = useTheme();
   const [timePeriod, setTimePeriod] = useState("This Month");
   const [overviewData, setOverviewData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -100,7 +102,11 @@ const Overview = () => {
   );
 
   const StatCard = ({ icon: Icon, title, value, gradient, iconBg, textColor = "text-gray-900" }) => (
-    <div className={`relative overflow-hidden rounded-2xl ${gradient} p-6 shadow-lg hover:shadow-xl transition-all duration-300 group`}>
+    <div className={`relative overflow-hidden rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group border-2 ${
+      isDarkMode 
+        ? 'border-blue-400 bg-gray-800' 
+        : 'border-blue-500 bg-white'
+    }`}>
       <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
         <div className="absolute inset-0 bg-white rounded-full transform rotate-12 scale-150"></div>
       </div>
@@ -109,10 +115,14 @@ const Overview = () => {
           <Icon className="w-8 h-8 text-white" />
         </div>
         <div className="flex-1">
-          <p className={`${textColor} opacity-90 text-sm font-medium tracking-wide mb-1`}>
+          <p className={`opacity-90 text-sm font-medium tracking-wide mb-1 transition-colors duration-300 ${
+            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+          }`}>
             {title}
           </p>
-          <p className={`${textColor} text-2xl font-bold tracking-wide`}>
+          <p className={`text-2xl font-bold tracking-wide transition-colors duration-300 ${
+            isDarkMode ? 'text-gray-100' : 'text-gray-900'
+          }`}>
             {value}
           </p>
         </div>
@@ -140,7 +150,11 @@ const Overview = () => {
 
     return (
       <div className="group relative">
-        <div className="bg-white rounded-2xl p-4 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 group-hover:border-gray-200">
+        <div className={`rounded-2xl p-4 shadow-md hover:shadow-xl transition-all duration-300 border group-hover:border-gray-200 ${
+          isDarkMode 
+            ? 'bg-gray-700 border-gray-600' 
+            : 'bg-white border-gray-100'
+        }`}>
           <div className="flex flex-col items-center gap-3">
             <div className="relative">
               <div className={`w-16 h-16 bg-gradient-to-br ${colors[index % colors.length]} rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
@@ -153,7 +167,9 @@ const Overview = () => {
               )}
             </div>
             <div className="text-center">
-              <p className="text-sm font-semibold text-gray-800 group-hover:text-gray-900 transition-colors">
+              <p className={`text-sm font-semibold transition-colors group-hover:text-gray-900 ${
+                isDarkMode ? 'text-gray-200' : 'text-gray-800'
+              }`}>
                 {rep.name}
               </p>
               {index === 0 && (
@@ -167,16 +183,24 @@ const Overview = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className={`rounded-3xl border shadow-xl overflow-hidden transition-colors duration-300 ${
+      isDarkMode 
+        ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 border-gray-700' 
+        : 'bg-gradient-to-br from-gray-50 via-white to-gray-50 border-gray-200'
+    }`}>
       {loading ? (
         <LoadingSpinner />
       ) : error ? (
-        <div className="p-8 text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className={`p-8 text-center transition-colors duration-300 ${
+          isDarkMode ? 'text-gray-300' : 'text-gray-800'
+        }`}>
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+            isDarkMode ? 'bg-red-900/20' : 'bg-red-100'
+          }`}>
             <ChartNoAxesGantt className="w-8 h-8 text-red-500" />
           </div>
-          <h3 className="text-red-700 font-semibold text-lg mb-2">Error Loading Data</h3>
-          <p className="text-red-600">{error}</p>
+          <h3 className="text-red-400 font-semibold text-lg mb-2">Error Loading Data</h3>
+          <p className="text-red-400">{error}</p>
         </div>
       ) : (
         <div className="p-6 space-y-6">
@@ -233,15 +257,23 @@ const Overview = () => {
           </div>
 
           {/* Sales Representatives Section */}
-          <div className="bg-white rounded-2xl border border-2 border-blue-500 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
+          <div className={`rounded-2xl border-2 border-blue-500 shadow-sm overflow-hidden transition-colors duration-300 ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <div className={`px-6 py-4 border-b transition-colors duration-300 ${
+              isDarkMode ? 'border-gray-700' : 'border-gray-200'
+            }`}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-400 rounded-lg flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-800">Top Sales Representatives</h3>
-                  <p className="text-sm text-gray-600">Best performers</p>
+                  <h3 className={`font-semibold transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                  }`}>Top Sales Representatives</h3>
+                  <p className={`text-sm transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Best performers</p>
                 </div>
               </div>
             </div>
@@ -255,10 +287,16 @@ const Overview = () => {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Users className="w-8 h-8 text-gray-400" />
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors duration-300 ${
+                    isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+                  }`}>
+                    <Users className={`w-8 h-8 transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                    }`} />
                   </div>
-                  <p className="text-gray-500 font-medium">No sales representative data available</p>
+                  <p className={`font-medium transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}>No sales representative data available</p>
                 </div>
               )}
             </div>

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { BookOpenCheck, Search, Filter, Eye, Calendar, Hash, User, Users, DollarSign, Package, Activity, Sparkles, ChevronDown, RefreshCw, TrendingUp, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import OrderDetails from "@components/InventoryManager/orders/OrderDetails";
+import { useTheme } from "../../../context/theme/ThemeContext.jsx";
 
 const OrderSummary = () => {
+  const { isDarkMode } = useTheme();
   const [orders, setOrders] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -146,7 +148,8 @@ const OrderSummary = () => {
         return;
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/orders/all-data`, {
+      // Request all orders by setting a high limit (1000 should be enough for most cases)
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/orders/all-data?limit=1000&offset=0`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -621,31 +624,45 @@ const OrderSummary = () => {
     }
   };
 
-  const LoadingSpinner = () => (
-    <div className="h-full w-full flex flex-col items-center justify-center gap-6 py-12">
-      <div className="relative">
-        <div className="w-20 h-20 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-pulse">
-          <RefreshCw size={32} color="white" className="animate-spin" />
+  const LoadingSpinner = () => {
+    const { isDarkMode } = useTheme();
+    
+    return (
+      <div className="h-full w-full flex flex-col items-center justify-center gap-6 py-12">
+        <div className="relative">
+          <div className="w-20 h-20 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-pulse">
+            <RefreshCw size={32} color="white" className="animate-spin" />
+          </div>
+          <div className="absolute inset-0 w-20 h-20 border-4 border-blue-200 rounded-full animate-ping opacity-75"></div>
         </div>
-        <div className="absolute inset-0 w-20 h-20 border-4 border-blue-200 rounded-full animate-ping opacity-75"></div>
-      </div>
-      <div className="flex items-center gap-3 text-gray-600">
-        <span className="text-xl font-medium">Loading orders data</span>
-        <div className="flex gap-1">
-          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-0"></div>
-          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce delay-150"></div>
-          <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce delay-300"></div>
+        <div className="flex items-center gap-3">
+          <span className={`text-xl font-medium transition-colors duration-300 ${
+            isDarkMode ? 'text-gray-300' : 'text-gray-600'
+          }`}>Loading orders data</span>
+          <div className="flex gap-1">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-0"></div>
+            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce delay-150"></div>
+            <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce delay-300"></div>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const summaryStats = getSummaryStats();
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className={`w-full h-full rounded-3xl border shadow-xl overflow-hidden transition-colors duration-300 ${
+      isDarkMode 
+        ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 border-gray-700' 
+        : 'bg-gradient-to-br from-white via-gray-50 to-white border-gray-200'
+    }`}>
       {isOpen ? (
-        <div className="h-full overflow-y-auto bg-gradient-to-br from-gray-50 to-white p-6">
+        <div className={`h-full overflow-y-auto p-6 transition-colors duration-300 ${
+          isDarkMode 
+            ? 'bg-gradient-to-br from-gray-800 to-gray-900' 
+            : 'bg-gradient-to-br from-gray-50 to-white'
+        }`}>
           <OrderDetails item={selectedItem} changeOpen={() => handleRefresh()} />
         </div>
       ) : (
@@ -678,18 +695,28 @@ const OrderSummary = () => {
               {/* Summary Statistics Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Total Orders */}
-                <div className="bg-white rounded-2xl p-6 border-2 border-blue-500 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div className={`rounded-2xl p-6 border-2 border-blue-500 shadow-sm hover:shadow-md transition-all duration-200 ${
+                  isDarkMode ? 'bg-gray-800' : 'bg-white'
+                }`}>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Total Orders</p>
-                      <p className="text-3xl font-bold text-gray-900 mt-2">{summaryStats.totalOrders}</p>
+                      <p className={`text-sm font-medium transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                      }`}>Total Orders</p>
+                      <p className={`text-3xl font-bold mt-2 transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                      }`}>{summaryStats.totalOrders}</p>
                       <div className="flex items-center mt-2">
                         <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
                         <span className="text-sm text-green-600 font-medium">+{summaryStats.monthlyGrowth}%</span>
-                        <span className="text-sm text-gray-500 ml-1">vs last month</span>
+                        <span className={`text-sm ml-1 transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}>vs last month</span>
                       </div>
                     </div>
-                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors duration-300 ${
+                      isDarkMode ? 'bg-blue-900/30' : 'bg-blue-50'
+                    }`}>
                       <Users className="w-6 h-6 text-blue-600" />
                     </div>
                   </div>
@@ -697,10 +724,16 @@ const OrderSummary = () => {
               </div>
 
               {/* Order Status Overview */}
-              <div className="bg-white rounded-2xl border-2 border-blue-400 shadow-sm p-6">
+              <div className={`rounded-2xl border-2 border-blue-400 shadow-sm p-6 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-gray-900">Order Status Overview</h3>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <h3 className={`text-xl font-bold transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                  }`}>Order Status Overview</h3>
+                  <div className={`flex items-center gap-2 text-sm transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
                     <Activity className="w-4 h-4" />
                     Real-time data
                   </div>
@@ -755,17 +788,27 @@ const OrderSummary = () => {
               </div>
 
               {/* Filters Section */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className={`rounded-2xl border shadow-sm p-6 transition-colors duration-300 ${
+                isDarkMode 
+                  ? 'bg-gray-800 border-gray-700' 
+                  : 'bg-white border-gray-100'
+              }`}>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                   {/* Status Filter */}
                   <div className="flex-1">
-                    <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <label className={`text-sm font-medium mb-2 flex items-center gap-2 transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                       <Filter className="w-4 h-4" />
                       Filter by Status
                     </label>
                     <div className="relative">
                       <select
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none bg-white shadow-sm"
+                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none shadow-sm ${
+                          isDarkMode
+                            ? 'bg-gray-700 border-gray-600 text-gray-200'
+                            : 'bg-white border-gray-300 text-gray-700'
+                        }`}
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
                       >
@@ -781,14 +824,20 @@ const OrderSummary = () => {
 
                   {/* Search Input */}
                   <div className="flex-1">
-                    <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <label className={`text-sm font-medium mb-2 flex items-center gap-2 transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                       <Search className="w-4 h-4" />
                       Search Orders
                     </label>
                     <div className="relative">
                       <input
                         type="text"
-                        className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm"
+                        className={`w-full px-4 py-3 pl-10 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm ${
+                          isDarkMode
+                            ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-400'
+                            : 'bg-white border-gray-300 text-gray-700 placeholder-gray-400'
+                        }`}
                         placeholder="Search by Order ID, Customer Name, or Sales Rep..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -800,14 +849,26 @@ const OrderSummary = () => {
               </div>
 
               {/* Orders Table */}
-              <div className="flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+              <div className={`flex-1 rounded-2xl border shadow-sm overflow-hidden transition-colors duration-300 ${
+                isDarkMode 
+                  ? 'bg-gray-800 border-gray-700' 
+                  : 'bg-white border-gray-100'
+              }`}>
+                <div className={`px-6 py-4 border-b transition-colors duration-300 ${
+                  isDarkMode
+                    ? 'bg-gradient-to-r from-gray-700 to-gray-800 border-gray-600'
+                    : 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200'
+                }`}>
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+                    <h3 className={`font-semibold flex items-center gap-2 transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                    }`}>
                       <Activity className="w-5 h-5 text-blue-500" />
                       Orders List ({filteredOrders.length} results)
                     </h3>
-                    <div className="text-sm text-gray-600">
+                    <div className={`text-sm transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
                           <CheckCircle className="w-4 h-4 text-green-600" />
@@ -836,85 +897,133 @@ const OrderSummary = () => {
                 
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
+                    <thead className={`border-b transition-colors duration-300 ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600' 
+                        : 'bg-gray-50 border-gray-200'
+                    }`}>
                       <tr>
-                        <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className={`px-4 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                        }`}>
                           <div className="flex items-center gap-2">
                             <Calendar className="w-4 h-4" />
                             Order Date
                           </div>
                         </th>
-                        <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className={`px-4 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                        }`}>
                           <div className="flex items-center gap-2">
                             <Hash className="w-4 h-4" />
                             Order ID
                           </div>
                         </th>
-                        <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className={`px-4 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                        }`}>
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4" />
                             Customer Name
                           </div>
                         </th>
-                        <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className={`px-4 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                        }`}>
                           <div className="flex items-center gap-2">
                             <Users className="w-4 h-4" />
                             Sales Rep
                           </div>
                         </th>
-                        <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className={`px-4 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                        }`}>
                           <div className="flex items-center gap-2">
                             <DollarSign className="w-4 h-4" />
                             Total Amount
                           </div>
                         </th>
-                        <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className={`px-4 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                        }`}>
                           <div className="flex items-center gap-2">
                             <Package className="w-4 h-4" />
                             No of Products
                           </div>
                         </th>
-                        <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className={`px-4 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                        }`}>
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4" />
                             Assigned RM
                           </div>
                         </th>
-                        <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th className={`px-4 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                        }`}>Status</th>
+                        <th className={`px-4 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                        }`}>Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className={`divide-y transition-colors duration-300 ${
+                      isDarkMode 
+                        ? 'bg-gray-800 divide-gray-700' 
+                        : 'bg-white divide-gray-200'
+                    }`}>
                       {filteredOrders.map((item) => (
-                        <tr key={item.order_id} className="hover:bg-gray-50 transition-colors duration-200">
-                          <td className="px-4 py-4 text-sm text-gray-900">
+                        <tr key={item.order_id} className={`transition-colors duration-200 ${
+                          isDarkMode 
+                            ? 'hover:bg-gray-700' 
+                            : 'hover:bg-gray-50'
+                        }`}>
+                          <td className={`px-4 py-4 text-sm transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-900'
+                          }`}>
                             {new Date(item.order_date).toLocaleDateString()}
                           </td>
-                          <td className="px-4 py-4 text-sm font-medium text-gray-900">
+                          <td className={`px-4 py-4 text-sm font-medium transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                          }`}>
                             {item.order_id}
                           </td>
-                          <td className="px-4 py-4 text-sm text-gray-500">
+                          <td className={`px-4 py-4 text-sm transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
                             {item.customer_name}
                           </td>
-                          <td className="px-4 py-4 text-sm text-gray-500">
+                          <td className={`px-4 py-4 text-sm transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
                             {item.sales_rep_name}
                           </td>
-                          <td className="px-4 py-4 text-sm font-semibold text-gray-900">
+                          <td className={`px-4 py-4 text-sm font-semibold transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                          }`}>
                             Rs. {parseFloat(item.total_amount).toLocaleString()}
                           </td>
-                          <td className="px-4 py-4 text-sm text-gray-500 text-center">
+                          <td className={`px-4 py-4 text-sm text-center transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}>
                             {item.no_of_products}
                           </td>
-                          <td className="px-4 py-4 text-sm text-gray-600">
+                          <td className={`px-4 py-4 text-sm transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                          }`}>
                             {assignedOrders.has(item.order_id) ? (
                               <div className="flex flex-col gap-1">
                                 <div className="flex items-center gap-2">
                                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                  <span className="font-medium text-gray-900">
+                                  <span className={`font-medium transition-colors duration-300 ${
+                                    isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                                  }`}>
                                     {orderResourceManagers.get(item.order_id)?.name || 'Assigned'}
                                   </span>
                                 </div>
-                                <div className="text-xs text-gray-500">
+                                <div className={`text-xs transition-colors duration-300 ${
+                                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                                }`}>
                                   {orderResourceManagers.get(item.order_id)?.id || 'N/A'} • {orderResourceManagers.get(item.order_id)?.assignedAt ? 
                                     new Date(orderResourceManagers.get(item.order_id).assignedAt).toLocaleDateString('en-US', { 
                                       month: 'short', 
@@ -932,8 +1041,12 @@ const OrderSummary = () => {
                                 )}
                               </div>
                             ) : (
-                              <div className="flex items-center gap-2 text-gray-400">
-                                <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                              <div className={`flex items-center gap-2 transition-colors duration-300 ${
+                                isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                              }`}>
+                                <div className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                                  isDarkMode ? 'bg-gray-600' : 'bg-gray-300'
+                                }`}></div>
                                 <span className="text-sm">Not assigned</span>
                               </div>
                             )}

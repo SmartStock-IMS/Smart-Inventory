@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaSpinner } from "react-icons/fa";
 import { PackageSearch, Star, ArrowRight, Trophy, Sparkles, Scale, Package } from "lucide-react";
+import { useTheme } from "../../../context/theme/ThemeContext.jsx";
 import axios from "axios";
 
 // Mock service function for demo
@@ -85,6 +86,7 @@ const getPopularProductsDataOriginal = async () => {
 };
 
 export default function PopularProducts() {
+  const { isDarkMode } = useTheme();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -122,7 +124,9 @@ export default function PopularProducts() {
         </div>
         <div className="absolute inset-0 w-20 h-20 border-4 border-purple-200 rounded-full animate-ping opacity-75"></div>
       </div>
-      <div className="flex items-center gap-3 text-gray-600">
+      <div className={`flex items-center gap-3 transition-colors duration-300 ${
+        isDarkMode ? 'text-gray-300' : 'text-gray-600'
+      }`}>
         <span className="text-xl font-medium">Loading product data</span>
         <div className="flex gap-1">
           <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce delay-0"></div>
@@ -149,7 +153,11 @@ export default function PopularProducts() {
     const RankIcon = getRankIcon(rank);
 
     return (
-      <div className="group relative bg-white rounded-2xl border border-gray-100 hover:border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
+      <div className={`group relative rounded-2xl border shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden ${
+        isDarkMode 
+          ? 'bg-gray-800 border-gray-700 hover:border-gray-600' 
+          : 'bg-white border-gray-100 hover:border-gray-200'
+      }`}>
         <div className="p-4">
           <div className="flex items-center gap-4">
             {/* Rank Badge */}
@@ -178,10 +186,14 @@ export default function PopularProducts() {
 
             {/* Product Info */}
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 text-sm uppercase tracking-wide truncate group-hover:text-gray-700 transition-colors">
+              <h3 className={`font-semibold text-sm uppercase tracking-wide truncate group-hover:text-gray-700 transition-colors ${
+                isDarkMode ? 'text-gray-200' : 'text-gray-900'
+              }`}>
                 {product.name}
               </h3>
-              <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+              <p className={`text-xs mt-1 flex items-center gap-1 transition-colors duration-300 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              }`}>
                 <Scale className="w-3 h-3" />
                 {product.category}
               </p>
@@ -205,7 +217,11 @@ export default function PopularProducts() {
 
   if (loading) {
     return (
-      <div className="w-full h-full bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-3xl border border-gray-200 shadow-xl">
+      <div className={`w-full h-full rounded-3xl border shadow-xl transition-colors duration-300 ${
+        isDarkMode 
+          ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 border-gray-700' 
+          : 'bg-gradient-to-br from-gray-50 via-white to-gray-50 border-gray-200'
+      }`}>
         <LoadingSpinner />
       </div>
     );
@@ -226,7 +242,11 @@ export default function PopularProducts() {
   }
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-white via-gray-50 to-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden flex flex-col">
+    <div className={`w-full h-full rounded-3xl border shadow-xl overflow-hidden flex flex-col transition-colors duration-300 ${
+      isDarkMode 
+        ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 border-gray-700' 
+        : 'bg-gradient-to-br from-white via-gray-50 to-white border-gray-200'
+    }`}>
       {/* Header Section */}
       <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-6 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
@@ -252,7 +272,11 @@ export default function PopularProducts() {
       <div className="flex-1 p-6 overflow-hidden">
         <div className="h-full flex flex-col">
           {/* Column Headers */}
-          <div className="flex justify-between items-center text-gray-500 text-sm mb-4 px-4 pb-2 border-b border-gray-100">
+          <div className={`flex justify-between items-center text-sm mb-4 px-4 pb-2 border-b transition-colors duration-300 ${
+            isDarkMode 
+              ? 'text-gray-400 border-gray-700' 
+              : 'text-gray-500 border-gray-100'
+          }`}>
             <span className="font-medium">Product Rankings</span>
             <span className="font-medium">Stock</span>
           </div>
@@ -271,10 +295,16 @@ export default function PopularProducts() {
             ) : (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <PackageSearch className="w-8 h-8 text-gray-400" />
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors duration-300 ${
+                    isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+                  }`}>
+                    <PackageSearch className={`w-8 h-8 transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                    }`} />
                   </div>
-                  <p className="text-gray-500 font-medium">No popular products data available</p>
+                  <p className={`font-medium transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}>No popular products data available</p>
                 </div>
               </div>
             )}
@@ -283,7 +313,11 @@ export default function PopularProducts() {
       </div>
 
       {/* Footer CTA */}
-      <div className="p-6 bg-gradient-to-r from-gray-50 to-white border-t border-gray-100">
+      <div className={`p-6 border-t transition-colors duration-300 ${
+        isDarkMode 
+          ? 'bg-gradient-to-r from-gray-800 to-gray-700 border-gray-700' 
+          : 'bg-gradient-to-r from-gray-50 to-white border-gray-100'
+      }`}>
         <Link
           to="/inventorymanager/productlist"
           className="block w-full group"

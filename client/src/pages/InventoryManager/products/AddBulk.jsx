@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaSpinner } from "react-icons/fa";
 import { Search, Minus, Plus, Layers, Sparkles, Package, ShoppingCart, Filter, Grid, Eye, X, CheckCircle, AlertCircle, Scale, Truck } from "lucide-react";
 import axios from "axios";
+import { useTheme } from "../../../context/theme/ThemeContext";
 
 // Backend API: fetch products via API Gateway
 const fetchAllProducts = async () => {
@@ -20,6 +21,31 @@ const fetchAllProducts = async () => {
   }
 };
 
+// Fetch categories to get Cloudinary images
+const fetchCategories = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return { success: false, data: [] };
+
+    const response = await axios.get('http://localhost:3000/api/categories', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const result = response.data;
+    if (result.success && result.data) {
+      const categories = result.data.categories || [];
+      return { success: true, data: categories };
+    }
+    return { success: false, data: [] };
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return { success: false, data: [] };
+  }
+};
+
 // Mock toast function
 const toast = {
   success: (message) => console.log(`✅ ${message}`),
@@ -27,67 +53,73 @@ const toast = {
 };
 
 // Mock BulkList component
-const BulkList = ({ bulkList, isProcessed, setBulk }) => (
-  <div className="h-full bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6">
-    <div className="flex items-center justify-between mb-6">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center">
-          <CheckCircle className="w-5 h-5 text-white" />
+const BulkList = ({ bulkList, isProcessed, setBulk }) => {
+  const { isDarkMode } = useTheme();
+  
+  return (
+    <div className={`h-full ${isDarkMode ? 'bg-gradient-to-br from-gray-800 to-gray-700' : 'bg-gradient-to-br from-green-50 to-emerald-50'} rounded-2xl p-6 transition-colors duration-300`}>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 ${isDarkMode ? 'bg-gray-600' : 'bg-green-500'} rounded-xl flex items-center justify-center transition-colors duration-300`}>
+            <CheckCircle className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className={`text-xl font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} transition-colors duration-300`}>Bulk Order Summary</h3>
+            <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} transition-colors duration-300`}>Review and confirm your bulk order</p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-xl font-bold text-gray-800">Bulk Order Summary</h3>
-          <p className="text-gray-600">Review and confirm your bulk order</p>
+        <button
+          onClick={() => isProcessed(false)}
+          className={`px-6 py-2 ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-500 hover:bg-gray-600'} text-white rounded-lg transition-colors duration-200`}
+        >
+          Back to Products
+        </button>
+      </div>
+      
+      <div className={`${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-100'} rounded-xl shadow-sm border overflow-hidden transition-colors duration-300`}>
+        <div className={`${isDarkMode ? 'bg-gray-600 border-gray-500' : 'bg-gray-50 border-gray-200'} px-6 py-4 border-b transition-colors duration-300`}>
+          <h4 className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} transition-colors duration-300`}>Items in Bulk Order ({bulkList.length})</h4>
         </div>
-      </div>
-      <button
-        onClick={() => isProcessed(false)}
-        className="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors duration-200"
-      >
-        Back to Products
-      </button>
-    </div>
-    
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-        <h4 className="font-semibold text-gray-800">Items in Bulk Order ({bulkList.length})</h4>
-      </div>
-      <div className="p-6">
-        {bulkList.length > 0 ? (
-          <div className="space-y-4">
-            {bulkList.map((item, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-4">
-                  <Scale className="w-5 h-5 text-orange-500" />
-                  <div>
-                    <p className="font-medium text-gray-800">{item.item_code}</p>
-                    <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+        <div className="p-6">
+          {bulkList.length > 0 ? (
+            <div className="space-y-4">
+              {bulkList.map((item, index) => (
+                <div key={index} className={`flex items-center justify-between p-4 ${isDarkMode ? 'bg-gray-600' : 'bg-gray-50'} rounded-lg transition-colors duration-300`}>
+                  <div className="flex items-center gap-4">
+                    <Scale className={`w-5 h-5 ${isDarkMode ? 'text-orange-400' : 'text-orange-500'} transition-colors duration-300`} />
+                    <div>
+                      <p className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} transition-colors duration-300`}>{item.item_code}</p>
+                      <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} transition-colors duration-300`}>Quantity: {item.quantity}</p>
+                    </div>
                   </div>
+                  <button
+                    onClick={() => setBulk(prev => prev.filter((_, i) => i !== index))}
+                    className={`p-2 text-red-500 ${isDarkMode ? 'hover:bg-red-900/20' : 'hover:bg-red-50'} rounded-lg transition-colors duration-300`}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => setBulk(prev => prev.filter((_, i) => i !== index))}
-                  className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-gray-500">
-            <Package className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-            <p>No items in bulk order</p>
-          </div>
-        )}
+              ))}
+            </div>
+          ) : (
+            <div className={`text-center py-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} transition-colors duration-300`}>
+              <Package className={`w-12 h-12 mx-auto mb-3 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} transition-colors duration-300`} />
+              <p>No items in bulk order</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const cn = (...classes) => classes.filter(Boolean).join(' ');
 
 const AddBulk = () => {
   const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
   const [products, setProducts] = useState([]);
+  const [categoriesData, setCategoriesData] = useState([]);
   const [productBulk, setProductBulk] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -99,18 +131,36 @@ const AddBulk = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
+  // Helper function to get category image from database
+  const getCategoryImage = (categoryName) => {
+    const category = categoriesData.find(cat => cat.category_name === categoryName);
+    return category?.pic_url || null;
+  };
+
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
-        const response = await fetchAllProducts();
-        if (response.success) {
-          setProducts(response.data);
+        
+        // Fetch both products and categories
+        const [productsRes, categoriesRes] = await Promise.all([
+          fetchAllProducts(),
+          fetchCategories()
+        ]);
+        
+        if (productsRes.success) {
+          setProducts(productsRes.data);
         } else {
-          console.error("Error fetching products: ", response.message);
+          console.error("Error fetching products: ", productsRes.message);
+        }
+        
+        if (categoriesRes.success) {
+          setCategoriesData(categoriesRes.data);
+        } else {
+          console.error("Error fetching categories: ", categoriesRes.message);
         }
       } catch (error) {
-        console.error("Error getting products.", error);
+        console.error("Error getting products and categories.", error);
       } finally {
         setLoading(false);
       }
@@ -133,7 +183,7 @@ const AddBulk = () => {
           id: p.product_id,
           name: p.name,
           category: name,
-          main_image: `https://loremflickr.com/300/300/${encodeURIComponent(name)}`,
+          main_image: getCategoryImage(name), // Use database image
           variants: [
             { product_id: p.product_id, product_code: p.product_id, weight: p.name, quantity: p.current_stock }
           ],
@@ -149,7 +199,7 @@ const AddBulk = () => {
       : filterCategories;
 
     setFilteredCategories(filteredCategories);
-  }, [products, searchQuery, selectedCategory]);
+  }, [products, searchQuery, selectedCategory, categoriesData]);
 
   // Build categories from backend products (each product is a variant row)
   const categoriesMap = (products || []).reduce((acc, p) => {
@@ -160,7 +210,7 @@ const AddBulk = () => {
       id: p.product_id,
       name: p.name,
       category: key,
-      main_image: `https://loremflickr.com/300/300/${encodeURIComponent(key)}`,
+      main_image: getCategoryImage(key), // Use database image
       variants: [
         { product_id: p.product_id, product_code: p.product_id, weight: p.name, quantity: p.current_stock }
       ],
@@ -243,7 +293,7 @@ const AddBulk = () => {
     }));
     setSelectedProduct({
       name: categoryName,
-      main_image: `https://loremflickr.com/300/300/${encodeURIComponent(categoryName)}`,
+      main_image: getCategoryImage(categoryName), // Use database image
       variants
     });
     setSelectedItemCode(variants?.[0]?.product_code || "");
@@ -261,9 +311,9 @@ const AddBulk = () => {
   };
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-blue-50 via-white to-blue-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className={`w-full h-full ${isDarkMode ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-blue-50 via-white to-blue-50'} rounded-3xl border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} shadow-xl overflow-hidden transition-colors duration-300`}>
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-5 relative overflow-hidden">
+      <div className={`${isDarkMode ? 'bg-gradient-to-r from-gray-800 to-gray-700' : 'bg-gradient-to-r from-blue-500 to-blue-400'} text-white p-5 relative overflow-hidden transition-colors duration-300`}>
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-white/10"></div>
         </div>
@@ -346,10 +396,10 @@ const AddBulk = () => {
             {loading ? (
               <div className="h-full flex items-center justify-center">
                 <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                  <div className={`w-16 h-16 ${isDarkMode ? 'bg-gradient-to-r from-gray-600 to-gray-500' : 'bg-gradient-to-r from-orange-500 to-red-500'} rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse transition-colors duration-300`}>
                     <FaSpinner className="w-8 h-8 text-white animate-spin" />
                   </div>
-                  <p className="text-gray-600 font-medium">Loading spices inventory...</p>
+                  <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} font-medium transition-colors duration-300`}>Loading spices inventory...</p>
                 </div>
               </div>
             ) : products && products.length > 0 ? (
@@ -359,20 +409,26 @@ const AddBulk = () => {
                 <div key={name} className="group">
                   <button
                     onClick={() => openCategoryDialog(name)}
-                    className="w-full bg-white rounded-xl border border-gray-200 hover:border-orange-300 hover:shadow-lg transition-all duration-300 overflow-hidden group-hover:scale-105"
+                    className={`w-full ${isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-orange-500 hover:bg-gray-700' : 'bg-white border-gray-200 hover:border-orange-300'} rounded-xl border hover:shadow-lg transition-all duration-300 overflow-hidden group-hover:scale-105`}
                   >
                     <div className="aspect-square overflow-hidden">
-                      <img
-                        src={`https://loremflickr.com/300/300/${encodeURIComponent(name)}`}
-                        alt={name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
+                      {getCategoryImage(name) ? (
+                        <img
+                          src={getCategoryImage(name)}
+                          alt={name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className={`w-full h-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} flex items-center justify-center transition-colors duration-300`}>
+                          <Package className={`w-12 h-12 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} transition-colors duration-300`} />
+                        </div>
+                      )}
                     </div>
                     <div className="p-4">
-                      <h4 className="font-medium text-gray-800 text-sm mb-2 line-clamp-2">
+                      <h4 className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} text-sm mb-2 line-clamp-2 transition-colors duration-300`}>
                         {name}
                       </h4>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
+                      <div className={`flex items-center justify-between text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} transition-colors duration-300`}>
                         <span>{(categoriesMap[name]?.length) || 0} items</span>
                         <Scale className="w-4 h-4" />
                       </div>
@@ -385,8 +441,8 @@ const AddBulk = () => {
             ) : (
               <div className="h-full flex items-center justify-center">
                 <div className="text-center">
-                  <AlertCircle className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-600 font-medium">No products available</p>
+                  <AlertCircle className={`w-16 h-16 mx-auto mb-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} transition-colors duration-300`} />
+                  <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} font-medium transition-colors duration-300`}>No products available</p>
                 </div>
               </div>
             )}
@@ -397,8 +453,8 @@ const AddBulk = () => {
       {/* Product Dialog */}
       {dialogOpen && selectedProduct && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden">
-            <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6">
+          <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden transition-colors duration-300`}>
+            <div className={`${isDarkMode ? 'bg-gradient-to-r from-gray-700 to-gray-600' : 'bg-gradient-to-r from-orange-500 to-red-500'} text-white p-6 transition-colors duration-300`}>
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xl font-bold">Add to Bulk Order</h3>
@@ -415,7 +471,7 @@ const AddBulk = () => {
             
             <div className="p-6 max-h-[calc(90vh-120px)] overflow-y-auto">
               <div className="flex items-center justify-center mb-6">
-                <div className="w-48 h-48 rounded-xl overflow-hidden shadow-lg border-4 border-gray-100">
+                <div className={`w-48 h-48 rounded-xl overflow-hidden shadow-lg border-4 ${isDarkMode ? 'border-gray-600' : 'border-gray-100'} transition-colors duration-300`}>
                   <img
                     src={selectedProduct.main_image}
                     alt={selectedProduct.name}
@@ -426,7 +482,7 @@ const AddBulk = () => {
 
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-3 transition-colors duration-300`}>
                     Selected Size: {selectedItemCode || "Please select a size"}
                   </label>
                   <div className="grid grid-cols-2 gap-3">
@@ -437,8 +493,8 @@ const AddBulk = () => {
                         className={cn(
                           "p-4 border-2 rounded-xl transition-all duration-200 text-left",
                           selectedItemCode === variant.product_code
-                            ? "border-orange-500 bg-orange-50 ring-2 ring-orange-200"
-                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                            ? `border-orange-500 ${isDarkMode ? 'bg-orange-900/20' : 'bg-orange-50'} ring-2 ring-orange-200`
+                            : `${isDarkMode ? 'border-gray-600 hover:border-gray-500 hover:bg-gray-700' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`
                         )}
                       >
                         <div className="flex items-center justify-between">
@@ -446,11 +502,11 @@ const AddBulk = () => {
                             <div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border ${getWeightBadgeColor(variant.weight)}`}>
                               {variant.weight}
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">{variant.product_code}</p>
+                            <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-1 transition-colors duration-300`}>{variant.product_code}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-medium text-gray-800">{variant.quantity}</p>
-                            <p className="text-xs text-gray-500">in stock</p>
+                            <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} transition-colors duration-300`}>{variant.quantity}</p>
+                            <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} transition-colors duration-300`}>in stock</p>
                           </div>
                         </div>
                       </button>
@@ -459,13 +515,13 @@ const AddBulk = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                  <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-3 transition-colors duration-300`}>
                     Quantity to Add
                   </label>
                   <div className="flex items-center justify-center">
                     <button
                       onClick={handleDecrement}
-                      className="p-3 border border-gray-300 rounded-l-xl bg-gray-50 hover:bg-gray-100 transition-colors"
+                      className={`p-3 border ${isDarkMode ? 'border-gray-600 bg-gray-700 hover:bg-gray-600' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'} rounded-l-xl transition-colors duration-300`}
                     >
                       <Minus className="w-4 h-4" />
                     </button>
@@ -473,11 +529,11 @@ const AddBulk = () => {
                       type="number"
                       value={quantity}
                       onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-24 py-3 text-center border-y border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className={`w-24 py-3 text-center border-y ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-200 focus:ring-orange-500' : 'border-gray-300 bg-white text-gray-800 focus:ring-orange-500'} focus:outline-none focus:ring-2 transition-colors duration-300`}
                     />
                     <button
                       onClick={handleIncrement}
-                      className="p-3 border border-gray-300 rounded-r-xl bg-gray-50 hover:bg-gray-100 transition-colors"
+                      className={`p-3 border ${isDarkMode ? 'border-gray-600 bg-gray-700 hover:bg-gray-600' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'} rounded-r-xl transition-colors duration-300`}
                     >
                       <Plus className="w-4 h-4" />
                     </button>
@@ -491,8 +547,8 @@ const AddBulk = () => {
                     className={cn(
                       "flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2",
                       selectedItemCode
-                        ? "bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg hover:shadow-xl"
-                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        ? `${isDarkMode ? 'bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500' : 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700'} text-white shadow-lg hover:shadow-xl`
+                        : `${isDarkMode ? 'bg-gray-700 text-gray-500' : 'bg-gray-200 text-gray-400'} cursor-not-allowed`
                     )}
                   >
                     <ShoppingCart className="w-4 h-4" />
@@ -500,7 +556,7 @@ const AddBulk = () => {
                   </button>
                   <button
                     onClick={handleDialogClose}
-                    className="px-6 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
+                    className={`px-6 py-3 border ${isDarkMode ? 'border-gray-600 hover:bg-gray-700 text-gray-300' : 'border-gray-300 hover:bg-gray-50 text-gray-700'} rounded-xl transition-colors duration-300`}
                   >
                     Cancel
                   </button>

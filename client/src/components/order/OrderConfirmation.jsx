@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "../../context/cart/CartContext";
 import { useAuth } from "../../context/auth/AuthContext";
+import { useNavigate } from "react-router-dom";
 import Invoice from "./Invoice";
 import { ToastContainer, toast } from "react-toastify";
 import generateId from "@lib/generate-id.js";
@@ -26,23 +27,41 @@ import {
 } from "react-icons/fa";
 
 const OrderConfirmation = () => {
-  const { customer, cartState } = useCart();
+  const { customer, cartState, clearCart } = useCart();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // State management
   const [quotationData, setQuotationData] = useState({});
   const [showDownloadButton, setShowDownloadButton] = useState(false);
+  const [savedCartState, setSavedCartState] = useState(null);
+  const [savedCustomer, setSavedCustomer] = useState(null);
   const [orderTerm, setOrderTerm] = useState("");
   const [orderTermError, setOrderTermError] = useState(false);
   const [companyName, setCompanyName] = useState("");
   const [companyError, setCompanyError] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Clear cart when component unmounts (user navigates away)
+  useEffect(() => {
+    return () => {
+      if (showDownloadButton) {
+        // Only clear cart if quotation was generated
+        clearCart();
+      }
+    };
+  }, [showDownloadButton, clearCart]);
+
   const quotationId = generateId("QT");
   const currentDate = new Date().toISOString().split("T")[0];
   const initDueDate = new Date();
   initDueDate.setMonth(new Date().getMonth() + 1);
   const dueDate = initDueDate.toISOString().split("T")[0];
+
+  const handleNewOrder = () => {
+    clearCart();
+    navigate('/sales-rep/add-items');
+  };
 
   if (!cartState || !customer) {
     return (
@@ -97,8 +116,22 @@ const OrderConfirmation = () => {
       // Temporarily use mock API call since backend is not connected
       // TODO: Replace with real API when backend is connected
       // const response = await createNewQuotation(qtData);
+      // if (response.success) {
+      //   console.log("Quotation created successfully");
+      //   toast.success("Order placed successfully! 🎉");
+      //   setOrderTermError(false);
+      //   setCompanyError(false);
+      //   
+      //   setShowDownloadButton(true);
+      //   
+      //   // DON'T clear cart here - we need the data to show the quotation
+      //   // The cart will be cleared when the user navigates away
+      // } else {
+      //   console.error("Create quotation failed: ", response.error);
+      //   toast.error("Failed to place order. Please try again.");
+      // }
       
-      // Mock successful response
+      // Mock successful response for development
       await new Promise(resolve => setTimeout(resolve, 2000));
       const mockResponse = { success: true, data: qtData };
       
@@ -107,7 +140,11 @@ const OrderConfirmation = () => {
         toast.success("Order placed successfully! 🎉");
         setOrderTermError(false);
         setCompanyError(false);
+        
         setShowDownloadButton(true);
+        
+        // DON'T clear cart here - we need the data to show the quotation
+        // The cart will be cleared when the user navigates away
       } else {
         console.error("Create quotation failed: ", mockResponse.error);
         toast.error("Failed to place order. Please try again.");
@@ -453,7 +490,8 @@ const OrderConfirmation = () => {
         <Invoice 
           cartState={cartState} 
           billingDetails={customer} 
-          quotationData={quotationData} 
+          quotationData={quotationData}
+          onNewOrder={handleNewOrder}
         />
       )}
 

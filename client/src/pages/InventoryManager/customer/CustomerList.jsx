@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
 import axios from "axios";
+import { useTheme } from "../../../context/theme/ThemeContext";
 
 const getAllCustomersNoPage = async () => {
   try {
@@ -66,6 +67,7 @@ const toast = {
 const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 const CustomerList = () => {
+  const { isDarkMode } = useTheme();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -152,7 +154,7 @@ const CustomerList = () => {
       {filteredCustomers.map((customer) => (
         <div
           key={customer.customer_id}
-          className="bg-white rounded-2xl border border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
+          className={`rounded-2xl border shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group ${isDarkMode ? 'bg-gray-800 border-gray-600 hover:border-blue-400' : 'bg-white border-gray-200 hover:border-blue-300'}`}
         >
           <div className="p-6">
             <div className="flex items-center gap-4 mb-4">
@@ -164,10 +166,10 @@ const CustomerList = () => {
                   onClick={() => handleClick(customer.customer_id)}
                   className="text-left hover:text-blue-600 transition-colors duration-200"
                 >
-                  <h3 className="font-semibold text-gray-800 truncate">
+                  <h3 className={`font-semibold truncate transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                     {customer.name}
                   </h3>
-                  <p className="text-sm text-gray-500">
+                  <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                     {customer.customer_id}
                   </p>
                 </button>
@@ -175,18 +177,18 @@ const CustomerList = () => {
             </div>
 
             <div className="space-y-3 mb-6">
-              <div className="flex items-center gap-3 text-sm text-gray-600">
-                <Phone className="w-4 h-4 text-gray-400" />
+              <div className={`flex items-center gap-3 text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                <Phone className={`w-4 h-4 transition-colors duration-300 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
                 <span className="truncate">{customer.contact_no}</span>
               </div>
-              <div className="flex items-center gap-3 text-sm text-gray-600">
-                <Mail className="w-4 h-4 text-gray-400" />
+              <div className={`flex items-center gap-3 text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                <Mail className={`w-4 h-4 transition-colors duration-300 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
                 <span className="truncate">{customer.email}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <MapPin className="w-4 h-4 text-gray-400" />
+                <MapPin className={`w-4 h-4 transition-colors duration-300 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
                 <span
-                  className={`inline-flex px-2 py-1 rounded-full text-xs font-medium border`}
+                  className={`inline-flex px-2 py-1 rounded-full text-xs font-medium border transition-colors duration-300 ${isDarkMode ? 'text-gray-300 border-gray-600' : 'text-gray-600 border-gray-300'}`}
                 >
                   {customer.address}
                 </span>
@@ -203,7 +205,7 @@ const CustomerList = () => {
               </button>
               <button
                 onClick={() => openDeleteDialog(customer)}
-                className="px-4 py-2 text-red-600 border border-red-200 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors duration-200"
+                className={`px-4 py-2 text-red-600 border rounded-lg text-sm font-medium transition-colors duration-200 ${isDarkMode ? 'border-red-500 hover:bg-red-900/20' : 'border-red-200 hover:bg-red-50'}`}
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -215,58 +217,58 @@ const CustomerList = () => {
   );
 
   const TableView = () => (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className={`rounded-2xl border shadow-sm overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-100'}`}>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px]">
-          <thead className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
+          <thead className={`border-b transition-colors duration-300 ${isDarkMode ? 'bg-gradient-to-r from-gray-700 to-gray-600 border-gray-600' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-gray-200'}`}>
             <tr>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 <div className="flex items-center gap-2">
                   <Hash className="w-4 h-4" />
                   Code
                 </div>
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4" />
                   Customer
                 </div>
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4" />
                   Contact
                 </div>
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4" />
                   Email
                 </div>
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
                   Address
                 </div>
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className={`divide-y transition-colors duration-300 ${isDarkMode ? 'divide-gray-600' : 'divide-gray-200'}`}>
             {filteredCustomers.map((customer) => (
               <tr
                 key={customer.customer_id}
-                className="hover:bg-gray-50 transition-colors duration-200"
+                className={`transition-colors duration-200 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
               >
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-sm font-bold">
                       {getInitials(customer.name)}
                     </div>
-                    <span className="font-medium text-gray-800">
+                    <span className={`font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                       {customer.customer_id}
                     </span>
                   </div>
@@ -279,17 +281,17 @@ const CustomerList = () => {
                     {customer.name}
                   </button>
                 </td>
-                <td className="px-6 py-4 text-gray-600">
+                <td className={`px-6 py-4 transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                   {customer.contact_no}
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-600">{customer.email}</span>
+                    <Mail className={`w-4 h-4 transition-colors duration-300 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                    <span className={`transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{customer.email}</span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-gray-600">{customer.address}</span>
+                  <span className={`transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{customer.address}</span>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
@@ -303,7 +305,7 @@ const CustomerList = () => {
                     <button
                       onClick={() => openDeleteDialog(customer)}
                       disabled={isLoading}
-                      className="px-4 py-2 text-red-600 border border-red-200 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2"
+                      className={`px-4 py-2 text-red-600 border rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2 ${isDarkMode ? 'border-red-500 hover:bg-red-900/20' : 'border-red-200 hover:bg-red-50'}`}
                     >
                       <Trash2 className="w-4 h-4" />
                       Remove
@@ -319,7 +321,7 @@ const CustomerList = () => {
   );
 
   return (
-    <div className="h-full w-full bg-gradient-to-br from-blue-50 via-white to-indigo-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className={`h-full w-full rounded-3xl border shadow-xl overflow-hidden transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700' : 'bg-gradient-to-br from-blue-50 via-white to-indigo-50 border-gray-200'}`}>
       {/* Header Section */}
       <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-6 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
@@ -355,7 +357,7 @@ const CustomerList = () => {
                   placeholder="Search customers by name, code, email, or city..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50"
+                  className="w-full pl-10 pr-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all duration-200"
                 />
               </div>
 
@@ -396,34 +398,34 @@ const CustomerList = () => {
               <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
                 <FaSpinner className="w-8 h-8 text-white animate-spin" />
               </div>
-              <p className="text-gray-600 font-medium">Loading customers...</p>
+              <p className={`font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Loading customers...</p>
             </div>
           </div>
         ) : (
           <>
             {/* Stats Bar */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+              <div className={`rounded-xl p-4 border shadow-sm transition-colors duration-300 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-100'}`}>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                     <Users className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-gray-800">
+                    <p className={`text-2xl font-bold transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                       {filteredCustomers.length}
                     </p>
-                    <p className="text-sm text-gray-600">Total Customers</p>
+                    <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Customers</p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+              <div className={`rounded-xl p-4 border shadow-sm transition-colors duration-300 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-100'}`}>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                     <Building className="w-5 h-5 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-gray-800">
+                    <p className={`text-2xl font-bold transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                       {
                         new Set(
                           customers.map((c) => {
@@ -433,7 +435,7 @@ const CustomerList = () => {
                         ).size
                       }
                     </p>
-                    <p className="text-sm text-gray-600">Cities Covered</p>
+                    <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Cities Covered</p>
                   </div>
                 </div>
               </div>
@@ -449,11 +451,11 @@ const CustomerList = () => {
             ) : (
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
-                  <Users className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-600 font-medium">
+                  <Users className={`w-16 h-16 mx-auto mb-4 transition-colors duration-300 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                  <p className={`font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                     No customers found
                   </p>
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className={`text-sm mt-2 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                     Try adjusting your search criteria
                   </p>
                 </div>
@@ -466,7 +468,7 @@ const CustomerList = () => {
       {/* Delete Confirmation Dialog */}
       {deleteDialogOpen && customerToDelete && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
+          <div className={`rounded-2xl shadow-2xl max-w-md w-full mx-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-t-2xl">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
@@ -487,19 +489,19 @@ const CustomerList = () => {
                   {getInitials(customerToDelete.name)}
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-semibold text-gray-800 mb-1">
+                  <h4 className={`font-semibold mb-1 transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                     {customerToDelete.name}
                   </h4>
-                  <p className="text-sm text-gray-600">
+                  <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                     {customerToDelete.customer_id}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={`text-xs mt-1 transition-colors duration-300 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                     {customerToDelete.email}
                   </p>
                 </div>
               </div>
 
-              <p className="text-gray-600 mb-6">
+              <p className={`mb-6 transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 Are you sure you want to remove this customer from your
                 database? This will permanently delete all customer information.
               </p>
@@ -527,7 +529,7 @@ const CustomerList = () => {
                     setDeleteDialogOpen(false);
                     setCustomerToDelete(null);
                   }}
-                  className="px-6 py-3 border border-gray-300 hover:bg-gray-50 rounded-xl font-semibold transition-colors duration-200"
+                  className={`px-6 py-3 border rounded-xl font-semibold transition-colors duration-200 ${isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                 >
                   Cancel
                 </button>
