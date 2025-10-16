@@ -3,13 +3,19 @@ import { User, Users, HandCoins, ChartNoAxesGantt, TrendingUp, Award, Sparkles, 
 import { FaSpinner } from "react-icons/fa";
 import { useTheme } from "../../../context/theme/ThemeContext.jsx";
 import api from "../../../lib/api";
+import axios from "axios";
 
 const getOverviewData = async (period) => {
   try {
-    const response = await api.get("/customers");
+    const token = localStorage.getItem("token");
+    const response = await api.get("/customers",
+      { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+    );
     const totalCustomers = response.data.data.customers[0].total_count;
 
-    const response2 = await api.get("/users/sales-staff");
+    const response2 = await api.get("/users/sales-staff",
+      { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+    );
 
     const rankedUsers = response2.data.data.users
       .sort(
