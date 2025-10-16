@@ -18,6 +18,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import axios from "axios";
+import { useTheme } from "../../../context/theme/ThemeContext";
 
 // Avatar component
 const Avatar = ({ name, imageUrl, editable, size, onImageUpload }) => {
@@ -77,6 +78,7 @@ const Avatar = ({ name, imageUrl, editable, size, onImageUpload }) => {
 const EditCustomer = () => {
   const { user_code } = useParams(); // This is customer_id from backend
   const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -221,8 +223,8 @@ const EditCustomer = () => {
     ...props
   }) => (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
-        {Icon && <Icon className="w-4 h-4 text-gray-500" />}
+      <label className={`flex text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} items-center gap-2 transition-colors duration-300`}>
+        {Icon && <Icon className={`w-4 h-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} transition-colors duration-300`} />}
         {label}
         {required && <span className="text-red-500">*</span>}
       </label>
@@ -232,8 +234,12 @@ const EditCustomer = () => {
           name={name}
           value={formData[name]}
           onChange={handleInputChange}
-          className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm hover:border-gray-400 ${
-            error ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"
+          className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 focus:ring-2 ${isDarkMode ? 'focus:ring-gray-500 focus:border-gray-500 hover:border-gray-500' : 'focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400'} shadow-sm ${
+            error 
+              ? "border-red-500 bg-red-50" 
+              : isDarkMode 
+                ? "border-gray-600 bg-gray-700 text-gray-200" 
+                : "border-gray-300 bg-white text-gray-800"
           }`}
           {...props}
         />
@@ -295,11 +301,11 @@ const EditCustomer = () => {
   }
 
   return (
-    <div className="h-full w-full bg-gradient-to-br from-blue-50 via-white to-indigo-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className={`h-full w-full ${isDarkMode ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-blue-50 via-white to-indigo-50'} rounded-3xl border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} shadow-xl overflow-hidden transition-colors duration-300`}>
       <div className="relative w-full max-w-none px-4">
         {/* Header Section */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 mb-8 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-400 p-8 text-white relative">
+        <div className={`${isDarkMode ? 'bg-gray-800/80 border-gray-600/20' : 'bg-white/80 border-white/20'} backdrop-blur-sm rounded-2xl shadow-2xl border mb-8 overflow-hidden transition-colors duration-300`}>
+          <div className={`${isDarkMode ? 'bg-gradient-to-r from-gray-800 to-gray-700' : 'bg-gradient-to-r from-blue-500 to-blue-400'} p-8 text-white relative transition-colors duration-300`}>
             {/* Back button - positioned at top */}
             <div className="relative z-10 mb-6">
               <button
@@ -332,24 +338,24 @@ const EditCustomer = () => {
         </div>
 
         {/* Content Section */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
+        <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-600/20' : 'bg-white/90 border-white/20'} backdrop-blur-sm rounded-2xl shadow-2xl border overflow-hidden transition-colors duration-300`}>
           <div className="p-8">
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Personal Information */}
               <div className="space-y-6">
-                <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <User className="w-5 h-5 text-blue-600" />
+                <div className={`flex items-center gap-3 pb-4 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'} transition-colors duration-300`}>
+                  <div className={`p-2 ${isDarkMode ? 'bg-gray-700' : 'bg-blue-100'} rounded-lg transition-colors duration-300`}>
+                    <User className={`w-5 h-5 ${isDarkMode ? 'text-gray-300' : 'text-blue-600'} transition-colors duration-300`} />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-800">
+                  <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} transition-colors duration-300`}>
                     Personal Information
                   </h3>
                 </div>
 
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                      <Hash className="w-4 h-4 text-gray-500" />
+                    <label className={`flex text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2 items-center gap-2 transition-colors duration-300`}>
+                      <Hash className={`w-4 h-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} transition-colors duration-300`} />
                       Customer ID
                     </label>
                     <input
@@ -357,7 +363,7 @@ const EditCustomer = () => {
                       name="customer_id"
                       value={formData.customer_id}
                       disabled
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-100 text-gray-600 cursor-not-allowed"
+                      className={`w-full px-4 py-3 border rounded-xl cursor-not-allowed transition-colors duration-300 ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-400' : 'border-gray-300 bg-gray-100 text-gray-600'}`}
                     />
                   </div>
 
@@ -374,11 +380,11 @@ const EditCustomer = () => {
 
               {/* Contact Information */}
               <div className="space-y-6">
-                <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Mail className="w-5 h-5 text-blue-600" />
+                <div className={`flex items-center gap-3 pb-4 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'} transition-colors duration-300`}>
+                  <div className={`p-2 ${isDarkMode ? 'bg-gray-700' : 'bg-blue-100'} rounded-lg transition-colors duration-300`}>
+                    <Mail className={`w-5 h-5 ${isDarkMode ? 'text-gray-300' : 'text-blue-600'} transition-colors duration-300`} />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-800">
+                  <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} transition-colors duration-300`}>
                     Contact Information
                   </h3>
                 </div>
@@ -408,18 +414,18 @@ const EditCustomer = () => {
 
               {/* Address Information */}
               <div className="space-y-6">
-                <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <MapPin className="w-5 h-5 text-blue-600" />
+                <div className={`flex items-center gap-3 pb-4 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'} transition-colors duration-300`}>
+                  <div className={`p-2 ${isDarkMode ? 'bg-gray-700' : 'bg-blue-100'} rounded-lg transition-colors duration-300`}>
+                    <MapPin className={`w-5 h-5 ${isDarkMode ? 'text-gray-300' : 'text-blue-600'} transition-colors duration-300`} />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-800">
+                  <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'} transition-colors duration-300`}>
                     Address Information
                   </h3>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-gray-500" />
+                  <label className={`flex text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2 items-center gap-2 transition-colors duration-300`}>
+                    <MapPin className={`w-4 h-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} transition-colors duration-300`} />
                     Full Address
                     <span className="text-red-500">*</span>
                   </label>
@@ -429,10 +435,12 @@ const EditCustomer = () => {
                     onChange={handleInputChange}
                     rows="4"
                     placeholder="Enter complete address including street, city, and postal code..."
-                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none transition-all duration-200 ${
+                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 ${isDarkMode ? 'focus:ring-gray-500 focus:border-gray-500' : 'focus:ring-blue-500 focus:border-blue-500'} shadow-sm resize-none transition-all duration-200 ${
                       errors.address
                         ? "border-red-500 bg-red-50"
-                        : "border-gray-300 bg-white"
+                        : isDarkMode 
+                          ? "border-gray-600 bg-gray-700 text-gray-200" 
+                          : "border-gray-300 bg-white text-gray-800"
                     }`}
                   ></textarea>
                   {errors.address && (
@@ -445,14 +453,14 @@ const EditCustomer = () => {
               </div>
 
               {/* Form Actions */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl border shadow-sm p-6 transition-colors duration-300`}>
                 <div className="flex justify-end space-x-4">
                   <button
                     type="button"
                     onClick={() =>
                       navigate(`/inventorymanager/customer/${user_code}`)
                     }
-                    className="px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors font-medium flex items-center gap-2"
+                    className={`px-6 py-3 ${isDarkMode ? 'text-gray-300 bg-gray-700 hover:bg-gray-600' : 'text-gray-700 bg-gray-100 hover:bg-gray-200'} rounded-xl transition-colors font-medium flex items-center gap-2 duration-300`}
                     disabled={saving}
                   >
                     <X className="w-4 h-4" />
@@ -461,7 +469,7 @@ const EditCustomer = () => {
                   <button
                     onClick={handleSubmit}
                     disabled={saving}
-                    className="px-8 py-3 text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl transition-all duration-200 font-medium flex items-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={`px-8 py-3 text-white ${isDarkMode ? 'bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'} rounded-xl transition-all duration-200 font-medium flex items-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     {saving ? (
                       <>

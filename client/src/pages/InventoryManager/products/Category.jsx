@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
+import { useTheme } from "../../../context/theme/ThemeContext.jsx";
 import { 
   Plus, 
   Save, 
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 
 const Category = () => {
+  const { isDarkMode } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [filteredCategories, setFilteredCategories] = useState([]);
@@ -372,7 +374,9 @@ const Category = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
+    <div className={`min-h-screen p-4 md:p-6 lg:p-8 transition-colors duration-300 ${
+      isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
+    }`}>
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header Section */}
         <div className="mb-6">
@@ -381,8 +385,12 @@ const Category = () => {
               <Tag className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Category Management</h1>
-              <p className="text-gray-600 mt-1">Create and manage product categories for your inventory system</p>
+              <h1 className={`text-2xl font-bold tracking-tight transition-colors duration-300 ${
+                isDarkMode ? 'text-gray-100' : 'text-gray-900'
+              }`}>Category Management</h1>
+              <p className={`mt-1 transition-colors duration-300 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>Create and manage product categories for your inventory system</p>
             </div>
           </div>
         </div>
@@ -391,7 +399,11 @@ const Category = () => {
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
           {/* Form Section */}
           <div className="xl:col-span-3">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className={`rounded-2xl shadow-sm border overflow-hidden transition-colors duration-300 ${
+              isDarkMode 
+                ? 'bg-gray-800 border-gray-700' 
+                : 'bg-white border-gray-200'
+            }`}>
               {/* Form Header */}
               <div className="bg-gradient-to-r from-blue-500 to-blue-400 px-6 py-4">
                 <div className="flex items-center space-x-3">
@@ -411,7 +423,9 @@ const Category = () => {
                   <div className="space-y-4">
                     {/* Category Name Field */}
                     <div className="space-y-2">
-                      <label className="flex items-center space-x-2 text-sm font-semibold text-gray-800">
+                      <label className={`flex items-center space-x-2 text-sm font-semibold transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                      }`}>
                         <Package className="w-4 h-4 text-blue-500" />
                         <span>Category Name</span>
                         <span className="text-red-500">*</span>
@@ -421,7 +435,11 @@ const Category = () => {
                         name="category_name"
                         value={formData.category_name}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 text-gray-900 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 text-base font-medium placeholder-gray-500"
+                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 text-base font-medium ${
+                          isDarkMode
+                            ? 'text-gray-200 bg-gray-700 border-gray-600 placeholder-gray-400'
+                            : 'text-gray-900 bg-gray-50 border-gray-200 placeholder-gray-500'
+                        }`}
                         placeholder="e.g., Black Pepper, Electronics..."
                         required
                       />
@@ -429,7 +447,9 @@ const Category = () => {
 
                     {/* Description Field */}
                     <div className="space-y-2">
-                      <label className="flex items-center space-x-2 text-sm font-semibold text-gray-800">
+                      <label className={`flex items-center space-x-2 text-sm font-semibold transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                      }`}>
                         <FileText className="w-4 h-4 text-blue-500" />
                         <span>Description</span>
                       </label>
@@ -438,7 +458,11 @@ const Category = () => {
                         value={formData.description}
                         onChange={handleInputChange}
                         rows={3}
-                        className="w-full px-4 py-3 text-gray-900 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 text-base resize-none placeholder-gray-500"
+                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 text-base resize-none ${
+                          isDarkMode
+                            ? 'text-gray-200 bg-gray-700 border-gray-600 placeholder-gray-400'
+                            : 'text-gray-900 bg-gray-50 border-gray-200 placeholder-gray-500'
+                        }`}
                         placeholder="Category description..."
                       />
                     </div>
@@ -466,7 +490,11 @@ const Category = () => {
                       <button
                         type="button"
                         onClick={resetForm}
-                        className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-200 flex items-center space-x-2"
+                        className={`px-6 py-3 font-semibold rounded-xl transition-all duration-200 flex items-center space-x-2 ${
+                          isDarkMode
+                            ? 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                            : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                        }`}
                       >
                         <RefreshCw className="w-4 h-4" />
                         <span>Reset</span>
@@ -476,14 +504,20 @@ const Category = () => {
 
                   {/* Image Upload */}
                   <div className="space-y-2">
-                    <label className="flex items-center space-x-2 text-sm font-semibold text-gray-800">
+                    <label className={`flex items-center space-x-2 text-sm font-semibold transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                    }`}>
                       <ImageIcon className="w-4 h-4 text-blue-500" />
                       <span>Category Image</span>
                     </label>
                     
                     {imagePreview ? (
                       <div className="relative group">
-                        <div className="w-full h-36 bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-200">
+                        <div className={`w-full h-36 rounded-xl overflow-hidden border-2 transition-colors duration-300 ${
+                          isDarkMode 
+                            ? 'bg-gray-700 border-gray-600' 
+                            : 'bg-gray-100 border-gray-200'
+                        }`}>
                           <img
                             src={imagePreview}
                             alt="Category preview"
@@ -502,8 +536,12 @@ const Category = () => {
                       <div
                         className={`w-full h-36 border-2 border-dashed rounded-xl transition-all duration-300 cursor-pointer ${
                           dragActive
-                            ? "border-blue-400 bg-blue-50"
-                            : "border-gray-300 hover:border-blue-400 hover:bg-gray-50"
+                            ? isDarkMode 
+                              ? "border-blue-400 bg-blue-900/20" 
+                              : "border-blue-400 bg-blue-50"
+                            : isDarkMode
+                              ? "border-gray-600 hover:border-blue-400 hover:bg-gray-700"
+                              : "border-gray-300 hover:border-blue-400 hover:bg-gray-50"
                         }`}
                         onDragEnter={handleDrag}
                         onDragLeave={handleDrag}
@@ -511,10 +549,18 @@ const Category = () => {
                         onDrop={handleDrop}
                         onClick={() => document.getElementById('imageInput').click()}
                       >
-                        <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                          <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                          <p className="text-sm font-medium text-gray-700">Upload Image</p>
-                          <p className="text-xs text-gray-500">Click or drag & drop</p>
+                        <div className={`flex flex-col items-center justify-center h-full transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                          <Upload className={`w-8 h-8 mb-2 transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                          }`} />
+                          <p className={`text-sm font-medium transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}>Upload Image</p>
+                          <p className={`text-xs transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-500' : 'text-gray-500'
+                          }`}>Click or drag & drop</p>
                         </div>
                       </div>
                     )}
@@ -566,7 +612,11 @@ const Category = () => {
         </div>
 
         {/* Existing Categories Section */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className={`rounded-2xl shadow-sm border overflow-hidden transition-colors duration-300 ${
+          isDarkMode 
+            ? 'bg-gray-800 border-gray-700' 
+            : 'bg-white border-gray-200'
+        }`}>
           {/* Categories Header */}
           <div className="bg-gradient-to-r from-blue-500 to-blue-400 px-6 py-4">
             <div className="flex items-center justify-between">
@@ -599,7 +649,11 @@ const Category = () => {
             {filteredCategories.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredCategories.map((category) => (
-                  <div key={category.category_id} className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
+                  <div key={category.category_id} className={`rounded-xl border overflow-hidden hover:shadow-md transition-all duration-200 ${
+                    isDarkMode 
+                      ? 'bg-gray-700 border-gray-600 hover:bg-gray-600' 
+                      : 'bg-gray-50 border-gray-200'
+                  }`}>
                     {/* Category Image */}
                     {category.pic_url ? (
                       <div className="h-32 bg-gray-200">
@@ -610,17 +664,27 @@ const Category = () => {
                         />
                       </div>
                     ) : (
-                      <div className="h-32 bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center">
-                        <Package className="w-8 h-8 text-blue-400" />
+                      <div className={`h-32 flex items-center justify-center transition-colors duration-300 ${
+                        isDarkMode 
+                          ? 'bg-gradient-to-br from-blue-900/30 to-blue-800/20' 
+                          : 'bg-gradient-to-br from-blue-100 to-blue-50'
+                      }`}>
+                        <Package className={`w-8 h-8 transition-colors duration-300 ${
+                          isDarkMode ? 'text-blue-300' : 'text-blue-400'
+                        }`} />
                       </div>
                     )}
                     
                     {/* Category Info */}
                     <div className="p-4">
-                      <h3 className="font-semibold text-gray-900 text-base mb-1 truncate">
+                      <h3 className={`font-semibold text-base mb-1 truncate transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                      }`}>
                         {category.category_name}
                       </h3>
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                      <p className={`text-sm mb-3 line-clamp-2 transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
                         {category.description || "No description available"}
                       </p>
                       
@@ -628,14 +692,22 @@ const Category = () => {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleEdit(category)}
-                          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-200 flex items-center justify-center gap-1"
+                          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 flex items-center justify-center gap-1 ${
+                            isDarkMode 
+                              ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                              : 'bg-blue-500 hover:bg-blue-600 text-white'
+                          }`}
                         >
                           <Edit3 className="w-3 h-3" />
                           Edit
                         </button>
                         <button
                           onClick={() => handleDeleteClick(category)}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-200 flex items-center justify-center"
+                          className={`px-3 py-2 rounded-lg text-xs font-medium transition-all duration-300 flex items-center justify-center ${
+                            isDarkMode 
+                              ? 'bg-red-600 hover:bg-red-700 text-white' 
+                              : 'bg-red-500 hover:bg-red-600 text-white'
+                          }`}
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -644,7 +716,9 @@ const Category = () => {
                     
                     {/* Created Date */}
                     <div className="px-4 pb-3">
-                      <p className="text-xs text-gray-500">
+                      <p className={`text-xs transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-500' : 'text-gray-500'
+                      }`}>
                         Created: {new Date(category.created_at).toLocaleDateString()}
                       </p>
                     </div>
@@ -653,11 +727,17 @@ const Category = () => {
               </div>
             ) : (
               <div className="text-center py-12">
-                <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <Package className={`w-12 h-12 mx-auto mb-4 transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                }`} />
+                <h3 className={`text-lg font-medium mb-2 transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                }`}>
                   {searchTerm ? "No categories found" : "No categories yet"}
                 </h3>
-                <p className="text-gray-600">
+                <p className={`transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>
                   {searchTerm 
                     ? "Try adjusting your search terms" 
                     : "Create your first category using the form above"
@@ -672,9 +752,15 @@ const Category = () => {
       {/* Edit Category Modal */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className={`rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto transition-colors duration-300 ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-blue-500 to-blue-400 px-6 py-4 rounded-t-2xl">
+            <div className={`px-6 py-4 rounded-t-2xl transition-colors duration-300 ${
+              isDarkMode 
+                ? 'bg-gradient-to-r from-blue-600 to-blue-500' 
+                : 'bg-gradient-to-r from-blue-500 to-blue-400'
+            }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center justify-center w-8 h-8 bg-white/20 rounded-lg">
@@ -682,7 +768,9 @@ const Category = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-white">Edit Category</h3>
-                    <p className="text-blue-100 text-sm">Update category details</p>
+                    <p className={`text-sm transition-colors duration-300 ${
+                      isDarkMode ? 'text-blue-100' : 'text-blue-100'
+                    }`}>Update category details</p>
                   </div>
                 </div>
                 <button
@@ -698,7 +786,9 @@ const Category = () => {
             <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
               {/* Category Name */}
               <div className="space-y-2">
-                <label className="flex items-center space-x-2 text-sm font-semibold text-gray-800">
+                <label className={`flex items-center space-x-2 text-sm font-semibold transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                }`}>
                   <Package className="w-4 h-4 text-blue-500" />
                   <span>Category Name</span>
                   <span className="text-red-500">*</span>
@@ -708,7 +798,11 @@ const Category = () => {
                   name="category_name"
                   value={editFormData.category_name}
                   onChange={handleEditFormChange}
-                  className="w-full px-4 py-3 text-gray-900 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 text-base font-medium placeholder-gray-500"
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 text-base font-medium ${
+                    isDarkMode 
+                      ? 'text-gray-200 bg-gray-700 border-gray-600 placeholder-gray-400' 
+                      : 'text-gray-900 bg-gray-50 border-gray-200 placeholder-gray-500'
+                  }`}
                   placeholder="Category name..."
                   required
                 />
@@ -716,7 +810,9 @@ const Category = () => {
 
               {/* Description */}
               <div className="space-y-2">
-                <label className="flex items-center space-x-2 text-sm font-semibold text-gray-800">
+                <label className={`flex items-center space-x-2 text-sm font-semibold transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                }`}>
                   <FileText className="w-4 h-4 text-blue-500" />
                   <span>Description</span>
                 </label>
@@ -725,21 +821,29 @@ const Category = () => {
                   value={editFormData.description}
                   onChange={handleEditFormChange}
                   rows={3}
-                  className="w-full px-4 py-3 text-gray-900 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 text-base resize-none placeholder-gray-500"
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 text-base resize-none ${
+                    isDarkMode 
+                      ? 'text-gray-200 bg-gray-700 border-gray-600 placeholder-gray-400' 
+                      : 'text-gray-900 bg-gray-50 border-gray-200 placeholder-gray-500'
+                  }`}
                   placeholder="Category description..."
                 />
               </div>
 
               {/* Image Upload */}
               <div className="space-y-2">
-                <label className="flex items-center space-x-2 text-sm font-semibold text-gray-800">
+                <label className={`flex items-center space-x-2 text-sm font-semibold transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                }`}>
                   <ImageIcon className="w-4 h-4 text-blue-500" />
                   <span>Category Image</span>
                 </label>
                 
                 {editImagePreview ? (
                   <div className="relative group">
-                    <div className="w-full h-32 bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-200">
+                    <div className={`w-full h-32 rounded-xl overflow-hidden border-2 transition-colors duration-300 ${
+                      isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-100 border-gray-200'
+                    }`}>
                       <img
                         src={editImagePreview}
                         alt="Category preview"
@@ -759,12 +863,22 @@ const Category = () => {
                   </div>
                 ) : (
                   <div
-                    className="w-full h-32 border-2 border-dashed border-gray-300 hover:border-blue-400 rounded-xl transition-all duration-300 cursor-pointer hover:bg-gray-50"
+                    className={`w-full h-32 border-2 border-dashed rounded-xl transition-all duration-300 cursor-pointer ${
+                      isDarkMode 
+                        ? 'border-gray-600 hover:border-blue-400 hover:bg-gray-700/50' 
+                        : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+                    }`}
                     onClick={() => document.getElementById('editImageInput').click()}
                   >
-                    <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                      <Upload className="w-6 h-6 text-gray-400 mb-1" />
-                      <p className="text-sm font-medium text-gray-700">Upload Image</p>
+                    <div className={`flex flex-col items-center justify-center h-full transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      <Upload className={`w-6 h-6 mb-1 transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                      }`} />
+                      <p className={`text-sm font-medium transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>Upload Image</p>
                     </div>
                   </div>
                 )}
@@ -788,14 +902,22 @@ const Category = () => {
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-200"
+                  className={`flex-1 px-4 py-3 font-semibold rounded-xl transition-all duration-300 ${
+                    isDarkMode 
+                      ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }`}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
+                  className={`flex-1 font-semibold py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl disabled:cursor-not-allowed ${
+                    isDarkMode 
+                      ? 'bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white' 
+                      : 'bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white'
+                  }`}
                 >
                   {isLoading ? (
                     <>
@@ -818,16 +940,24 @@ const Category = () => {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && categoryToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full">
+          <div className={`rounded-2xl shadow-xl max-w-md w-full transition-colors duration-300 ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-red-500 to-red-400 px-6 py-4 rounded-t-2xl">
+            <div className={`px-6 py-4 rounded-t-2xl transition-colors duration-300 ${
+              isDarkMode 
+                ? 'bg-gradient-to-r from-red-600 to-red-500' 
+                : 'bg-gradient-to-r from-red-500 to-red-400'
+            }`}>
               <div className="flex items-center space-x-3">
                 <div className="flex items-center justify-center w-8 h-8 bg-white/20 rounded-lg">
                   <Trash2 className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-white">Delete Category</h3>
-                  <p className="text-red-100 text-sm">This action cannot be undone</p>
+                  <p className={`text-sm transition-colors duration-300 ${
+                    isDarkMode ? 'text-red-100' : 'text-red-100'
+                  }`}>This action cannot be undone</p>
                 </div>
               </div>
             </div>
@@ -835,19 +965,31 @@ const Category = () => {
             {/* Modal Content */}
             <div className="p-6">
               <div className="mb-6">
-                <p className="text-gray-700 mb-4">
+                <p className={`mb-4 transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Are you sure you want to delete the category <strong>"{categoryToDelete.category_name}"</strong>?
                 </p>
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className={`border rounded-lg p-4 transition-colors duration-300 ${
+                  isDarkMode 
+                    ? 'bg-red-900/20 border-red-700/50' 
+                    : 'bg-red-50 border-red-200'
+                }`}>
                   <div className="flex items-start space-x-3">
                     <div className="flex-shrink-0">
-                      <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className={`w-5 h-5 transition-colors duration-300 ${
+                        isDarkMode ? 'text-red-400' : 'text-red-400'
+                      }`} fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
                     </div>
                     <div>
-                      <h4 className="text-sm font-medium text-red-800">Warning</h4>
-                      <p className="text-sm text-red-700 mt-1">
+                      <h4 className={`text-sm font-medium transition-colors duration-300 ${
+                        isDarkMode ? 'text-red-300' : 'text-red-800'
+                      }`}>Warning</h4>
+                      <p className={`text-sm mt-1 transition-colors duration-300 ${
+                        isDarkMode ? 'text-red-400' : 'text-red-700'
+                      }`}>
                         This will permanently delete the category and cannot be recovered.
                       </p>
                     </div>
@@ -862,13 +1004,21 @@ const Category = () => {
                     setShowDeleteModal(false);
                     setCategoryToDelete(null);
                   }}
-                  className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-200"
+                  className={`flex-1 px-4 py-3 font-semibold rounded-xl transition-all duration-300 ${
+                    isDarkMode 
+                      ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' 
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }`}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
+                  className={`flex-1 font-semibold py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl ${
+                    isDarkMode 
+                      ? 'bg-red-600 hover:bg-red-700 text-white' 
+                      : 'bg-red-500 hover:bg-red-600 text-white'
+                  }`}
                 >
                   <Trash2 className="w-4 h-4" />
                   <span>Delete Category</span>

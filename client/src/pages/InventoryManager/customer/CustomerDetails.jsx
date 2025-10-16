@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ChevronLeft, User, Mail, Phone, MapPin, Edit, Package, Calendar, Hash, DollarSign, FileText } from "lucide-react";
 import axios from "axios";
+import { useTheme } from "../../../context/theme/ThemeContext";
 
 const CustomerDetails = () => {
+  const { isDarkMode } = useTheme();
   const { user_code } = useParams(); // This will be customer_id from the backend
   const navigate = useNavigate();
   const [customer, setCustomer] = useState(null);
@@ -94,12 +96,12 @@ const CustomerDetails = () => {
 
   if (loading) {
     return (
-      <div className="h-full w-full bg-gradient-to-br from-blue-50 via-white to-indigo-50 rounded-3xl border border-gray-200 shadow-xl flex items-center justify-center">
+      <div className={`h-full w-full rounded-3xl border shadow-xl flex items-center justify-center transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700' : 'bg-gradient-to-br from-blue-50 via-white to-indigo-50 border-gray-200'}`}>
         <div className="text-center">
           <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
             <User className="w-8 h-8 text-white" />
           </div>
-          <p className="text-gray-600 font-medium">Loading customer details...</p>
+          <p className={`font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Loading customer details...</p>
         </div>
       </div>
     );
@@ -107,15 +109,15 @@ const CustomerDetails = () => {
 
   if (error || !customer) {
     return (
-      <div className="h-full w-full bg-gradient-to-br from-red-50 via-white to-red-50 rounded-3xl border border-red-200 shadow-xl flex items-center justify-center">
+      <div className={`h-full w-full rounded-3xl border shadow-xl flex items-center justify-center transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-red-900 via-gray-800 to-red-900 border-red-700' : 'bg-gradient-to-br from-red-50 via-white to-red-50 border-red-200'}`}>
         <div className="text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <User className="w-8 h-8 text-red-600" />
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${isDarkMode ? 'bg-red-800' : 'bg-red-100'}`}>
+            <User className={`w-8 h-8 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />
           </div>
-          <p className="text-red-600 font-medium">{error || "Customer not found"}</p>
+          <p className={`font-medium transition-colors duration-300 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>{error || "Customer not found"}</p>
           <button
             onClick={() => navigate('/inventorymanager/customer-list')}
-            className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            className={`mt-4 px-6 py-2 rounded-lg font-medium transition-colors duration-200 ${isDarkMode ? 'bg-red-700 text-red-100 hover:bg-red-600' : 'bg-red-600 text-white hover:bg-red-700'}`}
           >
             Back to Customer List
           </button>
@@ -125,7 +127,7 @@ const CustomerDetails = () => {
   }
 
   return (
-    <div className="h-full w-full bg-gradient-to-br from-blue-50 via-white to-indigo-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className={`h-full w-full rounded-3xl border shadow-xl overflow-hidden transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700' : 'bg-gradient-to-br from-blue-50 via-white to-indigo-50 border-gray-200'}`}>
       {/* Header Section */}
       <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-6">
         <div className="flex items-center justify-between mb-4">
@@ -158,67 +160,67 @@ const CustomerDetails = () => {
       <div className="h-[calc(100%-140px)] p-6 overflow-y-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* Customer Information Card */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className={`lg:col-span-2 rounded-2xl border shadow-sm p-6 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-100'}`}>
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <User className="w-5 h-5 text-blue-600" />
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-blue-800' : 'bg-blue-100'}`}>
+                <User className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
               </div>
-              <h2 className="text-xl font-bold text-gray-800">Customer Information</h2>
+              <h2 className={`text-xl font-bold transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Customer Information</h2>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <Hash className="w-4 h-4 text-gray-600" />
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-300 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                    <Hash className={`w-4 h-4 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Customer ID</p>
-                    <p className="font-semibold text-gray-800">{customer.customer_id}</p>
+                    <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Customer ID</p>
+                    <p className={`font-semibold transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{customer.customer_id}</p>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <Mail className="w-4 h-4 text-gray-600" />
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-300 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                    <Mail className={`w-4 h-4 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Email Address</p>
-                    <p className="font-semibold text-gray-800">{customer.email}</p>
+                    <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Email Address</p>
+                    <p className={`font-semibold transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{customer.email}</p>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <Phone className="w-4 h-4 text-gray-600" />
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-300 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                    <Phone className={`w-4 h-4 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Phone Number</p>
-                    <p className="font-semibold text-gray-800">{customer.contact_no}</p>
+                    <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Phone Number</p>
+                    <p className={`font-semibold transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{customer.contact_no}</p>
                   </div>
                 </div>
               </div>
               
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <MapPin className="w-4 h-4 text-gray-600" />
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-300 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                    <MapPin className={`w-4 h-4 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Address</p>
-                    <p className="font-semibold text-gray-800">
+                    <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Address</p>
+                    <p className={`font-semibold transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                       {customer.address}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <Calendar className="w-4 h-4 text-gray-600" />
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-300 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                    <Calendar className={`w-4 h-4 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Member Since</p>
-                    <p className="font-semibold text-gray-800">
+                    <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Member Since</p>
+                    <p className={`font-semibold transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                       {new Date(customer.created_at).toLocaleDateString('en-IN', {
                         year: 'numeric',
                         month: 'long',
@@ -230,7 +232,7 @@ const CustomerDetails = () => {
               </div>
             </div>
             
-            <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className={`mt-6 pt-6 border-t transition-colors duration-300 ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
               <button
                 onClick={() => navigate(`/inventorymanager/customer/edit/${customer.customer_id}`)}
                 className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2"
@@ -243,42 +245,42 @@ const CustomerDetails = () => {
 
           {/* Quick Stats */}
           <div className="space-y-4">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className={`rounded-2xl border shadow-sm p-6 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-100'}`}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                   <Package className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-800">{quotations.length}</p>
-                  <p className="text-sm text-gray-600">Total Orders</p>
+                  <p className={`text-2xl font-bold transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{quotations.length}</p>
+                  <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Orders</p>
                 </div>
               </div>
             </div>
             
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className={`rounded-2xl border shadow-sm p-6 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-100'}`}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                   <DollarSign className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-800">
+                  <p className={`text-2xl font-bold transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                     Rs {quotations.reduce((sum, q) => sum + parseFloat(q.total_amount || 0), 0).toLocaleString()}
                   </p>
-                  <p className="text-sm text-gray-600">Total Value</p>
+                  <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Value</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className={`rounded-2xl border shadow-sm p-6 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-100'}`}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                   <Package className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-800">
+                  <p className={`text-2xl font-bold transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                     {quotations.reduce((sum, q) => sum + parseInt(q.no_of_products || 0), 0)}
                   </p>
-                  <p className="text-sm text-gray-600">Total Products</p>
+                  <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Products</p>
                 </div>
               </div>
             </div>
@@ -286,13 +288,13 @@ const CustomerDetails = () => {
         </div>
 
         {/* Order History */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+        <div className={`rounded-2xl border shadow-sm overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-100'}`}>
+          <div className={`px-6 py-4 border-b transition-colors duration-300 ${isDarkMode ? 'bg-gradient-to-r from-gray-700 to-gray-600 border-gray-600' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-gray-200'}`}>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <FileText className="w-5 h-5 text-blue-600" />
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isDarkMode ? 'bg-blue-800' : 'bg-blue-100'}`}>
+                <FileText className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
               </div>
-              <h2 className="text-xl font-bold text-gray-800">Order History</h2>
+              <h2 className={`text-xl font-bold transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Order History</h2>
             </div>
           </div>
           
@@ -300,44 +302,44 @@ const CustomerDetails = () => {
             {quotations.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[640px]">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className={`border-b transition-colors duration-300 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4" />
                           Order Date
                         </div>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         <div className="flex items-center gap-2">
                           <Hash className="w-4 h-4" />
                           Order ID
                         </div>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         Sales Rep
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         Products
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         <div className="flex items-center gap-2">
                           <DollarSign className="w-4 h-4" />
                           Total
                         </div>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         Delivery Date
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         Status
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className={`divide-y transition-colors duration-300 ${isDarkMode ? 'divide-gray-600' : 'divide-gray-200'}`}>
                     {quotations.map((order) => (
-                      <tr key={order.order_id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 text-sm text-gray-800">
+                      <tr key={order.order_id} className={`transition-colors duration-200 ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
+                        <td className={`px-6 py-4 text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>
                           {new Date(order.order_date).toLocaleDateString('en-IN', {
                             year: 'numeric',
                             month: 'short',
@@ -349,7 +351,7 @@ const CustomerDetails = () => {
                             {order.order_id.substring(0, 8)}...
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-800">
+                        <td className={`px-6 py-4 text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>
                           {order.sales_rep_name}
                         </td>
                         <td className="px-6 py-4">
@@ -357,10 +359,10 @@ const CustomerDetails = () => {
                             {order.no_of_products} items
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm font-semibold text-gray-800">
+                        <td className={`px-6 py-4 text-sm font-semibold transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                           Rs {parseFloat(order.total_amount || 0).toLocaleString()}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-800">
+                        <td className={`px-6 py-4 text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>
                           {new Date(order.delivery_date).toLocaleDateString('en-IN', {
                             year: 'numeric',
                             month: 'short',
@@ -379,11 +381,11 @@ const CustomerDetails = () => {
               </div>
             ) : (
               <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Package className="w-8 h-8 text-gray-400" />
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors duration-300 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                  <Package className={`w-8 h-8 transition-colors duration-300 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
                 </div>
-                <p className="text-gray-600 font-medium">No orders found</p>
-                <p className="text-sm text-gray-500 mt-2">This customer hasn't placed any orders yet</p>
+                <p className={`font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>No orders found</p>
+                <p className={`text-sm mt-2 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>This customer hasn't placed any orders yet</p>
               </div>
             )}
           </div>
