@@ -146,7 +146,8 @@ const OrderSummary = () => {
         return;
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/orders/all-data`, {
+      // Request all orders by setting a high limit (1000 should be enough for most cases)
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/orders/all-data?limit=1000&offset=0`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

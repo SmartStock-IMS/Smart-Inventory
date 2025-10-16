@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import { InputWithLabel } from "@components/ui/InputWithLabel";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getCustomerByUserCode } from "@services/customer-services.js";
 import { FaSpinner } from "react-icons/fa";
 import { cn } from "@lib/utils.js";
@@ -88,157 +88,189 @@ const OrderDetails = ({ item, changeOpen = () => {} }) => {
     }
   };
 
-  const handleDownloadInvoice = async () => {
+  const handleDownloadInvoice = useCallback(async () => {
     try {
+      // Add loading state to prevent multiple clicks
+      setIsDownload(true);
+      
       const response = await getInvoice(item.quotation_id);
       if (response.success) {
         const invoiceId = response.data.invoice.invoice_no;
         await downloadInvoice(invoiceId, customerData);
+        
+        // Show success message
+        toast.success("Invoice downloaded successfully!");
+      } else {
+        toast.error("Failed to generate invoice");
       }
     } catch (error) {
-      console.error(error);
+      console.error("Download error:", error);
+      toast.error("Failed to download invoice");
+    } finally {
+      // Ensure loading state is reset and navigation isn't blocked
+      setTimeout(() => {
+        setIsDownload(false);
+        // Force cleanup of any PDF-related DOM changes
+        if (document.querySelector('[data-pdf-generator]')) {
+          document.querySelector('[data-pdf-generator]').remove();
+        }
+      }, 1000);
     }
-  };
+  }, [item.quotation_id, customerData]);
 
   const downloadInvoice = async (invoiceId, customerData) => {
-    const doc = new jsPDF();
-    
-    // Set page margins
-    const margin = 14;
-    const pageWidth = doc.internal.pageSize.getWidth();
-    
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text("INVOICE", pageWidth / 2, 20, { align: "center" });
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    const invoiceInfoX = pageWidth - margin;
-    doc.text(`INVOICE DATE: ${new Date().toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'})}`, invoiceInfoX, 30, { align: "right" });
-    doc.text(`INVOICE # ${invoiceId}`, invoiceInfoX, 35, { align: "right" });
-    
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text("Bill To:", margin, 35);
-    doc.text(`${customerData?.first_name || ""} ${customerData?.last_name || ""}`, margin, 45);
-    doc.text(`${customerData?.address_line1 || ""}`, margin, 50);
-    if (customerData?.address_line2) {
-      doc.text(`${customerData?.address_line2 || ""}`, margin, 55);
-      doc.text(`${customerData?.city || ""}, ${customerData?.province || ""}`, margin, 60);
-      doc.text(`${customerData?.postal_code || ""}`, margin, 65);
-    } else {
-      doc.text(`${customerData?.city || ""}, ${customerData?.province || ""}`, margin, 55);
-      doc.text(`${customerData?.postal_code || ""}`, margin, 60);
-    }
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(`TERMS: ${item.payment_term}`, invoiceInfoX, 50, { align: "right" });
-    doc.text(`DUE DATE: ${new Date(item.quotation_due_date).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'})}`, invoiceInfoX, 55, { align: "right" });
-    doc.text(`REP: ${item.sales_rep_id}`, invoiceInfoX, 60, { align: "right" });
-    doc.text(`VIA:`, invoiceInfoX, 65, { align: "right" });
-  
-    const tableColumn = [
-      "ITEM CODE",
-      "DESCRIPTION",
-      "QUANTITY",
-      "UNIT PRICE",
-      "AMOUNT"
-    ];
-    
-    const tableRows = item.quotationItems.map((itemData) => {
-      const unitPrice = new Intl.NumberFormat('en-LK', {
-        style: 'currency',
-        currency: 'LKR',
-        minimumFractionDigits: 2
-      }).format(itemData.unit_price);
-
-      const totalAmount = new Intl.NumberFormat('en-LK', {
-        style: 'currency',
-        currency: 'LKR',
-        minimumFractionDigits: 2
-      }).format(itemData.total_amount);
-
-      return [
-        itemData.item_code,
-        itemData.description,
-        itemData.item_qty,
-        unitPrice,
-        totalAmount,
-      ];
-    });
-    
-    autoTable(doc, {
-      head: [tableColumn],
-      body: tableRows,
-      startY: 75,
-      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-      margin: { left: margin, right: margin },
-      styles: { cellPadding: 3, fontSize: 9 },
-      columnStyles: {
-        0: { cellWidth: 30 },
-        1: { cellWidth: 'auto' },
-        2: { cellWidth: 25, halign: 'center' },
-        3: { cellWidth: 30, halign: 'right' },
-        4: { cellWidth: 30, halign: 'right' }
+    try {
+      // Use setTimeout to ensure DOM updates are processed
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const doc = new jsPDF();
+      
+      // Set page margins
+      const margin = 14;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.text("INVOICE", pageWidth / 2, 20, { align: "center" });
+      
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      const invoiceInfoX = pageWidth - margin;
+      doc.text(`INVOICE DATE: ${new Date().toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'})}`, invoiceInfoX, 30, { align: "right" });
+      doc.text(`INVOICE # ${invoiceId}`, invoiceInfoX, 35, { align: "right" });
+      
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.text("Bill To:", margin, 35);
+      doc.text(`${customerData?.first_name || ""} ${customerData?.last_name || ""}`, margin, 45);
+      doc.text(`${customerData?.address_line1 || ""}`, margin, 50);
+      if (customerData?.address_line2) {
+        doc.text(`${customerData?.address_line2 || ""}`, margin, 55);
+        doc.text(`${customerData?.city || ""}, ${customerData?.province || ""}`, margin, 60);
+        doc.text(`${customerData?.postal_code || ""}`, margin, 65);
+      } else {
+        doc.text(`${customerData?.city || ""}, ${customerData?.province || ""}`, margin, 55);
+        doc.text(`${customerData?.postal_code || ""}`, margin, 60);
       }
-    });
-  
-    const finalY = doc.lastAutoTable.finalY + 15;
+      
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`TERMS: ${item.payment_term}`, invoiceInfoX, 50, { align: "right" });
+      doc.text(`DUE DATE: ${new Date(item.quotation_due_date).toLocaleDateString('en-US', {month: '2-digit', day: '2-digit', year: 'numeric'})}`, invoiceInfoX, 55, { align: "right" });
+      doc.text(`REP: ${item.sales_rep_id}`, invoiceInfoX, 60, { align: "right" });
+      doc.text(`VIA:`, invoiceInfoX, 65, { align: "right" });
     
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("Total", pageWidth - 80, finalY);
-    doc.text("Balance Due", pageWidth - 80, finalY + 8);
-    doc.text("Customer Total Balance", pageWidth - 80, finalY + 16);
+      const tableColumn = [
+        "ITEM CODE",
+        "DESCRIPTION",
+        "QUANTITY",
+        "UNIT PRICE",
+        "AMOUNT"
+      ];
+      
+      const tableRows = item.quotationItems.map((itemData) => {
+        const unitPrice = new Intl.NumberFormat('en-LK', {
+          style: 'currency',
+          currency: 'LKR',
+          minimumFractionDigits: 2
+        }).format(itemData.unit_price);
+
+        const totalAmount = new Intl.NumberFormat('en-LK', {
+          style: 'currency',
+          currency: 'LKR',
+          minimumFractionDigits: 2
+        }).format(itemData.total_amount);
+
+        return [
+          itemData.item_code,
+          itemData.description,
+          itemData.item_qty,
+          unitPrice,
+          totalAmount,
+        ];
+      });
+      
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 75,
+        headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+        margin: { left: margin, right: margin },
+        styles: { cellPadding: 3, fontSize: 9 },
+        columnStyles: {
+          0: { cellWidth: 30 },
+          1: { cellWidth: 'auto' },
+          2: { cellWidth: 25, halign: 'center' },
+          3: { cellWidth: 30, halign: 'right' },
+          4: { cellWidth: 30, halign: 'right' }
+        }
+      });
     
-    doc.text(`LKR ${Number(item.net_total).toLocaleString('en-LK', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    })}`, pageWidth - margin, finalY, { align: "right" });
-    doc.text("LKR 0.00", pageWidth - margin, finalY + 8, { align: "right" });
-    doc.text("LKR 0.00", pageWidth - margin, finalY + 16, { align: "right" });
-  
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "italic");
-    doc.text("Note : Thanks For your business", margin, finalY + 30);
-    doc.text("Account Name : Trollious Cosmetics (Pvt) Ltd", margin, finalY + 36);
-    doc.text("Account Number : 1000429495", margin, finalY + 42);
-    doc.text("Bank : Commercial Bank", margin, finalY + 48);
-    doc.text("Branch : Panadura City Office", margin, finalY + 54);
-  
-    const signatureY = finalY + 70;
+      const finalY = doc.lastAutoTable.finalY + 15;
+      
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text("Total", pageWidth - 80, finalY);
+      doc.text("Balance Due", pageWidth - 80, finalY + 8);
+      doc.text("Customer Total Balance", pageWidth - 80, finalY + 16);
+      
+      doc.text(`LKR ${Number(item.net_total).toLocaleString('en-LK', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`, pageWidth - margin, finalY, { align: "right" });
+      doc.text("LKR 0.00", pageWidth - margin, finalY + 8, { align: "right" });
+      doc.text("LKR 0.00", pageWidth - margin, finalY + 16, { align: "right" });
     
-    doc.setDrawColor(100, 100, 100);
-    doc.setLineDashPattern([1, 1], 0);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "italic");
+      doc.text("Note : Thanks For your business", margin, finalY + 30);
+      doc.text("Account Name : Trollious Cosmetics (Pvt) Ltd", margin, finalY + 36);
+      doc.text("Account Number : 1000429495", margin, finalY + 42);
+      doc.text("Bank : Commercial Bank", margin, finalY + 48);
+      doc.text("Branch : Panadura City Office", margin, finalY + 54);
     
-    doc.line(margin, signatureY, margin + 60, signatureY);
-    doc.setFontSize(8);
-    doc.text("Approved Signature", margin, signatureY + 5);
+      const signatureY = finalY + 70;
+      
+      doc.setDrawColor(100, 100, 100);
+      doc.setLineDashPattern([1, 1], 0);
+      
+      doc.line(margin, signatureY, margin + 60, signatureY);
+      doc.setFontSize(8);
+      doc.text("Approved Signature", margin, signatureY + 5);
+      
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.text("TROLLIOUS COSMETICS (PVT) LTD.", margin, signatureY + 15);
+      
+      doc.setLineDashPattern([1, 1], 0);
+      doc.line(pageWidth/2 - 30, signatureY, pageWidth/2 + 30, signatureY);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text("Customer Signature", pageWidth/2, signatureY + 5, { align: "center" });
+      
+      doc.setLineDashPattern([1, 1], 0);
+      doc.line(pageWidth - margin - 60, signatureY, pageWidth - margin, signatureY);
+      doc.text("Authorised Signature", pageWidth - margin - 30, signatureY + 5, { align: "center" });
+      
+      const companyInfoY = signatureY + 25;
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.text("No 182,", margin, companyInfoY);
+      doc.text("Kuruppumulla Road,", margin, companyInfoY + 5);
+      doc.text("Panadura, 12500", margin, companyInfoY + 10);
+      doc.text("0707 577 500 / 502", margin, companyInfoY + 15);
     
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.text("TROLLIOUS COSMETICS (PVT) LTD.", margin, signatureY + 15);
-    
-    doc.setLineDashPattern([1, 1], 0);
-    doc.line(pageWidth/2 - 30, signatureY, pageWidth/2 + 30, signatureY);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.text("Customer Signature", pageWidth/2, signatureY + 5, { align: "center" });
-    
-    doc.setLineDashPattern([1, 1], 0);
-    doc.line(pageWidth - margin - 60, signatureY, pageWidth - margin, signatureY);
-    doc.text("Authorised Signature", pageWidth - margin - 30, signatureY + 5, { align: "center" });
-    
-    const companyInfoY = signatureY + 25;
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text("No 182,", margin, companyInfoY);
-    doc.text("Kuruppumulla Road,", margin, companyInfoY + 5);
-    doc.text("Panadura, 12500", margin, companyInfoY + 10);
-    doc.text("0707 577 500 / 502", margin, companyInfoY + 15);
-  
-    doc.save(`invoice_${invoiceId}.pdf`);
+      // Use setTimeout to ensure PDF generation doesn't block UI
+      setTimeout(() => {
+        doc.save(`invoice_${invoiceId}.pdf`);
+        // Clear any potential memory leaks
+        doc = null;
+      }, 100);
+      
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      throw error;
+    }
   };
 
   const getStatusColor = (status) => {
@@ -288,7 +320,7 @@ const OrderDetails = ({ item, changeOpen = () => {} }) => {
     }
   };
 
-  const updateOrderStatus = async (status) => {
+  const updateOrderStatus = useCallback(async (status) => {
     setIsUpdatingStatus(true);
     try {
       const token = localStorage.getItem("token");
@@ -305,6 +337,9 @@ const OrderDetails = ({ item, changeOpen = () => {} }) => {
       if (response.ok && result.success) {
         toast.success(`Order ${status} successfully!`);
         setOrderStatus(status); // Update the local state to reflect the new status
+        
+        // Force a small delay to ensure UI updates properly
+        await new Promise(resolve => setTimeout(resolve, 100));
       } else {
         throw new Error(result.message || "Failed to update order status");
       }
@@ -312,17 +347,28 @@ const OrderDetails = ({ item, changeOpen = () => {} }) => {
       console.error("Error updating order status:", error);
       toast.error("Failed to update order status. Try again.");
     } finally {
-      setIsUpdatingStatus(false);
+      // Ensure state is always reset with a small delay
+      setTimeout(() => {
+        setIsUpdatingStatus(false);
+      }, 100);
     }
-  };
+  }, [item.order_id]);
 
   return (
-    <div className="h-full py-3">
+    <div className="h-full py-3" key={`order-details-${item.quotation_id}`}>
       {/* Quick Action Button - Top */}
       <div className="px-3 mb-4">
         <button
-          className="w-fit flex flex-row items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 border border-blue-200 hover:border-blue-300 rounded-lg transition-all duration-200"
-          onClick={() => changeOpen()}
+          type="button"
+          className="w-fit flex flex-row items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 border border-blue-200 hover:border-blue-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Force a slight delay to ensure any ongoing operations complete
+            setTimeout(() => {
+              changeOpen();
+            }, 100);
+          }}
         >
           <ChevronLeft className="w-5 h-5" />
           <span className="font-medium">Go Back to Orders</span>
@@ -790,16 +836,36 @@ const OrderDetails = ({ item, changeOpen = () => {} }) => {
         {/* Download invoice */}
         {userType === "002" && (
           <div>
-            {isDownload || quotationStatus === 'Generate Invoice' && (
+            {(isDownload || quotationStatus === 'Generate Invoice') && (
               <div className="w-full mt-2 flex flex-row items-center justify-end">
                 <button
                   className={cn(
-                    "w-fit py-2 px-6 bg-black rounded-md shadow-lg text-white",
-                    "hover:bg-black/80",
+                    "w-fit py-2 px-6 bg-black rounded-md shadow-lg text-white transition-all duration-200",
+                    "hover:bg-black/80 focus:outline-none focus:ring-2 focus:ring-black/50",
+                    isDownload && "cursor-not-allowed opacity-50"
                   )}
-                  onClick={handleDownloadInvoice}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Ensure no other async operations interfere
+                    if (!isSubmit && !isDownload) {
+                      // Mark this as a PDF generation operation
+                      window.pdfGenerationTimer = setTimeout(() => {
+                        handleDownloadInvoice();
+                      }, 10);
+                    }
+                  }}
+                  disabled={isDownload}
+                  type="button"
                 >
-                  Download
+                  {isDownload ? (
+                    <div className="flex items-center gap-2">
+                      <FaSpinner className="w-4 h-4 animate-spin" />
+                      Downloading...
+                    </div>
+                  ) : (
+                    "Download"
+                  )}
                 </button>
               </div>
             )}
@@ -820,52 +886,67 @@ const OrderDetails = ({ item, changeOpen = () => {} }) => {
           ) : orderStatus === "rejected" ? null : !isOrderAccepted ? (
             <>
               <button
+                type="button"
                 className={cn(
-                  "bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition",
+                  "bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500/50",
                   isUpdatingStatus && "cursor-not-allowed opacity-50"
                 )}
-                onClick={() => updateOrderStatus("approved")}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  updateOrderStatus("approved");
+                }}
                 disabled={isUpdatingStatus}
               >
                 {isUpdatingStatus ? (
-                  <>
-                    <FaSpinner className="w-5 h-5 animate-spin mr-2" />
+                  <div className="flex items-center">
+                    <FaSpinner className="w-4 h-4 animate-spin mr-2" />
                     Approving...
-                  </>
+                  </div>
                 ) : (
                   "Approve Order"
                 )}
               </button>
               <button
+                type="button"
                 className={cn(
-                  "bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition",
+                  "bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500/50",
                   isUpdatingStatus && "cursor-not-allowed opacity-50"
                 )}
-                onClick={() => updateOrderStatus("rejected")}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  updateOrderStatus("rejected");
+                }}
                 disabled={isUpdatingStatus}
               >
                 {isUpdatingStatus ? (
-                  <>
-                    <FaSpinner className="w-5 h-5 animate-spin mr-2" />
+                  <div className="flex items-center">
+                    <FaSpinner className="w-4 h-4 animate-spin mr-2" />
                     Rejecting...
-                  </>
+                  </div>
                 ) : (
                   "Reject Order"
                 )}
               </button>
               <button
+                type="button"
                 className={cn(
-                  "bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition",
+                  "bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50",
                   isCreatingQuotation && "cursor-not-allowed opacity-50"
                 )}
-                onClick={handleCreateQuotation}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCreateQuotation();
+                }}
                 disabled={isCreatingQuotation}
               >
                 {isCreatingQuotation ? (
-                  <>
-                    <FaSpinner className="w-5 h-5 animate-spin mr-2" />
+                  <div className="flex items-center">
+                    <FaSpinner className="w-4 h-4 animate-spin mr-2" />
                     Creating...
-                  </>
+                  </div>
                 ) : (
                   "Create Quotation"
                 )}

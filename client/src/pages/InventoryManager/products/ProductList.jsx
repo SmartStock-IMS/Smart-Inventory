@@ -35,6 +35,10 @@ const getProducts = async () => {
     const token = localStorage.getItem("token");
     const response = await api.get('/products', {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
+      params: {
+        limit: 1000, // Request a high limit to get all products
+        page: 1
+      }
     });
     return { success: true, data: response.data };
   } catch (error) {

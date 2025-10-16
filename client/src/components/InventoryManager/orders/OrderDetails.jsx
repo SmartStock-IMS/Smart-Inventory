@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import { InputWithLabel } from "@components/ui/InputWithLabel";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { getCustomerByUserCode } from "@services/customer-services.js";
 import { FaSpinner } from "react-icons/fa";
 import { cn } from "@lib/utils.js";
@@ -86,17 +86,24 @@ const OrderDetails = ({ item, changeOpen }) => {
     }
   };
 
-  const handleDownloadInvoice = async () => {
+  const handleDownloadInvoice = useCallback(async () => {
     try {
+      // Add loading state to prevent multiple clicks
+      setIsDownload(true);
+      
       const input = invoiceRef.current;
       
       if (!input) {
         console.error("Invoice element not found");
+        toast.error("Invoice element not found");
         return;
       }
 
       // Show loading state
       toast.info('Generating Invoice PDF...');
+
+      // Use setTimeout to ensure DOM updates are processed
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Temporarily make visible and position off-screen
       const originalStyle = input.style.cssText;
@@ -194,26 +201,41 @@ const OrderDetails = ({ item, changeOpen }) => {
         }
       }
 
-      // Generate filename
+      // Generate filename and save PDF
       const filename = `Invoice_${item.quotation_id}_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      // Save PDF
-      pdf.save(filename);
-      
-      toast.success('Invoice downloaded successfully!');
+      // Use setTimeout to ensure PDF generation doesn't block UI
+      setTimeout(() => {
+        pdf.save(filename);
+        toast.success('Invoice downloaded successfully!');
+        // Clean up PDF object
+        pdf = null;
+      }, 100);
       
     } catch (error) {
       console.error('Error generating Invoice PDF:', error);
       toast.error('Failed to generate Invoice PDF. Please try again.');
+    } finally {
+      // Ensure loading state is reset and navigation isn't blocked
+      setTimeout(() => {
+        setIsDownload(false);
+        // Force cleanup of any canvas or PDF-related DOM changes
+        const canvasElements = document.querySelectorAll('canvas[data-html2canvas-ignore]');
+        canvasElements.forEach(canvas => canvas.remove());
+      }, 1000);
     }
-  };
+  }, [item.quotation_id]);
 
-  const downloadPDF = async () => {
+  const downloadPDF = useCallback(async () => {
     try {
+      // Add loading state to prevent multiple clicks
+      setIsDownload(true);
+      
       const input = invoiceRef.current;
       
       if (!input) {
         console.error("Invoice element not found");
+        toast.error("Invoice element not found");
         return;
       }
 
@@ -224,6 +246,9 @@ const OrderDetails = ({ item, changeOpen }) => {
 
       // Show loading state
       toast.info(`Generating ${documentType} PDF...`);
+
+      // Use setTimeout to ensure DOM updates are processed
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Temporarily make the element visible for capture
       const originalStyle = input.style.cssText;
@@ -311,19 +336,30 @@ const OrderDetails = ({ item, changeOpen }) => {
         }
       }
 
-      // Generate filename
+      // Generate filename and save PDF
       const filename = `${documentType}_${item.quotation_id}_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      // Save PDF
-      pdf.save(filename);
-      
-      toast.success(`${documentType} downloaded successfully!`);
+      // Use setTimeout to ensure PDF generation doesn't block UI
+      setTimeout(() => {
+        pdf.save(filename);
+        toast.success(`${documentType} downloaded successfully!`);
+        // Clean up PDF object
+        pdf = null;
+      }, 100);
       
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast.error('Failed to generate PDF. Please try again.');
+    } finally {
+      // Ensure loading state is reset and navigation isn't blocked
+      setTimeout(() => {
+        setIsDownload(false);
+        // Force cleanup of any canvas or PDF-related DOM changes
+        const canvasElements = document.querySelectorAll('canvas[data-html2canvas-ignore]');
+        canvasElements.forEach(canvas => canvas.remove());
+      }, 1000);
     }
-  };
+  }, [item.quotation_id, item.status, quotationStatus]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -337,12 +373,20 @@ const OrderDetails = ({ item, changeOpen }) => {
   };
 
   return (
-    <div className="h-full py-3">
+    <div className="h-full py-3" key={`order-details-${item.quotation_id}`}>
       {/* Quick Action Button - Top */}
       <div className="px-3 mb-4">
         <button
-          className="w-fit flex flex-row items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 border border-blue-200 hover:border-blue-300 rounded-lg transition-all duration-200"
-          onClick={() => changeOpen()}
+          type="button"
+          className="w-fit flex flex-row items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 border border-blue-200 hover:border-blue-300 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Force a slight delay to ensure any ongoing operations complete
+            setTimeout(() => {
+              changeOpen();
+            }, 100);
+          }}
         >
           <ChevronLeft className="w-5 h-5" />
           <span className="font-medium">Go Back to Orders</span>
@@ -819,14 +863,41 @@ const OrderDetails = ({ item, changeOpen }) => {
             
             return (
               <button
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
-                onClick={isInvoiceStatus ? handleDownloadInvoice : downloadPDF}
-                disabled={isSubmit}
+                type="button"
+                className={cn(
+                  "flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200",
+                  "focus:outline-none focus:ring-2 focus:ring-blue-500/50",
+                  (isSubmit || isDownload) && "cursor-not-allowed opacity-50"
+                )}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!isSubmit && !isDownload) {
+                    // Mark this as a PDF generation operation
+                    window.pdfGenerationTimer = setTimeout(() => {
+                      if (isInvoiceStatus) {
+                        handleDownloadInvoice();
+                      } else {
+                        downloadPDF();
+                      }
+                    }, 10);
+                  }
+                }}
+                disabled={isSubmit || isDownload}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                {buttonText}
+                {(isSubmit || isDownload) ? (
+                  <>
+                    <FaSpinner className="w-4 h-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    {buttonText}
+                  </>
+                )}
               </button>
             );
           })()}

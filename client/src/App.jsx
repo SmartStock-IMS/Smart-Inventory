@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
 import { AuthContextProvider } from "./context/auth/AuthContext.jsx";
 import Login from "./pages/auth/Login.jsx";
 import Unauthorized from "./pages/auth/Unauthorized.jsx";
@@ -10,6 +11,48 @@ import AdmiAdministratorRoutes from "./routes/AdministratorRoutes.jsx";
 import ResourceManagerRoutes from "./routes/ResourceManagerRoutes.jsx";
 
 function App() {
+  // Cleanup function to prevent PDF generation from interfering with navigation
+  useEffect(() => {
+    const cleanupPDFArtifacts = () => {
+      // Remove any orphaned canvas elements from html2canvas
+      const orphanedCanvas = document.querySelectorAll('canvas[data-html2canvas-ignore], canvas[style*="position: absolute"]');
+      orphanedCanvas.forEach(canvas => {
+        if (canvas.parentNode) {
+          canvas.parentNode.removeChild(canvas);
+        }
+      });
+      
+      // Remove any temporary PDF generation elements
+      const tempElements = document.querySelectorAll('[data-pdf-generator], [style*="top: -9999px"]');
+      tempElements.forEach(el => {
+        if (el.parentNode && el.id !== 'root') {
+          el.parentNode.removeChild(el);
+        }
+      });
+      
+      // Clear any pending jsPDF operations
+      if (window.jsPDF && window.jsPDF.API) {
+        delete window.jsPDF.API.currentDoc;
+      }
+    };
+
+    // Run cleanup on route changes
+    const handleRouteChange = () => {
+      setTimeout(cleanupPDFArtifacts, 100);
+    };
+
+    // Listen for route changes
+    window.addEventListener('popstate', handleRouteChange);
+    
+    // Initial cleanup
+    cleanupPDFArtifacts();
+
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+      cleanupPDFArtifacts();
+    };
+  }, []);
+
   return (
     <AuthContextProvider>
       <Router>
