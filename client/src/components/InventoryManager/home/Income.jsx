@@ -21,6 +21,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
+import { useTheme } from "../../../context/theme/ThemeContext.jsx";
 
 const API_BASE_URL = `${import.meta.env.VITE_API_URL}/reports`;
 
@@ -212,6 +213,7 @@ const ModernDateSelector = ({
   selectedOption,
   setSelectedOption,
 }) => {
+  const { isDarkMode } = useTheme();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -303,12 +305,16 @@ const ModernDateSelector = ({
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setShowDropdown(!showDropdown)}
-        className="flex items-center gap-3 px-5 py-3 bg-white hover:bg-gray-50 text-gray-700 rounded-lg transition-all duration-200 border border-gray-300 hover:border-gray-400 shadow-sm min-w-[200px]"
+        className={`flex items-center gap-3 px-5 py-3 rounded-lg transition-all duration-200 border shadow-sm min-w-[200px] ${
+          isDarkMode
+            ? 'bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-600 hover:border-gray-500'
+            : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300 hover:border-gray-400'
+        }`}
       >
-        <Calendar className="w-5 h-5 text-gray-600" />
+        <Calendar className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
         <div className="flex-1 text-left">
           <div className="text-sm font-semibold">{selectedOption}</div>
-          <div className="text-xs text-gray-500">
+          <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             {formatFullDate(fromDate)} - {formatFullDate(toDate)}
           </div>
         </div>
@@ -318,9 +324,15 @@ const ModernDateSelector = ({
       </button>
 
       {showDropdown && (
-        <div className="absolute top-full mt-2 left-0 bg-white rounded-lg shadow-xl border border-gray-200 z-50 min-w-[250px] overflow-hidden">
+        <div className={`absolute top-full mt-2 left-0 rounded-lg shadow-xl border z-50 min-w-[250px] overflow-hidden ${
+          isDarkMode 
+            ? 'bg-gray-800 border-gray-700' 
+            : 'bg-white border-gray-200'
+        }`}>
           <div className="p-2">
-            <div className="text-xs font-semibold text-gray-500 px-3 py-2">
+            <div className={`text-xs font-semibold px-3 py-2 ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+            }`}>
               SELECT TIME PERIOD
             </div>
             {quickSelectOptions.map((option, index) => (
@@ -329,13 +341,19 @@ const ModernDateSelector = ({
                 onClick={option.action}
                 className={`w-full text-left px-4 py-3 rounded-md transition-colors duration-150 ${
                   selectedOption === option.label
-                    ? "bg-blue-50 text-blue-700 font-medium"
-                    : "hover:bg-gray-50 text-gray-700"
+                    ? isDarkMode
+                      ? "bg-blue-900/30 text-blue-300 font-medium"
+                      : "bg-blue-50 text-blue-700 font-medium"
+                    : isDarkMode
+                      ? "hover:bg-gray-700 text-gray-300"
+                      : "hover:bg-gray-50 text-gray-700"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm">{option.label}</span>
-                  <span className="text-xs text-gray-500 capitalize">
+                  <span className={`text-xs ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                  } capitalize`}>
                     {option.granularity}
                   </span>
                 </div>
@@ -348,8 +366,15 @@ const ModernDateSelector = ({
   );
 };
 
-const StatCard = ({ title, value, change, icon: Icon, color, subtitle }) => (
-  <div className="relative overflow-hidden rounded-lg p-6 bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+const StatCard = ({ title, value, change, icon: Icon, color, subtitle }) => {
+  const { isDarkMode } = useTheme();
+  
+  return (
+    <div className={`relative overflow-hidden rounded-lg p-6 shadow-sm border hover:shadow-md transition-shadow ${
+      isDarkMode 
+        ? 'bg-gray-800 border-gray-700' 
+        : 'bg-white border-gray-200'
+    }`}>
     <div className="flex items-start justify-between mb-3">
       <div
         className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}
@@ -378,36 +403,57 @@ const StatCard = ({ title, value, change, icon: Icon, color, subtitle }) => (
         </div>
       )}
     </div>
-    <h3 className="text-gray-600 text-sm font-medium mb-1">{title}</h3>
-    <p className="text-gray-900 text-2xl font-bold mb-1">{value}</p>
-    {subtitle && <p className="text-gray-500 text-xs">{subtitle}</p>}
+    <h3 className={`text-sm font-medium mb-1 transition-colors duration-300 ${
+      isDarkMode ? 'text-gray-300' : 'text-gray-600'
+    }`}>{title}</h3>
+    <p className={`text-2xl font-bold mb-1 transition-colors duration-300 ${
+      isDarkMode ? 'text-gray-100' : 'text-gray-900'
+    }`}>{value}</p>
+    {subtitle && <p className={`text-xs transition-colors duration-300 ${
+      isDarkMode ? 'text-gray-400' : 'text-gray-500'
+    }`}>{subtitle}</p>}
   </div>
-);
+  );
+};
 
-const LoadingSpinner = () => (
-  <div className="h-full w-full flex flex-col items-center justify-center gap-6 py-12">
-    <div className="relative">
-      <div className="w-20 h-20 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-pulse">
-        <FaSpinner size={32} color="white" className="animate-spin" />
+const LoadingSpinner = () => {
+  const { isDarkMode } = useTheme();
+  
+  return (
+    <div className="h-full w-full flex flex-col items-center justify-center gap-6 py-12">
+      <div className="relative">
+        <div className="w-20 h-20 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-pulse">
+          <FaSpinner size={32} color="white" className="animate-spin" />
+        </div>
+        <div className="absolute inset-0 w-20 h-20 border-4 border-blue-200 rounded-full animate-ping opacity-75"></div>
       </div>
-      <div className="absolute inset-0 w-20 h-20 border-4 border-blue-200 rounded-full animate-ping opacity-75"></div>
-    </div>
-    <div className="flex items-center gap-3 text-gray-600">
-      <span className="text-xl font-medium">Loading overview data</span>
-      <div className="flex gap-1">
-        <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-0"></div>
-        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce delay-150"></div>
-        <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce delay-300"></div>
+      <div className="flex items-center gap-3">
+        <span className={`text-xl font-medium transition-colors duration-300 ${
+          isDarkMode ? 'text-gray-300' : 'text-gray-600'
+        }`}>Loading overview data</span>
+        <div className="flex gap-1">
+          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-0"></div>
+          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce delay-150"></div>
+          <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce delay-300"></div>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const CustomTooltip = ({ active, payload, label }) => {
+  const { isDarkMode } = useTheme();
+  
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-4 rounded-xl shadow-xl border border-gray-100">
-        <p className="text-gray-600 text-sm font-medium mb-2">{label}</p>
+      <div className={`p-4 rounded-xl shadow-xl border transition-colors duration-300 ${
+        isDarkMode 
+          ? 'bg-gray-800 border-gray-700' 
+          : 'bg-white border-gray-100'
+      }`}>
+        <p className={`text-sm font-medium mb-2 transition-colors duration-300 ${
+          isDarkMode ? 'text-gray-300' : 'text-gray-600'
+        }`}>{label}</p>
         <p className="text-blue-600 text-lg font-bold">
           Rs.{Number(payload[0].value).toLocaleString()}
         </p>
@@ -418,6 +464,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const DashboardIncome = () => {
+  const { isDarkMode } = useTheme();
   const [fromDate, setFromDate] = useState(
     new Date(new Date().setDate(new Date().getDate() - 7))
   );
@@ -518,7 +565,9 @@ const DashboardIncome = () => {
 
   if (loading) {
     return (
-      <div className="w-full h-full bg-gray-50 rounded-lg">
+      <div className={`w-full h-full rounded-lg transition-colors duration-300 ${
+        isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
+      }`}>
         <LoadingSpinner />
       </div>
     );
@@ -526,7 +575,9 @@ const DashboardIncome = () => {
 
   if (error) {
     return (
-      <div className="w-full h-full bg-gray-50 rounded-lg flex items-center justify-center">
+      <div className={`w-full h-full rounded-lg flex items-center justify-center transition-colors duration-300 ${
+        isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
+      }`}>
         <div className="text-center p-8">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CircleDollarSign className="w-8 h-8 text-red-500" />
@@ -541,9 +592,15 @@ const DashboardIncome = () => {
   }
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className={`rounded-3xl border shadow-xl overflow-hidden transition-colors duration-300 ${
+      isDarkMode 
+        ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 border-gray-700' 
+        : 'bg-gradient-to-br from-gray-50 via-white to-gray-50 border-gray-200'
+    }`}>
       <div className="p-6 space-y-6">
-        <div className="w-full h-full bg-gray-50 rounded-lg">
+        <div className={`w-full h-full rounded-lg transition-colors duration-300 ${
+          isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
+        }`}>
           <div className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-6 text-white relative">
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
               <div className="flex items-center gap-4">
@@ -613,10 +670,16 @@ const DashboardIncome = () => {
           </div>
 
           <div className="px-6 pb-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className={`rounded-lg border p-6 transition-colors duration-300 ${
+              isDarkMode 
+                ? 'bg-gray-800 border-gray-700' 
+                : 'bg-white border-gray-200'
+            }`}>
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800">
+                  <h3 className={`text-lg font-semibold transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                  }`}>
                     Revenue Trend -{" "}
                     {granularity === "day"
                       ? "Daily"
@@ -625,7 +688,9 @@ const DashboardIncome = () => {
                         : "Monthly"}{" "}
                     View
                   </h3>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className={`text-sm mt-1 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
                     {chartData.length}{" "}
                     {granularity === "day"
                       ? "days"
@@ -660,16 +725,16 @@ const DashboardIncome = () => {
                         angle={-45}
                         textAnchor="end"
                         height={80}
-                        tick={{ fontSize: 11, fill: "#6B7280" }}
-                        axisLine={{ stroke: "#E5E7EB" }}
+                        tick={{ fontSize: 11, fill: isDarkMode ? "#D1D5DB" : "#6B7280" }}
+                        axisLine={{ stroke: isDarkMode ? "#374151" : "#E5E7EB" }}
                         tickLine={false}
                       />
                       <YAxis
                         tickFormatter={(value) =>
                           `Rs.${(value / 1000).toFixed(0)}K`
                         }
-                        tick={{ fontSize: 12, fill: "#6B7280" }}
-                        axisLine={{ stroke: "#E5E7EB" }}
+                        tick={{ fontSize: 12, fill: isDarkMode ? "#D1D5DB" : "#6B7280" }}
+                        axisLine={{ stroke: isDarkMode ? "#374151" : "#E5E7EB" }}
                         tickLine={false}
                       />
                       <Tooltip content={<CustomTooltip />} />
@@ -712,16 +777,16 @@ const DashboardIncome = () => {
                         angle={-45}
                         textAnchor="end"
                         height={80}
-                        tick={{ fontSize: 11, fill: "#6B7280" }}
-                        axisLine={{ stroke: "#E5E7EB" }}
+                        tick={{ fontSize: 11, fill: isDarkMode ? "#D1D5DB" : "#6B7280" }}
+                        axisLine={{ stroke: isDarkMode ? "#374151" : "#E5E7EB" }}
                         tickLine={false}
                       />
                       <YAxis
                         tickFormatter={(value) =>
                           `Rs.${(value / 1000).toFixed(0)}K`
                         }
-                        tick={{ fontSize: 12, fill: "#6B7280" }}
-                        axisLine={{ stroke: "#E5E7EB" }}
+                        tick={{ fontSize: 12, fill: isDarkMode ? "#D1D5DB" : "#6B7280" }}
+                        axisLine={{ stroke: isDarkMode ? "#374151" : "#E5E7EB" }}
                         tickLine={false}
                       />
                       <Tooltip content={<CustomTooltip />} />

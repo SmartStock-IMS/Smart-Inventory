@@ -20,6 +20,7 @@ import api from "../../../lib/api";
 import { useLocation, useNavigate } from "react-router-dom";
 import { set } from "react-hook-form";
 import axios from "axios";
+import { useTheme } from "../../../context/theme/ThemeContext";
 
 // Fetch categories to get Cloudinary images
 const fetchCategories = async () => {
@@ -58,6 +59,8 @@ const InputWithLabel = ({
   className,
   ...props
 }) => {
+  const { isDarkMode } = useTheme();
+  
   const getIcon = () => {
     if (inputName?.includes("product_name") || inputName?.includes("name"))
       return <Package className="w-4 h-4" />;
@@ -70,7 +73,9 @@ const InputWithLabel = ({
     <div className="space-y-2">
       <label
         htmlFor={inputId}
-        className="text-sm font-medium text-gray-700 flex items-center gap-2"
+        className={`text-sm font-medium flex items-center gap-2 transition-colors duration-300 ${
+          isDarkMode ? 'text-gray-300' : 'text-gray-700'
+        }`}
       >
         {getIcon()}
         {label}
@@ -84,8 +89,12 @@ const InputWithLabel = ({
         readOnly={readOnly}
         className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm ${
           readOnly
-            ? "bg-gray-50 text-gray-600 cursor-not-allowed"
-            : "bg-white hover:border-gray-400"
+            ? isDarkMode 
+              ? "bg-gray-700 text-gray-400 cursor-not-allowed border-gray-600" 
+              : "bg-gray-50 text-gray-600 cursor-not-allowed border-gray-300"
+            : isDarkMode
+              ? "bg-gray-700 text-gray-200 border-gray-600 hover:border-gray-500"
+              : "bg-white hover:border-gray-400 border-gray-300"
         } ${className}`}
         {...props}
       />
@@ -95,7 +104,10 @@ const InputWithLabel = ({
 
 const getDetails = async () => {
   try {
-    const response = await api.get("/api/products");
+    const token = localStorage.getItem("token");
+    const response = await api.get("/products", {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
     return { success: true, data: response.data };
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -105,7 +117,10 @@ const getDetails = async () => {
 
 const updateProduct = async (productCode, data) => {
   try {
-    const response = await api.put(`/api/products/${productCode}`, data);
+    const token = localStorage.getItem("token");
+    const response = await api.put(`/products/${productCode}`, data, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
     return { success: true, message: "Product updated successfully", data: response.data };
   } catch (error) {
     console.error("Error updating product:", error);
@@ -115,7 +130,10 @@ const updateProduct = async (productCode, data) => {
 
 const deleteVariant = async (productCode) => {
   try {
-    const response = await api.delete(`/api/products/${productCode}`);
+    const token = localStorage.getItem("token");
+    const response = await api.delete(`/products/${productCode}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
     console.log(response);
     return { success: true, message: "Product variant deleted successfully", data: response.data };
   } catch (error) {
@@ -125,8 +143,14 @@ const deleteVariant = async (productCode) => {
 };
 
 const toast = {
-  success: (message) => console.log(`✅ ${message}`),
-  error: (message) => console.log(`❌ ${message}`),
+  success: (message) => {
+    console.log(`✅ SUCCESS: ${message}`);
+    alert(`✅ ${message}`); // Temporary visible feedback
+  },
+  error: (message) => {
+    console.log(`❌ ERROR: ${message}`);
+    alert(`❌ ${message}`); // Temporary visible feedback
+  },
 };
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
@@ -169,6 +193,7 @@ const mockProduct = {
 const ProductPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
   
   // Get category data from navigation state
   const categoryData = location.state;
@@ -268,9 +293,13 @@ const ProductPage = () => {
   const handleProductUpdate = async () => {
   try {
     setIsLoading(true);
+    console.log('Starting product update...');
+    console.log('Updated variants:', updatedVariants);
     
     // Update each variant individually
-    const updatePromises = updatedVariants.map(async (variant) => {
+    const updatePromises = updatedVariants.map(async (variant, index) => {
+      console.log(`Updating variant ${index}:`, variant);
+      
       const updateData = {
         name: variant.name,
         cost_price: variant.cost_price !== undefined && variant.cost_price !== null
@@ -297,10 +326,12 @@ const ProductPage = () => {
           : undefined
       };
 
+      console.log(`Update data for variant ${variant.product_id}:`, updateData);
       return updateProduct(variant.product_id, updateData);
     });
 
     const results = await Promise.all(updatePromises);
+    console.log('Update results:', results);
     
     // Check if all updates were successful
     const failedUpdates = results.filter(result => !result.success);
@@ -308,8 +339,15 @@ const ProductPage = () => {
     if (failedUpdates.length === 0) {
       toast.success("All variants updated successfully!");
       setIsEditing(false);
+      console.log('All updates successful');
     } else {
+      console.error('Failed updates:', failedUpdates);
       toast.error(`${failedUpdates.length} variant(s) failed to update`);
+      
+      // Log specific errors
+      failedUpdates.forEach((failedUpdate, index) => {
+        console.error(`Update ${index} failed:`, failedUpdate.error);
+      });
     }
     
   } catch (error) {
@@ -399,9 +437,17 @@ const ProductPage = () => {
   // };
 
   return (
-    <div className="h-full w-full bg-gradient-to-br from-blue-50 via-white to-blue-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className={`h-full w-full rounded-3xl border shadow-xl overflow-hidden transition-colors duration-300 ${
+      isDarkMode 
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700' 
+        : 'bg-gradient-to-br from-blue-50 via-white to-blue-50 border-gray-200'
+    }`}>
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-5 relative overflow-hidden">
+      <div className={`p-5 relative overflow-hidden transition-colors duration-300 ${
+        isDarkMode 
+          ? 'bg-gradient-to-r from-gray-800 to-gray-700 text-white' 
+          : 'bg-gradient-to-r from-blue-500 to-blue-400 text-white'
+      }`}>
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-white/10"></div>
         </div>
@@ -420,7 +466,11 @@ const ProductPage = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/inventorymanager/productlist')}
-              className="px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors flex items-center gap-2"
+              className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+                isDarkMode
+                  ? 'bg-white/10 text-white hover:bg-white/20'
+                  : 'bg-white/20 text-white hover:bg-white/30'
+              }`}
             >
               ← Back to Categories
             </button>
@@ -433,7 +483,9 @@ const ProductPage = () => {
                 "px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-300 flex items-center gap-2",
                 isEditing
                   ? "bg-red-500 hover:bg-red-600 text-white"
-                  : "bg-white text-orange-600 hover:bg-gray-100"
+                  : isDarkMode
+                    ? "bg-gray-700 text-orange-400 hover:bg-gray-600 border border-gray-600"
+                    : "bg-white text-orange-600 hover:bg-gray-100"
               )}
             >
               {isEditing ? (
@@ -475,8 +527,16 @@ const ProductPage = () => {
       <div className="h-[calc(100%-110px)] p-5 overflow-y-auto">
         <div className="space-y-8">
           {/* Product Information Section */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-400 to-blue-300 text-white p-4">
+          <div className={`rounded-2xl border shadow-sm overflow-hidden transition-colors duration-300 ${
+            isDarkMode 
+              ? 'bg-gray-800 border-gray-700' 
+              : 'bg-white border-gray-100'
+          }`}>
+            <div className={`p-4 transition-colors duration-300 ${
+              isDarkMode 
+                ? 'bg-gradient-to-r from-gray-700 to-gray-600 text-white' 
+                : 'bg-gradient-to-r from-blue-400 to-blue-300 text-white'
+            }`}>
               <h3 className="font-semibold text-lg flex items-center gap-2">
                 <Package className="w-5 h-5" />
                 Product Information
@@ -487,12 +547,16 @@ const ProductPage = () => {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Product Image */}
                 <div className="lg:col-span-1">
-                  <label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                  <label className={`text-sm font-medium mb-3 flex items-center gap-2 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
                     <Image className="w-4 h-4" />
                     Product Image
                   </label>
                   <div className="relative">
-                    <div className="w-full aspect-square rounded-2xl overflow-hidden shadow-lg border-4 border-gray-100">
+                    <div className={`w-full aspect-square rounded-2xl overflow-hidden shadow-lg border-4 transition-colors duration-300 ${
+                      isDarkMode ? 'border-gray-600' : 'border-gray-100'
+                    }`}>
                       {updatedProduct?.main_image ? (
                         <img
                           src={updatedProduct?.main_image}
@@ -500,8 +564,12 @@ const ProductPage = () => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <Package className="w-16 h-16 text-gray-400" />
+                        <div className={`w-full h-full flex items-center justify-center transition-colors duration-300 ${
+                          isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
+                        }`}>
+                          <Package className={`w-16 h-16 ${
+                            isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                          }`} />
                         </div>
                       )}
                     </div>
@@ -542,8 +610,16 @@ const ProductPage = () => {
           </div>
 
           {/* Variants Section */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-4">
+          <div className={`rounded-2xl border shadow-sm overflow-hidden transition-colors duration-300 ${
+            isDarkMode 
+              ? 'bg-gray-800 border-gray-700' 
+              : 'bg-white border-gray-100'
+          }`}>
+            <div className={`p-4 transition-colors duration-300 ${
+              isDarkMode 
+                ? 'bg-gradient-to-r from-gray-700 to-gray-600 text-white' 
+                : 'bg-gradient-to-r from-blue-500 to-blue-400 text-white'
+            }`}>
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-lg flex items-center gap-2">
                   <Scale className="w-5 h-5" />
@@ -554,42 +630,70 @@ const ProductPage = () => {
 
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className={`border-b transition-colors duration-300 ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600' 
+                    : 'bg-gray-50 border-gray-200'
+                }`}>
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                    }`}>
                       Image
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                    }`}>
                       Product Code
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                    }`}>
                       Weight
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                    }`}>
                       Price (Rs)
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                    }`}>
                       Stock
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                    }`}>
                       Min Stock
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> 
+                    <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                    }`}> 
                       Reorder Point
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                    }`}>
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className={`divide-y transition-colors duration-300 ${
+                  isDarkMode ? 'divide-gray-600' : 'divide-gray-200'
+                }`}>
                   {updatedVariants.map((variant, index) => (
                     <tr
                       key={index}
-                      className="hover:bg-gray-50 transition-colors"
+                      className={`transition-colors duration-300 ${
+                        isDarkMode 
+                          ? 'hover:bg-gray-700' 
+                          : 'hover:bg-gray-50'
+                      }`}
                     >
                       <td className="px-6 py-4">
-                        <div className="w-16 h-16 rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                        <div className={`w-16 h-16 rounded-xl overflow-hidden shadow-sm border transition-colors duration-300 ${
+                          isDarkMode ? 'border-gray-600' : 'border-gray-100'
+                        }`}>
                           {getVariantImage(categoryImage, categoryName, categoriesData) ? (
                             <img
                               src={getVariantImage(categoryImage, categoryName, categoriesData)}
@@ -597,8 +701,12 @@ const ProductPage = () => {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                              <Package className="w-6 h-6 text-gray-400" />
+                            <div className={`w-full h-full flex items-center justify-center transition-colors duration-300 ${
+                              isDarkMode ? 'bg-gray-600' : 'bg-gray-200'
+                            }`}>
+                              <Package className={`w-6 h-6 transition-colors duration-300 ${
+                                isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                              }`} />
                             </div>
                           )}
                         </div>
@@ -608,15 +716,19 @@ const ProductPage = () => {
                           type="text"
                           className={cn(
                             "w-full px-3 py-2 text-sm border rounded-lg transition-all duration-200",
-                            isEditing
-                              ? "border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                              : "border-gray-200 bg-gray-50 cursor-not-allowed"
+                            isDarkMode
+                              ? isEditing
+                                ? "border-gray-500 bg-gray-700 text-gray-100 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                : "border-gray-600 bg-gray-800 text-gray-300 cursor-not-allowed"
+                              : isEditing
+                                ? "border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                : "border-gray-200 bg-gray-50 cursor-not-allowed"
                           )}
                           value={variant.product_id || ""}
                           onChange={(e) =>
                             handleVariantChange(
                               index,
-                              "product_code",
+                              "product_id",
                               e.target.value
                             )
                           }
@@ -629,9 +741,13 @@ const ProductPage = () => {
                             type="text"
                             className={cn(
                               "w-full px-3 py-2 text-sm border rounded-lg transition-all duration-200",
-                              isEditing
-                                ? "border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                                : "border-gray-200 bg-gray-50 cursor-not-allowed"
+                              isDarkMode
+                                ? isEditing
+                                  ? "border-gray-500 bg-gray-700 text-gray-100 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                  : "border-gray-600 bg-gray-800 text-gray-300 cursor-not-allowed"
+                                : isEditing
+                                  ? "border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                  : "border-gray-200 bg-gray-50 cursor-not-allowed"
                             )}
                             value={variant.name.match(/\d+g/)?.[0] || ""}
                             onChange={(e) =>
@@ -648,14 +764,20 @@ const ProductPage = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="relative">
-                          <DollarSign className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <DollarSign className={`absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                          }`} />
                           <input
                             type="number"
                             className={cn(
                               "w-full pl-8 pr-3 py-2 text-sm border rounded-lg transition-all duration-200",
-                              isEditing
-                                ? "border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                                : "border-gray-200 bg-gray-50 cursor-not-allowed"
+                              isDarkMode
+                                ? isEditing
+                                  ? "border-gray-500 bg-gray-700 text-gray-100 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                  : "border-gray-600 bg-gray-800 text-gray-300 cursor-not-allowed"
+                                : isEditing
+                                  ? "border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                  : "border-gray-200 bg-gray-50 cursor-not-allowed"
                             )}
                             value={variant.selling_price !== undefined ? parseFloat(variant.selling_price) : ""}
                             onChange={(e) =>
@@ -675,9 +797,13 @@ const ProductPage = () => {
                             type="number"
                             className={cn(
                               "w-full px-3 py-2 text-sm border rounded-lg transition-all duration-200",
-                              isEditing
-                                ? "border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                                : "border-gray-200 bg-gray-50 cursor-not-allowed"
+                              isDarkMode
+                                ? isEditing
+                                  ? "border-gray-500 bg-gray-700 text-gray-100 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                  : "border-gray-600 bg-gray-800 text-gray-300 cursor-not-allowed"
+                                : isEditing
+                                  ? "border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                  : "border-gray-200 bg-gray-50 cursor-not-allowed"
                             )}
                             value={variant.current_stock }
                             onChange={(e) =>
@@ -706,9 +832,13 @@ const ProductPage = () => {
                           type="number"
                           className={cn(
                             "w-full px-3 py-2 text-sm border rounded-lg transition-all duration-200",
-                            isEditing
-                              ? "border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                              : "border-gray-200 bg-gray-50 cursor-not-allowed"
+                            isDarkMode
+                              ? isEditing
+                                ? "border-gray-500 bg-gray-700 text-gray-100 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                : "border-gray-600 bg-gray-800 text-gray-300 cursor-not-allowed"
+                              : isEditing
+                                ? "border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                : "border-gray-200 bg-gray-50 cursor-not-allowed"
                           )}
                           value={variant.min_stock_level || ""}
                           onChange={(e) =>
@@ -726,9 +856,13 @@ const ProductPage = () => {
                           type="number"
                           className={cn(
                             "w-full px-3 py-2 text-sm border rounded-lg transition-all duration-200",
-                            isEditing
-                              ? "border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                              : "border-gray-200 bg-gray-50 cursor-not-allowed"
+                            isDarkMode
+                              ? isEditing
+                                ? "border-gray-500 bg-gray-700 text-gray-100 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                : "border-gray-600 bg-gray-800 text-gray-300 cursor-not-allowed"
+                              : isEditing
+                                ? "border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                : "border-gray-200 bg-gray-50 cursor-not-allowed"
                           )}  
                           value={variant.reorder_point || ""}
                           onChange={(e) =>
@@ -745,7 +879,11 @@ const ProductPage = () => {
                       <td className="px-6 py-4">
                         <button
                           onClick={() => openDeleteDialog(index, variant)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                          className={`p-2 text-red-600 rounded-lg transition-colors duration-200 ${
+                            isDarkMode 
+                              ? 'hover:bg-red-900/30' 
+                              : 'hover:bg-red-50'
+                          }`}
                           disabled={isLoading}
                           title={"Delete Variant: ${variant.product_id}"}
                         >
