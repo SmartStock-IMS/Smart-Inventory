@@ -1,4 +1,5 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import DashboardHome from "../pages/InventoryManager/home/DashboardHome.jsx";
 import Sidebar from "../components/InventoryManager/genaral/Sidebar.jsx";
 import Header from "../components/InventoryManager/genaral/Header.jsx";
@@ -33,6 +34,50 @@ import BulkList from "../pages/InventoryManager/products/BulkList.jsx";
 import Profile from "../pages/auth/Profile.jsx";
 
 function InventoryManagerRoutes() {
+  const location = useLocation();
+  
+  // Cleanup PDF artifacts on route change to prevent navigation issues
+  useEffect(() => {
+    const cleanupOnRouteChange = () => {
+      // Remove any PDF-related artifacts that might interfere with navigation
+      const artifactsToRemove = [
+        'canvas[data-html2canvas-ignore]',
+        'canvas[style*="position: absolute"]', 
+        '[data-pdf-generator]',
+        '[style*="top: -9999px"]:not(.sidebar *):not(.header *)'
+      ];
+      
+      artifactsToRemove.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+          if (el.parentNode && !el.closest('.sidebar, .header')) {
+            el.parentNode.removeChild(el);
+          }
+        });
+      });
+      
+      // Reset any blocked event handlers
+      document.body.style.pointerEvents = 'auto';
+      document.documentElement.style.pointerEvents = 'auto';
+      
+      // Clear any remaining timers or intervals from PDF generation
+      if (window.pdfGenerationTimer) {
+        clearTimeout(window.pdfGenerationTimer);
+        delete window.pdfGenerationTimer;
+      }
+    };
+
+    // Run cleanup on every route change
+    cleanupOnRouteChange();
+    
+    // Also run cleanup after a short delay to catch any delayed artifacts
+    const timeoutId = setTimeout(cleanupOnRouteChange, 500);
+    
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [location.pathname]);
+
   return (
     <ThemeProvider>
       <SidebarProvider>

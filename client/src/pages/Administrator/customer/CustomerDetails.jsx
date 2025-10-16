@@ -40,7 +40,7 @@ const CustomerDetails = () => {
         
         // Fetch all orders/quotations
         const ordersResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL}/orders/all-data`,
+          `${import.meta.env.VITE_API_URL}/orders/all-data?limit=1000&offset=0`,
           {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           }

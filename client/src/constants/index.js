@@ -37,15 +37,15 @@ export const navigation = [
 // order section
 export const topbarLinks = [
   {
-    route: "/salesrep/order/add-items",
+    route: "/order/add-items",
     label: "Add items",
   },
   {
-    route: "/salesrep/order/billing-details",
+    route: "/order/billing-details",
     label: "Billing Details",
   },
   {
-    route: "/salesrep/order/confirmation",
+    route: "/order/confirmation",
     label: "Confirmation",
   },
 ];
