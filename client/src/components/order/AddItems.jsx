@@ -222,18 +222,23 @@ const AddItems = () => {
         
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-4 sm:p-6 mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-xl">
-                <Package className="w-6 h-6 text-blue-600" />
+              <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl">
+                <Package className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Order Management</h1>
-                <p className="text-sm text-slate-600">Review and finalize customer order</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Cart Items</h1>
+                <p className="text-sm text-slate-600">Review and select items for your order</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-xl">
-              <span className="text-sm font-medium text-slate-700">{items.length} items</span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-xl border border-blue-200">
+                <span className="text-sm font-medium text-blue-700">{items.length} Total Items</span>
+              </div>
+              <div className="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-xl border border-green-200">
+                <span className="text-sm font-medium text-green-700">{selectedItems.size} Selected</span>
+              </div>
             </div>
           </div>
         </div>
@@ -243,34 +248,37 @@ const AddItems = () => {
           {/* Cart Items Section */}
           <div className="flex-1 space-y-6">
             
-            {/* Selection Controls */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={toggleSelectAll}
-                  className="flex items-center gap-3 text-slate-700 hover:text-slate-900 transition-colors touch-manipulation"
-                >
-                  {isAllSelected ? (
-                    <CheckCircle2 className="w-5 h-5 text-blue-600" />
-                  ) : (
-                    <Circle className="w-5 h-5 text-slate-400" />
-                  )}
-                  <span className="font-medium">
-                    {isAllSelected ? "Deselect All" : "Select All"}
+            {/* Selection & Action Controls */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <h3 className="text-lg font-semibold text-slate-800">Item Selection</h3>
+                  <button
+                    onClick={toggleSelectAll}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors touch-manipulation border border-blue-200"
+                  >
+                    {isAllSelected ? (
+                      <CheckCircle2 className="w-4 h-4" />
+                    ) : (
+                      <Circle className="w-4 h-4" />
+                    )}
+                    <span className="font-medium text-sm">
+                      {isAllSelected ? "Deselect All" : "Select All"}
+                    </span>
+                  </button>
+                  <span className="text-sm text-slate-600 bg-slate-100 px-3 py-1 rounded-full">
+                    {selectedItems.size} of {items.length} selected
                   </span>
-                  <span className="text-sm text-slate-500">
-                    ({selectedItems.size} of {items.length} selected)
-                  </span>
-                </button>
+                </div>
                 
                 <button
                   onClick={deleteSelected}
                   disabled={selectedItems.size === 0 || isDeleting}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 touch-manipulation",
+                    "flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-all duration-200 touch-manipulation",
                     selectedItems.size === 0 || isDeleting
                       ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                      : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 active:bg-red-200"
+                      : "bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 active:bg-red-200 border border-red-200"
                   )}
                 >
                   {isDeleting ? (
@@ -281,95 +289,105 @@ const AddItems = () => {
                   ) : (
                     <>
                       <Trash2 className="w-4 h-4" />
-                      Remove Selected
+                      Remove Selected ({selectedItems.size})
                     </>
                   )}
                 </button>
               </div>
             </div>
 
-            {/* Mobile Cart Items */}
-            <div className="lg:hidden space-y-4">
-              {items.map((item, index) => (
-                <div key={index} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div className="p-4">
-                    <div className="flex items-start gap-4">
-                      <button
-                        onClick={() => toggleItemSelection(item.code)}
-                        className="mt-1 touch-manipulation"
-                      >
-                        {selectedItems.has(item.code) ? (
-                          <CheckCircle2 className="w-5 h-5 text-blue-600" />
-                        ) : (
-                          <Circle className="w-5 h-5 text-slate-400" />
-                        )}
-                      </button>
-                      
-                      <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
-                        <img
-                          src={item.url}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-slate-800 mb-2">{item.name}</h3>
-                        
-                        <div className="space-y-2">
-                          {item.weight ? (
-                            <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                              {item.weight}
-                            </span>
+            {/* Cart Items List - Mobile */}
+            <div className="lg:hidden">
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-4">
+                <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                  <ShoppingCart className="w-5 h-5 text-blue-600" />
+                  Cart Items ({items.length})
+                </h3>
+                <p className="text-sm text-slate-600 mt-1">Tap to select items for your order</p>
+              </div>
+              
+              <div className="space-y-4">
+                {items.map((item, index) => (
+                  <div key={index} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="p-4">
+                      <div className="flex items-start gap-4">
+                        <button
+                          onClick={() => toggleItemSelection(item.code)}
+                          className="mt-1 touch-manipulation"
+                        >
+                          {selectedItems.has(item.code) ? (
+                            <CheckCircle2 className="w-5 h-5 text-blue-600" />
                           ) : (
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-4 h-4 rounded-full border-2 border-slate-200"
-                                style={{ backgroundColor: item.color }}
-                              />
-                              <span className="text-sm text-slate-600">{item.color}</span>
-                            </div>
+                            <Circle className="w-5 h-5 text-slate-400" />
                           )}
+                        </button>
+                        
+                        <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+                          <img
+                            src={item.url}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-slate-800 mb-2">{item.name}</h3>
                           
-                          <div className="text-sm text-slate-600">
-                            Name: <span className="font-mono">{item.name}</span>
-                          </div>
+                          <div className="space-y-2">
+                            {item.weight ? (
+                              <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                                {item.weight}
+                              </span>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-4 h-4 rounded-full border-2 border-slate-200"
+                                  style={{ backgroundColor: item.color }}
+                                />
+                                <span className="text-sm text-slate-600">{item.color}</span>
+                              </div>
+                            )}
                           
-                          <div className="text-lg font-bold text-green-600">
-                            {formatCurrency(item.price)}
+                            <div className="text-sm text-slate-600">
+                              Name: <span className="font-mono">{item.name}</span>
+                            </div>
+                            
+                            <div className="text-lg font-bold text-green-600">
+                              {formatCurrency(item.price)}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    {/* Quantity Controls */}
-                    <div className="mt-4 flex items-center justify-between">
-                      <div className="text-sm text-slate-600">
-                        Total: <span className="font-bold text-slate-800">{formatCurrency(item.price * item.quantity)}</span>
-                      </div>
                       
-                      <div className="flex items-center bg-slate-100 rounded-lg">
-                        <button
-                          onClick={() => updateQuantity(item.code, -1)}
-                          disabled={item.quantity <= 1}
-                          className="p-2 text-slate-600 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="px-4 py-2 font-semibold text-slate-800 min-w-[3rem] text-center">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(item.code, 1)}
-                          className="p-2 text-slate-600 hover:text-slate-800 transition-colors touch-manipulation"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
+                      {/* Quantity Controls */}
+                      <div className="mt-4 flex items-center justify-between">
+                        <div className="text-sm text-slate-600">
+                          Total: <span className="font-bold text-slate-800">{formatCurrency(item.price * item.quantity)}</span>
+                        </div>
+                        
+                        <div className="flex items-center bg-slate-100 rounded-lg">
+                          <button
+                            onClick={() => updateQuantity(item.code, -1)}
+                            disabled={item.quantity <= 1}
+                            className="p-2 text-slate-600 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="px-4 py-2 font-semibold text-slate-800 min-w-[3rem] text-center">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.code, 1)}
+                            className="p-2 text-slate-600 hover:text-slate-800 transition-colors touch-manipulation"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
             {/* Desktop Cart Items */}
