@@ -4,6 +4,7 @@ import { Search, ExternalLink, Trash2, List, Sparkles, Package, Scale, Eye, Aler
 import { FaSpinner } from "react-icons/fa";
 import api from "../../../lib/api";
 import axios from "axios";
+import { useTheme } from "../../../context/theme/themeContext";
 
 // Fetch categories to get Cloudinary images
 const fetchCategories = async () => {
@@ -125,6 +126,7 @@ const toast = {
 const cn = (...classes) => classes.filter(Boolean).join(' ');
 
 const ProductList = () => {
+  const { isDarkMode } = useTheme();
   const navigate = useNavigate();
   const [cursor, setCursor] = useState(0);
   const [limit] = useState(15);
@@ -396,7 +398,11 @@ useEffect(() => {
   const GridView = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {filteredProducts.map((product, index) => (
-        <div key={index} className="bg-white rounded-2xl border border-gray-200 hover:border-orange-300 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group">
+        <div key={index} className={`rounded-2xl border shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group ${
+          isDarkMode 
+            ? 'bg-gray-800 border-gray-700 hover:border-orange-500/50' 
+            : 'bg-white border-gray-200 hover:border-orange-300'
+        }`}>
           <div className="aspect-square overflow-hidden">
             {product.main_image ? (
               <img
@@ -405,8 +411,12 @@ useEffect(() => {
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
               />
             ) : (
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                <Package className="w-16 h-16 text-gray-400" />
+              <div className={`w-full h-full flex items-center justify-center transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
+              }`}>
+                <Package className={`w-16 h-16 transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                }`} />
               </div>
             )}
           </div>
@@ -414,26 +424,38 @@ useEffect(() => {
           <div className="p-6">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <div className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <div className={`px-2 py-1 rounded-full text-xs font-medium transition-colors duration-300 ${
+                  isDarkMode ? 'bg-blue-600/20 text-blue-300' : 'bg-blue-100 text-blue-800'
+                }`}>
                   {product.product_count || product.no_variants} products
                 </div>
                 {product.isApiData && (
-                  <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  <div className={`px-2 py-1 rounded-full text-xs font-medium transition-colors duration-300 ${
+                    isDarkMode ? 'bg-green-600/20 text-green-300' : 'bg-green-100 text-green-800'
+                  }`}>
                     Live
                   </div>
                 )}
               </div>
             </div>
             
-            <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">{product.name}</h3>
-            <p className="text-sm text-gray-600 mb-4 line-clamp-2">{product.description}</p>
+            <h3 className={`font-semibold mb-2 line-clamp-2 transition-colors duration-300 ${
+              isDarkMode ? 'text-gray-200' : 'text-gray-800'
+            }`}>{product.name}</h3>
+            <p className={`text-sm mb-4 line-clamp-2 transition-colors duration-300 ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>{product.description}</p>
             
-            <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+            <div className={`flex items-center justify-between text-sm mb-4 transition-colors duration-300 ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+            }`}>
               <div className="flex items-center gap-1">
                 <Scale className="w-4 h-4" />
                 <span>{product.product_count || product.no_variants} products</span>
               </div>
-              <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
+              <span className={`px-2 py-1 rounded-full text-xs transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'
+              }`}>
                 Category
               </span>
             </div>
@@ -441,14 +463,22 @@ useEffect(() => {
             <div className="flex gap-2">
               <button
                 onClick={() => handleViewProduct(product)}
-                className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white' 
+                    : 'bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 text-white'
+                }`}
               >
                 <Eye className="w-4 h-4" />
                 View
               </button>
               <button
                 onClick={() => openDeleteDialog(product)}
-                className="px-4 py-2 text-red-600 border border-red-200 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors duration-200"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-300 ${
+                  isDarkMode 
+                    ? 'text-red-400 border border-red-500/50 hover:bg-red-600/20' 
+                    : 'text-red-600 border border-red-200 hover:bg-red-50'
+                }`}
                 disabled={!product.isApiData}
               >
                 <Trash2 className="w-4 h-4" />
@@ -461,31 +491,55 @@ useEffect(() => {
   );
 
   const TableView = () => (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className={`rounded-2xl border shadow-sm overflow-hidden transition-colors duration-300 ${
+      isDarkMode 
+        ? 'bg-gray-800 border-gray-700' 
+        : 'bg-white border-gray-100'
+    }`}>
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gradient-to-r from-orange-50 to-red-50 border-b border-gray-200">
+          <thead className={`border-b transition-colors duration-300 ${
+            isDarkMode 
+              ? 'bg-gradient-to-r from-orange-900/20 to-red-900/20 border-gray-700' 
+              : 'bg-gradient-to-r from-orange-50 to-red-50 border-gray-200'
+          }`}>
             <tr>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              }`}>
                 Category
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              }`}>
                 Products Count
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              }`}>
                 Status
               </th>
-              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              }`}>
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className={`divide-y transition-colors duration-300 ${
+            isDarkMode 
+              ? 'divide-gray-700' 
+              : 'divide-gray-200'
+          }`}>
             {filteredProducts.map((product, index) => (
-              <tr key={index} className="hover:bg-gray-50 transition-colors duration-200">
+              <tr key={index} className={`transition-colors duration-300 ${
+                isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'
+              }`}>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                    <div className={`w-16 h-16 rounded-xl overflow-hidden shadow-sm border transition-colors duration-300 ${
+                      isDarkMode ? 'border-gray-600' : 'border-gray-100'
+                    }`}>
                       {product.main_image ? (
                         <img
                           src={product.main_image}
@@ -493,36 +547,54 @@ useEffect(() => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <Package className="w-4 h-4 text-gray-400" />
+                        <div className={`w-full h-full flex items-center justify-center transition-colors duration-300 ${
+                          isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
+                        }`}>
+                          <Package className={`w-4 h-4 transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                          }`} />
                         </div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <button
                         onClick={() => handleViewProduct(product)}
-                        className="text-blue-600 hover:text-blue-800 font-medium hover:underline text-left"
+                        className={`font-medium hover:underline text-left transition-colors duration-300 ${
+                          isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'
+                        }`}
                       >
                         {product.name}
                       </button>
-                      <p className="text-sm text-gray-500 mt-1 line-clamp-1">{product.description}</p>
+                      <p className={`text-sm mt-1 line-clamp-1 transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                      }`}>{product.description}</p>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
-                    <Scale className="w-4 h-4 text-gray-400" />
-                    <span className="font-medium text-gray-800">{product.product_count || product.no_variants}</span>
-                    <span className="text-sm text-gray-500">products</span>
+                    <Scale className={`w-4 h-4 transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                    }`} />
+                    <span className={`font-medium transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                    }`}>{product.product_count || product.no_variants}</span>
+                    <span className={`text-sm transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>products</span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
                   {product.isApiData ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors duration-300 ${
+                      isDarkMode ? 'bg-green-600/20 text-green-300' : 'bg-green-100 text-green-800'
+                    }`}>
                       Live Data
                     </span>
                   ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors duration-300 ${
+                      isDarkMode ? 'bg-yellow-600/20 text-yellow-300' : 'bg-yellow-100 text-yellow-800'
+                    }`}>
                       Mock Data
                     </span>
                   )}
@@ -531,14 +603,22 @@ useEffect(() => {
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => handleViewProduct(product)}
-                      className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 text-white rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2"
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                        isDarkMode 
+                          ? 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white' 
+                          : 'bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 text-white'
+                      }`}
                     >
                       <ExternalLink className="w-4 h-4" />
                       View
                     </button>
                     <button
                       onClick={() => openDeleteDialog(product)}
-                      className="px-4 py-2 text-red-600 border border-red-200 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                        isDarkMode 
+                          ? 'text-red-400 border border-red-500/50 hover:bg-red-600/20' 
+                          : 'text-red-600 border border-red-200 hover:bg-red-50'
+                      }`}
                       disabled={isLoading || !product.isApiData}
                       title={!product.isApiData ? "Cannot delete mock data" : "Delete category"}
                     >
@@ -556,9 +636,17 @@ useEffect(() => {
   );
 
   return (
-    <div className="h-full w-full bg-gradient-to-br from-blue-50 via-white to-blue-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className={`h-full w-full rounded-3xl border shadow-xl overflow-hidden transition-colors duration-300 ${
+      isDarkMode 
+        ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 border-gray-700' 
+        : 'bg-gradient-to-br from-blue-50 via-white to-blue-50 border-gray-200'
+    }`}>
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-5 relative overflow-hidden">
+      <div className={`text-white p-5 relative overflow-hidden transition-colors duration-300 ${
+        isDarkMode 
+          ? 'bg-gradient-to-r from-blue-600 to-blue-500' 
+          : 'bg-gradient-to-r from-blue-500 to-blue-400'
+      }`}>
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-white/10"></div>
         </div>
@@ -644,40 +732,80 @@ useEffect(() => {
           <>
             {/* Stats Bar */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+              <div className={`rounded-xl p-4 border shadow-sm transition-colors duration-300 ${
+                isDarkMode 
+                  ? 'bg-gray-800 border-gray-700' 
+                  : 'bg-white border-gray-100'
+              }`}>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Package className="w-5 h-5 text-blue-600" />
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-300 ${
+                    isDarkMode ? 'bg-blue-600/20' : 'bg-blue-100'
+                  }`}>
+                    <Package className={`w-5 h-5 transition-colors duration-300 ${
+                      isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                    }`} />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-gray-800">{filteredProducts.length}</p>
-                    <p className="text-sm text-gray-600">Total Categories</p>
+                    <p className={`text-2xl font-bold transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                    }`}>{filteredProducts.length}</p>
+                    <p className={`text-sm transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>Total Categories</p>
                   </div>
                 </div>
               </div>
               
-              <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+              <div className={`rounded-xl p-4 border shadow-sm transition-colors duration-300 ${
+                isDarkMode 
+                  ? 'bg-gray-800 border-gray-700' 
+                  : 'bg-white border-gray-100'
+              }`}>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-300 ${
+                    isDarkMode ? 'bg-green-600/20' : 'bg-green-100'
+                  }`}>
+                    <CheckCircle className={`w-5 h-5 transition-colors duration-300 ${
+                      isDarkMode ? 'text-green-400' : 'text-green-600'
+                    }`} />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-gray-800">
+                    <p className={`text-2xl font-bold transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                    }`}>
                       {filteredProducts.reduce((total, category) => total + (category.product_count || category.no_variants), 0)}
                     </p>
-                    <p className="text-sm text-gray-600">Total Products</p>
+                    <p className={`text-sm transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>Total Products</p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+              <div className={`rounded-xl p-4 border shadow-sm transition-colors duration-300 ${
+                isDarkMode 
+                  ? 'bg-gray-800 border-gray-700' 
+                  : 'bg-white border-gray-100'
+              }`}>
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${dataSource === 'api' ? 'bg-green-100' : 'bg-yellow-100'}`}>
-                    <AlertCircle className={`w-5 h-5 ${dataSource === 'api' ? 'text-green-600' : 'text-yellow-600'}`} />
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-300 ${
+                    dataSource === 'api' 
+                      ? (isDarkMode ? 'bg-green-600/20' : 'bg-green-100')
+                      : (isDarkMode ? 'bg-yellow-600/20' : 'bg-yellow-100')
+                  }`}>
+                    <AlertCircle className={`w-5 h-5 transition-colors duration-300 ${
+                      dataSource === 'api' 
+                        ? (isDarkMode ? 'text-green-400' : 'text-green-600')
+                        : (isDarkMode ? 'text-yellow-400' : 'text-yellow-600')
+                    }`} />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-gray-800">{dataSource === 'api' ? 'Live' : 'Mock'}</p>
-                    <p className="text-sm text-gray-600">Data Source</p>
+                    <p className={`text-2xl font-bold transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                    }`}>{dataSource === 'api' ? 'Live' : 'Mock'}</p>
+                    <p className={`text-sm transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>Data Source</p>
                   </div>
                 </div>
               </div>
@@ -690,19 +818,35 @@ useEffect(() => {
           <div className="h-full flex items-center justify-center">
             {isLoading ? (
               <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse transition-colors duration-300 ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-r from-orange-600 to-red-600' 
+                    : 'bg-gradient-to-r from-orange-500 to-red-500'
+                }`}>
                   <FaSpinner className="w-8 h-8 text-white animate-spin" />
                 </div>
-                <p className="text-gray-600 font-medium">Loading categories...</p>
+                <p className={`font-medium transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>Loading categories...</p>
               </div>
             ) : (
               <div className="text-center">
-                <Package className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-600 font-medium">No categories found</p>
-                <p className="text-sm text-gray-500 mt-2">Try adjusting your search criteria or refresh the data</p>
+                <Package className={`w-16 h-16 mx-auto mb-4 transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                }`} />
+                <p className={`font-medium transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>No categories found</p>
+                <p className={`text-sm mt-2 transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                }`}>Try adjusting your search criteria or refresh the data</p>
                 <button
                   onClick={handleRefresh}
-                  className="mt-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors duration-200"
+                  className={`mt-4 px-6 py-2 rounded-lg font-medium transition-colors duration-300 ${
+                    isDarkMode 
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                      : 'bg-blue-500 hover:bg-blue-600 text-white'
+                  }`}
                 >
                   Refresh Data
                 </button>
@@ -715,8 +859,14 @@ useEffect(() => {
       {/* Delete Confirmation Dialog */}
       {deleteDialogOpen && productToDelete && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
-            <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-t-2xl">
+          <div className={`rounded-2xl shadow-2xl max-w-md w-full mx-4 transition-colors duration-300 ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <div className={`text-white p-6 rounded-t-2xl transition-colors duration-300 ${
+              isDarkMode 
+                ? 'bg-gradient-to-r from-red-600 to-red-700' 
+                : 'bg-gradient-to-r from-red-500 to-red-600'
+            }`}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
                   <AlertCircle className="w-5 h-5" />
@@ -730,7 +880,9 @@ useEffect(() => {
             
             <div className="p-6">
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                <div className={`w-16 h-16 rounded-xl overflow-hidden shadow-sm border transition-colors duration-300 ${
+                  isDarkMode ? 'border-gray-600' : 'border-gray-100'
+                }`}>
                   {productToDelete.main_image ? (
                     <img
                       src={productToDelete.main_image}
@@ -738,18 +890,28 @@ useEffect(() => {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                      <Package className="w-4 h-4 text-gray-400" />
+                    <div className={`w-full h-full flex items-center justify-center transition-colors duration-300 ${
+                      isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
+                    }`}>
+                      <Package className={`w-4 h-4 transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                      }`} />
                     </div>
                   )}
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-semibold text-gray-800 mb-1">{productToDelete.name}</h4>
-                  <p className="text-xs text-gray-500 mt-1">Products: {productToDelete.product_count || productToDelete.no_variants} items</p>
+                  <h4 className={`font-semibold mb-1 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                  }`}>{productToDelete.name}</h4>
+                  <p className={`text-xs mt-1 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}>Products: {productToDelete.product_count || productToDelete.no_variants} items</p>
                 </div>
               </div>
               
-              <p className="text-gray-600 mb-6">
+              <p className={`mb-6 transition-colors duration-300 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-600'
+              }`}>
                 Are you sure you want to delete this category? This will permanently remove all products in this category from your inventory.
               </p>
               
@@ -757,7 +919,11 @@ useEffect(() => {
                 <button
                   onClick={() => handleRemoveProduct(productToDelete.name)}
                   disabled={isLoading}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
+                  className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 ${
+                    isDarkMode 
+                      ? 'bg-gradient-to-r from-red-700 to-red-800 hover:from-red-800 hover:to-red-900 text-white' 
+                      : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
+                  }`}
                 >
                   {isLoading ? (
                     <>
@@ -776,7 +942,11 @@ useEffect(() => {
                     setDeleteDialogOpen(false);
                     setProductToDelete(null);
                   }}
-                  className="px-6 py-3 border border-gray-300 hover:bg-gray-50 rounded-xl font-semibold transition-colors duration-200"
+                  className={`px-6 py-3 rounded-xl font-semibold transition-colors duration-300 ${
+                    isDarkMode 
+                      ? 'border border-gray-600 hover:bg-gray-700 text-gray-300' 
+                      : 'border border-gray-300 hover:bg-gray-50 text-gray-700'
+                  }`}
                 >
                   Cancel
                 </button>

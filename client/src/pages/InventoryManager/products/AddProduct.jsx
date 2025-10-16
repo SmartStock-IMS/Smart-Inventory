@@ -1,11 +1,16 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { Box, Trash2, Plus, Package, Calendar, Hash, Palette, DollarSign, Archive, Clock, CheckCircle, AlertCircle, Sparkles, Star, ChevronDown } from "lucide-react";
+import { useTheme } from "../../../context/theme/themeContext";
 
 // Category Dropdown Component
 const CategoryDropdown = ({ categories, selectedCategory, onCategoryChange, register, required = false }) => {
+  const { isDarkMode } = useTheme();
+  
   return (
     <div className="w-full">
-      <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+      <label className={`text-sm font-medium mb-2 flex items-center gap-2 transition-colors duration-300 ${
+        isDarkMode ? 'text-gray-200' : 'text-gray-700'
+      }`}>
         <Package className="w-4 h-4" />
         Category
         {required && <span className="text-red-500">*</span>}
@@ -15,7 +20,11 @@ const CategoryDropdown = ({ categories, selectedCategory, onCategoryChange, regi
           {...register("category_id", { required })}
           value={selectedCategory}
           onChange={(e) => onCategoryChange(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 bg-white shadow-sm appearance-none"
+          className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 hover:border-gray-400 shadow-sm appearance-none ${
+            isDarkMode 
+              ? 'bg-gray-700 text-gray-200 border-gray-600' 
+              : 'bg-white text-gray-900 border-gray-300'
+          }`}
         >
           <option value="">Select a category</option>
           {categories.map((category) => (
@@ -24,13 +33,17 @@ const CategoryDropdown = ({ categories, selectedCategory, onCategoryChange, regi
             </option>
           ))}
         </select>
-        <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+        <ChevronDown className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 pointer-events-none transition-colors duration-300 ${
+          isDarkMode ? 'text-gray-400' : 'text-gray-400'
+        }`} />
       </div>
     </div>
   );
 };
 
 const InputWithLabel = ({ label, inputType, inputId, inputName, className = "", register, required = false, ...props }) => {
+  const { isDarkMode } = useTheme();
+  
   const getIcon = () => {
     if (inputName.includes('cost_price')) return <DollarSign className="w-4 h-4" />;
     if (inputName.includes('selling_price')) return <DollarSign className="w-4 h-4" />;
@@ -41,7 +54,9 @@ const InputWithLabel = ({ label, inputType, inputId, inputName, className = "", 
 
   return (
     <div className={`w-full ${className}`}>
-      <label htmlFor={inputId} className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+      <label htmlFor={inputId} className={`text-sm font-medium mb-2 flex items-center gap-2 transition-colors duration-300 ${
+        isDarkMode ? 'text-gray-200' : 'text-gray-700'
+      }`}>
         {getIcon()}
         {label}
         {required && <span className="text-red-500">*</span>}
@@ -51,7 +66,11 @@ const InputWithLabel = ({ label, inputType, inputId, inputName, className = "", 
           {...register(inputName, { required })}
           type={inputType}
           id={inputId}
-          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400 bg-white shadow-sm"
+          className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 hover:border-gray-400 shadow-sm ${
+            isDarkMode 
+              ? 'bg-gray-700 text-gray-200 border-gray-600 placeholder-gray-400' 
+              : 'bg-white text-gray-900 border-gray-300 placeholder-gray-500'
+          }`}
           {...props}
         />
       </div>
@@ -115,6 +134,8 @@ const toast = {
 const cn = (...classes) => classes.filter(Boolean).join(' ');
 
 const AddProduct = () => {
+  const { isDarkMode } = useTheme();
+  
   // init form default values
   const variantDefaultValues = {
     weight: "",
@@ -267,9 +288,17 @@ const AddProduct = () => {
   };
 
   return (
-    <div className="h-full bg-gradient-to-br from-blue-50 via-white to-blue-50 rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
+    <div className={`h-full rounded-3xl border shadow-xl overflow-hidden transition-colors duration-300 ${
+      isDarkMode 
+        ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 border-gray-700' 
+        : 'bg-gradient-to-br from-blue-50 via-white to-blue-50 border-gray-200'
+    }`}>
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-400 text-white p-5 relative overflow-hidden">
+      <div className={`text-white p-5 relative overflow-hidden transition-colors duration-300 ${
+        isDarkMode 
+          ? 'bg-gradient-to-r from-blue-600 to-blue-500' 
+          : 'bg-gradient-to-r from-blue-500 to-blue-400'
+      }`}>
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0 bg-white/10"></div>
         </div>
@@ -291,17 +320,31 @@ const AddProduct = () => {
 
       {/* Main Content */}
       <div className="h-[calc(100%-96px)] p-6 overflow-y-auto">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className={`rounded-2xl border shadow-sm overflow-hidden transition-colors duration-300 ${
+          isDarkMode 
+            ? 'bg-gray-800 border-gray-700' 
+            : 'bg-white border-gray-100'
+        }`}>
             {/* Category Selection Section */}
-            <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
+            <div className={`p-6 border-b transition-colors duration-300 ${
+              isDarkMode 
+                ? 'bg-gradient-to-r from-gray-700/50 to-gray-800/50 border-gray-700' 
+                : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-gray-100'
+            }`}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
                   <Package className="w-4 h-4 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-800">Select Category</h3>
+                <h3 className={`text-lg font-semibold transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                }`}>Select Category</h3>
               </div>
               
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <div className={`rounded-xl p-6 shadow-sm border transition-colors duration-300 ${
+                isDarkMode 
+                  ? 'bg-gray-700 border-gray-600' 
+                  : 'bg-white border-gray-100'
+              }`}>
                 <CategoryDropdown
                   categories={categories}
                   selectedCategory={selectedCategory}
@@ -319,13 +362,23 @@ const AddProduct = () => {
                 <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
                   <Star className="w-4 h-4 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-800">Add Product Variant</h3>
+                <h3 className={`text-lg font-semibold transition-colors duration-300 ${
+                  isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                }`}>Add Product Variant</h3>
               </div>
 
               {/* Variant Form */}
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100 mb-6">
+              <div className={`rounded-2xl p-6 border mb-6 transition-colors duration-300 ${
+                isDarkMode 
+                  ? 'bg-gradient-to-r from-purple-900/20 to-pink-900/20 border-purple-700/50' 
+                  : 'bg-gradient-to-r from-purple-50 to-pink-50 border-purple-100'
+              }`}>
                 <div className="h-full">
-                  <div className="bg-white rounded-xl p-6 border border-gray-200 h-full flex flex-col">
+                  <div className={`rounded-xl p-6 border h-full flex flex-col transition-colors duration-300 ${
+                    isDarkMode 
+                      ? 'bg-gray-700 border-gray-600' 
+                      : 'bg-white border-gray-200'
+                  }`}>
                     <div className="grid grid-cols-1 gap-6 mb-6">
                       <InputWithLabel
                         label={"Weight / Size (e.g., 50g, 1kg)"}
@@ -439,9 +492,19 @@ const AddProduct = () => {
               </div>
 
               {/* Variants Table */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
-                  <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+              <div className={`rounded-2xl border shadow-sm overflow-hidden transition-colors duration-300 ${
+                isDarkMode 
+                  ? 'bg-gray-800 border-gray-700' 
+                  : 'bg-white border-gray-100'
+              }`}>
+                <div className={`px-6 py-4 border-b transition-colors duration-300 ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-r from-gray-700/50 to-gray-800/50 border-gray-700' 
+                    : 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200'
+                }`}>
+                  <h4 className={`font-semibold flex items-center gap-2 transition-colors duration-300 ${
+                    isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                  }`}>
                     <CheckCircle className="w-5 h-5 text-green-500" />
                     Added Variants ({variantDetails.length})
                   </h4>
@@ -449,27 +512,63 @@ const AddProduct = () => {
                 
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
+                    <thead className={`border-b transition-colors duration-300 ${
+                      isDarkMode 
+                        ? 'bg-gray-700/50 border-gray-700' 
+                        : 'bg-gray-50 border-gray-200'
+                    }`}>
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Name</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Weight</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Stock</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost Price</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Selling Price</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min Stock</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Max Stock</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reorder Point</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shelf Life</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                        <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}>Product Name</th>
+                        <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}>Weight</th>
+                        <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}>Current Stock</th>
+                        <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}>Cost Price</th>
+                        <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}>Selling Price</th>
+                        <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}>Min Stock</th>
+                        <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}>Max Stock</th>
+                        <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}>Reorder Point</th>
+                        <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}>Shelf Life</th>
+                        <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}>Action</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className={`divide-y transition-colors duration-300 ${
+                      isDarkMode 
+                        ? 'bg-gray-800 divide-gray-700' 
+                        : 'bg-white divide-gray-200'
+                    }`}>
                       {variantDetails.length > 0 ? (
                         variantDetails.map((variant, index) => (
-                          <tr key={index} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-4 py-4 text-sm font-medium text-gray-900">{variant.name}</td>
-                            <td className="px-4 py-4 text-sm text-gray-500">{variant.weight}</td>
-                            <td className="px-4 py-4 text-sm text-gray-900 font-semibold">
+                          <tr key={index} className={`transition-colors duration-300 ${
+                            isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'
+                          }`}>
+                            <td className={`px-4 py-4 text-sm font-medium transition-colors duration-300 ${
+                              isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                            }`}>{variant.name}</td>
+                            <td className={`px-4 py-4 text-sm transition-colors duration-300 ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                            }`}>{variant.weight}</td>
+                            <td className={`px-4 py-4 text-sm font-semibold transition-colors duration-300 ${
+                              isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                            }`}>
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 variant.current_stock <= variant.min_stock_level 
                                   ? 'bg-red-100 text-red-800' 
@@ -480,16 +579,32 @@ const AddProduct = () => {
                                 {variant.current_stock}
                               </span>
                             </td>
-                            <td className="px-4 py-4 text-sm text-gray-900 font-semibold">Rs. {variant.cost_price}</td>
-                            <td className="px-4 py-4 text-sm text-gray-900 font-semibold">Rs. {variant.selling_price}</td>
-                            <td className="px-4 py-4 text-sm text-gray-500">{variant.min_stock_level}</td>
-                            <td className="px-4 py-4 text-sm text-gray-500">{variant.max_stock_level || '-'}</td>
-                            <td className="px-4 py-4 text-sm text-gray-500">{variant.reorder_point}</td>
-                            <td className="px-4 py-4 text-sm text-gray-500">{variant.shelf_life ? `${variant.shelf_life} days` : '-'}</td>
+                            <td className={`px-4 py-4 text-sm font-semibold transition-colors duration-300 ${
+                              isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                            }`}>Rs. {variant.cost_price}</td>
+                            <td className={`px-4 py-4 text-sm font-semibold transition-colors duration-300 ${
+                              isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                            }`}>Rs. {variant.selling_price}</td>
+                            <td className={`px-4 py-4 text-sm transition-colors duration-300 ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                            }`}>{variant.min_stock_level}</td>
+                            <td className={`px-4 py-4 text-sm transition-colors duration-300 ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                            }`}>{variant.max_stock_level || '-'}</td>
+                            <td className={`px-4 py-4 text-sm transition-colors duration-300 ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                            }`}>{variant.reorder_point}</td>
+                            <td className={`px-4 py-4 text-sm transition-colors duration-300 ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                            }`}>{variant.shelf_life ? `${variant.shelf_life} days` : '-'}</td>
                             <td className="px-4 py-4">
                               <button
                                 onClick={() => removeVariant(index)}
-                                className="p-2 rounded-lg hover:bg-red-100 hover:text-red-600 transition-all duration-300 group"
+                                className={`p-2 rounded-lg transition-all duration-300 group ${
+                                  isDarkMode 
+                                    ? 'hover:bg-red-600/20 hover:text-red-400' 
+                                    : 'hover:bg-red-100 hover:text-red-600'
+                                }`}
                               >
                                 <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
                               </button>
@@ -500,9 +615,15 @@ const AddProduct = () => {
                         <tr>
                           <td colSpan="10" className="px-4 py-12 text-center">
                             <div className="flex flex-col items-center gap-3">
-                              <AlertCircle className="w-12 h-12 text-gray-400" />
-                              <p className="text-gray-500 font-medium">No variants added yet</p>
-                              <p className="text-sm text-gray-400">Add product variants using the form above</p>
+                              <AlertCircle className={`w-12 h-12 transition-colors duration-300 ${
+                                isDarkMode ? 'text-gray-400' : 'text-gray-400'
+                              }`} />
+                              <p className={`font-medium transition-colors duration-300 ${
+                                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                              }`}>No variants added yet</p>
+                              <p className={`text-sm transition-colors duration-300 ${
+                                isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                              }`}>Add product variants using the form above</p>
                             </div>
                           </td>
                         </tr>

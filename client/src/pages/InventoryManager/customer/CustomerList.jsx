@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
 import axios from "axios";
+import { useTheme } from "../../../context/theme/ThemeContext";
 
 const getAllCustomersNoPage = async () => {
   try {
@@ -66,6 +67,7 @@ const toast = {
 const cn = (...classes) => classes.filter(Boolean).join(" ");
 
 const CustomerList = () => {
+  const { isDarkMode } = useTheme();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
