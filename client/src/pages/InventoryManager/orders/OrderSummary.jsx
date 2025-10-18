@@ -469,7 +469,7 @@ const OrderSummary = () => {
       const updatedOrders = [...filteredOrders, orderData];
       localStorage.setItem("assignedOrders", JSON.stringify(updatedOrders));
       
-      alert(`Successfully assigned Order ${order.order_id} to ${lockedRM.name}!`);
+      //alert(`Successfully assigned Order ${order.order_id} to ${lockedRM.name}!`);
       
       // Dispatch custom event to notify ResourceOrders page
       window.dispatchEvent(new CustomEvent('orderAssigned', {
@@ -577,7 +577,7 @@ const OrderSummary = () => {
       const updatedOrders = [...filteredOrders, orderData];
       localStorage.setItem("assignedOrders", JSON.stringify(updatedOrders));
       
-      alert(`Successfully assigned Order ${orderToPass.order_id} to ${chosenRM.name}!`);
+      //alert(`Successfully assigned Order ${orderToPass.order_id} to ${chosenRM.name}!`);
       
       // Dispatch custom event to notify ResourceOrders page
       window.dispatchEvent(new CustomEvent('orderAssigned', {

@@ -115,7 +115,7 @@ const Header = () => {
             </div>
             <span className={`font-medium text-xs sm:text-sm hidden lg:block transition-colors duration-200 ${
               isDarkMode ? 'text-gray-200' : 'text-gray-700'
-            }`}>Admin</span>
+            }`}>User</span>
           </div>
         </div>
       </nav>
