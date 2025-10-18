@@ -173,7 +173,7 @@ const VehicleManagement = () => {
       const result = await response.json();
 
       if (result.success) {
-        alert('Vehicle updated successfully!');
+        //alert('Vehicle updated successfully!');
         setEditingVehicle(null);
         fetchVehicles(); // Refresh the list
       } else {

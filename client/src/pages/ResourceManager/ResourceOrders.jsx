@@ -317,7 +317,7 @@ const ResourceOrders = () => {
       }
       
       // Show success message
-      alert(`Order ${orderToComplete.quotation_id} has been marked as completed successfully!`);
+      //alert(`Order ${orderToComplete.quotation_id} has been marked as completed successfully!`);
       
       // Close modal and reset
       setShowConfirmModal(false);

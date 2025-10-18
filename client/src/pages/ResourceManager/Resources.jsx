@@ -275,11 +275,11 @@ const ResourceOrders = () => {
           console.log("Vehicle status updated to 'inuse' by the system");
         }
         
-        alert('Resource assignment and stock movement created successfully!');
+        //alert('Resource assignment and stock movement created successfully!');
         
       } catch (error) {
         console.error("Error creating stock movement:", error);
-        alert("Error creating stock movement. Please try again.");
+        //("Error creating stock movement. Please try again.");
       }
     }
   };
@@ -309,7 +309,7 @@ const ResourceOrders = () => {
       const result = await response.json();
       
       if (result.success) {
-        alert('Stock movement completed successfully!');
+        //alert('Stock movement completed successfully!');
         // Refresh the movements list
         await fetchInProgressMovements();
         await fetchVehicles(); // Refresh vehicles as they might be available again
