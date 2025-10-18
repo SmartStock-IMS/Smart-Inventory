@@ -22,12 +22,12 @@ export const CartProvider = ({ children }) => {
         (item) => item.code === selectedVariant.product_code,
       );
 
-      console.log("existing item: ", existingItemIndex);
+      // console.log("existing item: ", existingItemIndex);
 
       if (existingItemIndex > -1) {
         const updatedCart = [...prevCart];
         updatedCart[existingItemIndex].quantity += quantity;
-        console.log("updated cart: ", updatedCart);
+        // console.log("updated cart: ", updatedCart);
         return updatedCart;
       } else {
         return [
@@ -79,13 +79,13 @@ export const CartProvider = ({ children }) => {
         }
       }
       
-      console.log("Multiple items added to cart: ", updatedCart);
+      // console.log("Multiple items added to cart: ", updatedCart);
       return updatedCart;
     });
   };
 
   const removeFromCart = (code) => {
-    console.log("remove item code: ", code);
+    // console.log("remove item code: ", code);
     setCart(cart.filter((item) => item.code !== code));
   };
 

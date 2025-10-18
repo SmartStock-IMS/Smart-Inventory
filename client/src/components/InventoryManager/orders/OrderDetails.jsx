@@ -31,13 +31,13 @@ const OrderDetails = ({ item, changeOpen }) => {
   const invoiceRef = useRef();
 
   useEffect(() => {
-    console.log("=== DEBUG INFO ===");
-    console.log("item: ", item);
-    console.log("item.status: ", item.status);
-    console.log("quotationStatus: ", quotationStatus);
-    console.log("Status type:", typeof item.status);
-    console.log("Status trimmed:", item.status?.trim());
-    console.log("=================");
+    // console.log("=== DEBUG INFO ===");
+    // console.log("item: ", item);
+    // console.log("item.status: ", item.status);
+    // console.log("quotationStatus: ", quotationStatus);
+    // console.log("Status type:", typeof item.status);
+    // console.log("Status trimmed:", item.status?.trim());
+    // console.log("=================");
     
     // Fetch customer data from backend
     const fetchCustomerData = async () => {

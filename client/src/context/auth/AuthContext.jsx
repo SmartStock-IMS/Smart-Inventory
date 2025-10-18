@@ -10,7 +10,7 @@ export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   const logout = () => {
-    console.log("🔄 Logging out user...");
+    // console.log("🔄 Logging out user...");
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
@@ -20,13 +20,13 @@ export const AuthContextProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    console.log("🔍 AuthContext useEffect starting...");
+    // console.log("🔍 AuthContext useEffect starting...");
     const checkToken = async () => {
       const token = localStorage.getItem("token");
-      console.log("AuthContext - Token found:", !!token);
+      // console.log("AuthContext - Token found:", !!token);
       
       if (!token) {
-        console.log("❌ AuthContext - No token found, user not logged in");
+        // console.log("❌ AuthContext - No token found, user not logged in");
         setIsLoading(false);
         return;
       }
@@ -36,7 +36,7 @@ export const AuthContextProvider = ({ children }) => {
         const storedUser = localStorage.getItem("user");
         if (storedUser) {
           const parsedUser = JSON.parse(storedUser);
-          console.log("📦 Loading stored user data for immediate consistency:", parsedUser);
+          // console.log("📦 Loading stored user data for immediate consistency:", parsedUser);
           setUser(parsedUser);
           setIsAuthenticated(true);
         }
@@ -45,13 +45,13 @@ export const AuthContextProvider = ({ children }) => {
       }
 
       try {
-        console.log("🔄 AuthContext - Validating token...");
+        // console.log("🔄 AuthContext - Validating token...");
         const validToken = await validateUser(token);
-        console.log("AuthContext - Token validation result:", validToken);
+        // console.log("AuthContext - Token validation result:", validToken);
         
         if (validToken && validToken.success) {
-          console.log("✅ Token validation successful");
-          console.log("validate token user data: ", validToken.user);
+          // console.log("✅ Token validation successful");
+          // console.log("validate token user data: ", validToken.user);
           
           // Ensure user has the expected structure
           const userData = validToken.user;
@@ -71,7 +71,7 @@ export const AuthContextProvider = ({ children }) => {
               last_name: userData.last_name,
               ...userData // Include all other user data
             };
-            console.log("✅ Normalized user data:", normalizedUser);
+            // console.log("✅ Normalized user data:", normalizedUser);
             
             // Update localStorage with normalized user data
             localStorage.setItem("user", JSON.stringify(normalizedUser));
@@ -83,14 +83,14 @@ export const AuthContextProvider = ({ children }) => {
             logout();
           }
         } else {
-          console.log("❌ Token validation failed:", validToken?.error || 'Unknown error');
+          // console.log("❌ Token validation failed:", validToken?.error || 'Unknown error');
           logout();
         }
       } catch (error) {
         console.error("❌ Token validation error:", error);
         logout();
       } finally {
-        console.log("🏁 AuthContext - Setting isLoading to false");
+        // console.log("🏁 AuthContext - Setting isLoading to false");
         setIsLoading(false);
       }
     };
@@ -100,16 +100,16 @@ export const AuthContextProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      console.log("🔄 AuthContext login called with:", username);
+      // console.log("🔄 AuthContext login called with:", username);
       const isValid = await userLogin(username, password);
-      console.log("🔄 AuthContext login response:", isValid);
+      // console.log("🔄 AuthContext login response:", isValid);
       
       if (isValid.success) {
-        console.log("✅ Login successful, user data:", isValid.user);
+        // console.log("✅ Login successful, user data:", isValid.user);
         
         // The userLogin function stores token and returns user data in isValid.user
         const userData = isValid.user.user || isValid.user;
-        console.log("🔍 Extracted user data:", userData);
+        // console.log("🔍 Extracted user data:", userData);
         
         if (userData) {
           const normalizedUser = {
@@ -125,8 +125,8 @@ export const AuthContextProvider = ({ children }) => {
             ...userData
           };
           
-          console.log("✅ Setting normalized user:", normalizedUser);
-          console.log("✅ Setting isAuthenticated to true");
+          // console.log("✅ Setting normalized user:", normalizedUser);
+          // console.log("✅ Setting isAuthenticated to true");
           
           // Update localStorage with normalized user data to maintain consistency
           localStorage.setItem("user", JSON.stringify(normalizedUser));
@@ -135,7 +135,7 @@ export const AuthContextProvider = ({ children }) => {
           setUser(normalizedUser);
           setIsAuthenticated(true);
           
-          console.log("✅ AuthContext state updated successfully");
+          // console.log("✅ AuthContext state updated successfully");
           return isValid;
         } else {
           console.error("❌ Invalid user data:", isValid.user);

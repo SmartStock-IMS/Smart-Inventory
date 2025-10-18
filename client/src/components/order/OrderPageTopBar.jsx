@@ -12,8 +12,8 @@ const OrderConfirmationTopBar = () => {
   }, [pathname]); // Add pathname dependency to update when route changes
 
   // Debug logging
-  console.log("Current pathname:", pathname);
-  console.log("Topbar links:", topbarLinks);
+  // console.log("Current pathname:", pathname);
+  // console.log("Topbar links:", topbarLinks);
   
   // Ensure topbarLinks exists and has content
   if (!topbarLinks || topbarLinks.length === 0) {
@@ -22,7 +22,7 @@ const OrderConfirmationTopBar = () => {
   }
   
   const currentStepIndex = topbarLinks.findIndex(l => l.route === pathname);
-  console.log("Current step index:", currentStepIndex);
+  // console.log("Current step index:", currentStepIndex);
   
   // Better logic for determining current step
   let validCurrentStepIndex = currentStepIndex;
@@ -41,8 +41,8 @@ const OrderConfirmationTopBar = () => {
   
   const progressPercentage = ((validCurrentStepIndex + 1) / topbarLinks.length) * 100;
   
-  console.log("Valid current step index:", validCurrentStepIndex);
-  console.log("Progress percentage:", progressPercentage);
+  // console.log("Valid current step index:", validCurrentStepIndex);
+  // console.log("Progress percentage:", progressPercentage);
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 mb-3">
@@ -55,7 +55,7 @@ const OrderConfirmationTopBar = () => {
               const isDisabled = link.route === "/order/add-items" && !hasSelectedItems;
               const isCompleted = validCurrentStepIndex > index;
               
-              console.log(`Step ${index + 1}: ${link.label}`, { isActive, isCompleted, isDisabled });
+              // console.log(`Step ${index + 1}: ${link.label}`, { isActive, isCompleted, isDisabled });
               
               return (
                 <div key={index} className="relative">
@@ -170,7 +170,7 @@ const OrderConfirmationTopBar = () => {
                   const isDisabled = link.route === "/order/add-items" && !hasSelectedItems;
                   const isCompleted = validCurrentStepIndex > index;
                   
-                  console.log(`Desktop Step ${index + 1}: ${link.label}`, { isActive, isCompleted, isDisabled });
+                  // console.log(`Desktop Step ${index + 1}: ${link.label}`, { isActive, isCompleted, isDisabled });
                   
                   return (
                     <div key={index} className="relative flex flex-col items-center z-10 flex-1 group">
