@@ -473,7 +473,7 @@ const DashboardIncome = () => {
           break;
         case "month":
         default:
-          console.log(item.month);
+          // console.log(item.month);
           name = item.month || formatMonth(date);
           break;
       }

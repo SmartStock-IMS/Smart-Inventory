@@ -2,6 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const productController = require('../controllers/productController');
 const multer = require('multer');
+const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -38,10 +39,10 @@ const updateProductValidation = [
 
 // Routes
 router.post('/upload-image', upload.single('image'), productController.uploadProductImage);
-router.get('/popular', productController.getMostPopularProducts);
+router.get('/popular',authMiddleware(['admin','inventory_manager']), productController.getMostPopularProducts);
 router.get('/', productController.getAllProducts);
 router.get('/:id', productController.getProductById);
-router.post('/', createProductValidation, productController.createProduct);
+router.post('/',authMiddleware(['admin','inventory_manager']), createProductValidation, productController.createProduct);
 router.put('/:id', updateProductValidation, productController.updateProduct);
 router.delete('/:id', productController.deleteProduct);
 

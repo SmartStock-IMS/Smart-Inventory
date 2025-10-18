@@ -130,10 +130,10 @@ const DailySummary = () => {
 
   const handleExportSummary = () => {
     if (!dailySummaryData || dailySummaryData.length === 0) {
-      console.log("No data to export");
+      // console.log("No data to export");
       return;
     }
-    console.log("dailySummary: ", dailySummaryData);
+    // console.log("dailySummary: ", dailySummaryData);
     exportToCSV(dailySummaryData, "daily-summary.csv");
   }
 

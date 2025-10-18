@@ -1,6 +1,7 @@
 const express = require('express');
 const { body } = require('express-validator');
 const orderController = require('../controllers/orderController');
+const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -24,7 +25,7 @@ router.get('/:id', orderController.getOrderById);
 router.post('/', createOrderValidation, orderController.createOrder);
 router.get('/by-sales-rep/:id', orderController.getOrdersBySalesRepId.bind(orderController));
 router.patch('/status/:id',orderController.updateOrderStatus);
-router.post('/assign', assignOrderValidation, orderController.assignOrderToResourceManager);
+router.post('/assign', authMiddleware(['inventory_manager']),   assignOrderValidation, orderController.assignOrderToResourceManager);
 router.get('/by-resource-manager/:id', orderController.getOrdersByRMId.bind(orderController));
 //router.delete('/:id', orderController.deleteOrder);
 
