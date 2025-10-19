@@ -16,7 +16,8 @@ import {
   HelpCircle,
   LogOut,
   Sparkles,
-  ChevronLeft
+  ChevronLeft,
+  Building
 } from "lucide-react";
 import home from "../../../assets/images/InventoryManager/genaral/home-3.png";
 import products from "../../../assets/images/InventoryManager/genaral/home1.png";
@@ -97,6 +98,18 @@ const Sidebar = () => {
       submenu: [
         { label: "Add Rep", path: "/inventorymanager/addrep" },
         { label: "Sales-Rep List", path: "/inventorymanager/sales-rep" }
+      ]
+    },
+    {
+      id: "suppliers",
+      label: "Suppliers",
+      icon: null,
+      lucideIcon: Building,
+      hasSubmenu: true,
+      submenu: [
+        { label: "Add Supplier", path: "/inventorymanager/addsupplier" },
+        { label: "Supplier List", path: "/inventorymanager/supplier-list" },
+        { label: "Supplier Products", path: "/inventorymanager/supplier-products" }
       ]
     },
     {

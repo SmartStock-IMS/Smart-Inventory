@@ -19,6 +19,9 @@ import RepsList from "../pages/InventoryManager/sales-rep/SalesRepList.jsx";
 import RepDetails from "../pages/InventoryManager/sales-rep/RepDetails.jsx";
 import EditRep from "../pages/InventoryManager/sales-rep/EditRep.jsx";
 import AddRep from "../pages/InventoryManager/sales-rep/AddRep.jsx";
+import AddSupplier from "../pages/InventoryManager/supplier/AddSupplier.jsx";
+import SupplierList from "../pages/InventoryManager/supplier/SupplierList.jsx";
+import SupplierProducts from "../pages/InventoryManager/supplier/SupplierProducts.jsx";
 import AddRM from "../pages/InventoryManager/RManager/AddRM.jsx";
 import RMList from "../pages/InventoryManager/RManager/RMList.jsx";
 import RMDetails from "../pages/InventoryManager/RManager/RMDetails.jsx";
@@ -116,6 +119,11 @@ function InventoryManagerRoutes() {
                     <Route path="/sales-rep" element={<RepsList />} />
                     <Route path="/sales-rep/:repCode" element={<RepDetails />} />
                     <Route path="/sales-rep/edit/:repCode" element={<EditRep />} />
+                    {/* item: suppliers */}
+                    <Route path="/addsupplier" element={<AddSupplier />} />
+                    <Route path="/supplier-list" element={<SupplierList />} />
+                    <Route path="/supplier-products" element={<SupplierProducts />} />
+                    <Route path="/supplier-products/:supplierId" element={<SupplierProducts />} />
                     {/* item: resource managers */}
                     <Route path="/addrm" element={<AddRM />} />
                     <Route path="/rm-list" element={<RMList />} />
