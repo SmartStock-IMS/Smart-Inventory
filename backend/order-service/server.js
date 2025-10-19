@@ -8,6 +8,7 @@ const orderRoutes = require('./src/routes/orderRoutes');
 const customerRoutes = require('./src/routes/customerRoutes');
 // const quotationRoutes = require('./src/routes/quotationRoutes');
  const reportRoutes = require('./src/routes/reportRoutes');
+const supplierRoutes = require('./src/routes/supplierRoutes'); // + add
 
 const app = express();
 const PORT = process.env.PORT || 3003;
@@ -45,6 +46,7 @@ app.use('/orders', orderRoutes);
 app.use('/customers', customerRoutes);
 // app.use('/quotations', quotationRoutes);
  app.use('/reports', reportRoutes);
+app.use('/suppliers', supplierRoutes); // + add
 
 // 404 handler
 app.use('*', (req, res) => {
