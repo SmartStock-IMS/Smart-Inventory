@@ -187,6 +187,7 @@ app.use('/api/orders', authenticateToken, createProxy(ORDER_SERVICE_URL, { '^/ap
 app.use('/api/customers', authenticateToken, createProxy(ORDER_SERVICE_URL, { '^/api/customers': '/customers' }));
 app.use('/api/quotations', authenticateToken, createProxy(ORDER_SERVICE_URL, { '^/api/quotations': '/quotations' }));
 app.use('/api/reports', authenticateToken, createProxy(ORDER_SERVICE_URL, { '^/api/reports': '/reports' }));
+app.use('/api/suppliers', authenticateToken, createProxy(ORDER_SERVICE_URL, { '^/api/suppliers': '/suppliers' })); // + add
 
 // Dashboard routes (aggregate data from multiple services)
 app.get('/api/dashboard', authenticateToken, async (req, res) => {
@@ -234,7 +235,8 @@ app.get('/api', (req, res) => {
       customers: '/api/customers',
       quotations: '/api/quotations',
       reports: '/api/reports',
-      dashboard: '/api/dashboard'
+      dashboard: '/api/dashboard',
+      suppliers: '/api/suppliers' // + add
     },
     timestamp: new Date().toISOString()
   });
