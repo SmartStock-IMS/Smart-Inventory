@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef, memo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback, useRef, memo } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   UserPlus,
   Mail,
@@ -19,7 +19,7 @@ import {
 import { useTheme } from "../../../context/theme/ThemeContext";
 import axios from "axios";
 
-// Memoized Avatar component to prevent unnecessary re-renders
+// Memoized Avatar component
 const Avatar = memo(
   ({ name, imageUrl, editable, size, onImageUpload }) => {
     const fileInputRef = useRef(null);
@@ -80,46 +80,6 @@ const Avatar = memo(
 
 Avatar.displayName = "Avatar";
 
-// Fixed API service with proper data handling
-const API_URL = `${import.meta.env.VITE_API_URL}/suppliers`;
-
-const createSupplier = async (supplierData) => {
-  try {
-    const token = localStorage.getItem("token");
-    console.log("Token:", token);
-    console.log("Supplier data being sent:", supplierData);
-
-    // Send as JSON like sales rep system - don't use FormData
-    const response = await axios.post(API_URL, supplierData, {
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    });
-
-    return { success: true, data: response.data };
-  } catch (error) {
-    console.error("API error:", error.response?.data || error.message);
-    return {
-      success: false,
-      message: error.response?.data?.message || "Failed to create supplier",
-      errors: error.response?.data?.errors || [],
-    };
-  }
-};
-
-const toast = {
-  success: (message) => alert(`✅ ${message}`),
-  error: (message) => {
-    // Handle array of messages or single message
-    if (Array.isArray(message)) {
-      alert(`❌ ${message.join(", ")}`);
-    } else {
-      alert(`❌ ${message}`);
-    }
-  },
-};
-
 // Memoized InputField component
 const InputField = memo(
   ({
@@ -136,7 +96,7 @@ const InputField = memo(
     
     return (
       <div className="space-y-2">
-        <label className={`block text-sm font-medium flex items-center gap-2 transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+        <label className={`flex items-center gap-2 text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
           {Icon && <Icon className={`w-4 h-4 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />}
           {label}
           <span className="text-red-500">*</span>
@@ -176,9 +136,10 @@ const InputField = memo(
 
 InputField.displayName = "InputField";
 
-const AddSupplier = () => {
+const EditSupplier = () => {
   const { isDarkMode } = useTheme();
   const navigate = useNavigate();
+  const { supplierId } = useParams();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -190,8 +151,45 @@ const AddSupplier = () => {
 
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  // Fetch supplier data
+  useEffect(() => {
+    const fetchSupplier = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/suppliers/${supplierId}`,
+          { headers }
+        );
+
+        const supplierData = response.data?.data;
+        if (supplierData) {
+          setFormData({
+            name: supplierData.name || "",
+            contact_no: supplierData.contact_no || "",
+            email: supplierData.email || "",
+            address: supplierData.address || "",
+            photo: null,
+          });
+        }
+      } catch (err) {
+        setError("Failed to load supplier data. Please try again.");
+        console.error("Error fetching supplier:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (supplierId) {
+      fetchSupplier();
+    }
+  }, [supplierId]);
 
   // Stabilized input change handler
   const handleInputChange = useCallback((e) => {
@@ -250,6 +248,38 @@ const AddSupplier = () => {
     return newErrors;
   }, [formData]);
 
+  const updateSupplier = async (supplierData) => {
+    try {
+      const token = localStorage.getItem("token");
+      
+      // Send JSON data instead of FormData
+      const response = await axios.put(
+        `${import.meta.env.VITE_API_URL}/suppliers/${supplierId}`,
+        {
+          name: supplierData.name,
+          contact_no: supplierData.contact_no,
+          email: supplierData.email,
+          address: supplierData.address,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+
+      return { success: true, data: response.data, status: response.status };
+    } catch (error) {
+      console.error("Update supplier error:", error);
+      return {
+        success: false,
+        data: { message: error.response?.data?.message || error.message || "Network error occurred" },
+        status: error.response?.status || 500,
+      };
+    }
+  };
+
   const handleSubmit = useCallback(
     async (e) => {
       e.preventDefault();
@@ -258,61 +288,61 @@ const AddSupplier = () => {
       const newErrors = validateForm();
       if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
-        toast.error("Please fix the form errors before submitting");
+        alert("Please fix the form errors before submitting");
         return;
       }
 
       setIsLoading(true);
 
       try {
-        // Send JSON data like sales rep system, not FormData
-        const supplierData = {
-          name: formData.name.trim(),
-          contact_no: formData.contact_no.trim(),
-          email: formData.email.trim(),
-          address: formData.address.trim(),
-          // Note: photo upload can be added later with a separate endpoint
-        };
-
-        console.log("Submitting supplier data:", supplierData);
-
-        const result = await createSupplier(supplierData);
+        const result = await updateSupplier(formData);
 
         if (result.success) {
           setSuccess(true);
-          toast.success("Supplier added successfully!");
+          alert("✅ Supplier updated successfully!");
           
-          // Clear form after successful submission
+          // Navigate back to supplier list after successful update
           setTimeout(() => {
-            handleClear();
-            setSuccess(false);
             navigate("/inventorymanager/supplier-list");
-          }, 2000);
+          }, 1000);
         } else {
           const errorMessage =
-            result.message ||
             result.data?.message ||
-            "Failed to add supplier";
+            result.data?.error ||
+            "Failed to update supplier";
           
           setError(errorMessage);
-          toast.error(errorMessage);
+          alert(`❌ ${errorMessage}`);
 
           // Handle validation errors from server
-          if (result.errors) {
-            setErrors(result.errors);
+          if (result.data?.errors) {
+            setErrors(result.data.errors);
           }
         }
       } catch (err) {
         const errorMessage = "An unexpected error occurred. Please try again.";
         setError(errorMessage);
-        toast.error(errorMessage);
+        alert(`❌ ${errorMessage}`);
         console.error("Submit error:", err);
       } finally {
         setIsLoading(false);
       }
     },
-    [formData, validateForm, navigate]
+    [formData, validateForm, navigate, supplierId]
   );
+
+  if (loading) {
+    return (
+      <div className={`h-full w-full rounded-3xl border shadow-xl flex items-center justify-center transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700' : 'bg-gradient-to-br from-blue-50 via-white to-indigo-50 border-gray-200'}`}>
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <Building className="w-8 h-8 text-white" />
+          </div>
+          <p className={`font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Loading supplier...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`h-full w-full rounded-3xl border shadow-xl overflow-hidden transition-all duration-300 ${isDarkMode ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700' : 'bg-gradient-to-br from-blue-50 via-white to-indigo-50 border-gray-200'}`}>
@@ -339,8 +369,8 @@ const AddSupplier = () => {
             </div>
           </div>
           <div>
-            <h1 className="text-3xl font-bold mb-2">Add New Supplier</h1>
-            <p className="text-white/80">Create a new supplier profile for your inventory management system</p>
+            <h1 className="text-3xl font-bold mb-2">Edit Supplier</h1>
+            <p className="text-white/80">Update supplier profile information</p>
           </div>
         </div>
       </div>
@@ -353,7 +383,7 @@ const AddSupplier = () => {
             <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3 animate-fade-in">
               <CheckCircle2 className="w-5 h-5 text-green-600" />
               <span className="text-green-800 font-medium">
-                Supplier added successfully! Redirecting...
+                Supplier updated successfully! Redirecting...
               </span>
             </div>
           )}
@@ -440,7 +470,7 @@ const AddSupplier = () => {
                   />
                   
                   <div className="space-y-2">
-                    <label className={`block text-sm font-medium flex items-center gap-2 transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <label className={`flex items-center gap-2 text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       <MapPin className={`w-4 h-4 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
                       Address
                       <span className="text-red-500">*</span>
@@ -481,10 +511,10 @@ const AddSupplier = () => {
                 <button
                   type="button"
                   className={`group px-6 py-3 text-sm font-medium border-2 rounded-xl transition-all duration-200 flex items-center gap-2 ${isDarkMode ? 'border-gray-600 text-gray-300 hover:border-gray-500 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-gray-50'}`}
-                  onClick={handleClear}
+                  onClick={() => navigate("/inventorymanager/supplier-list")}
                 >
-                  <RotateCcw className="w-4 h-4" />
-                  Clear Form
+                  <ArrowLeft className="w-4 h-4" />
+                  Cancel
                 </button>
                 <button
                   type="submit"
@@ -494,12 +524,12 @@ const AddSupplier = () => {
                   {isLoading ? (
                     <div className="flex items-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Adding Supplier...</span>
+                      <span>Updating Supplier...</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <Save className="w-4 h-4 group-hover:animate-pulse" />
-                      <span>Add Supplier</span>
+                      <span>Update Supplier</span>
                     </div>
                   )}
                 </button>
@@ -512,4 +542,4 @@ const AddSupplier = () => {
   );
 };
 
-export default AddSupplier;
+export default EditSupplier;

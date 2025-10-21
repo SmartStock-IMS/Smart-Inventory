@@ -12,7 +12,24 @@ const roleGuard = (allowedRoles = []) => (req, res, next) => {
 	next();
 };
 
+// Get all suppliers
 router.get('/', authMiddleware(['admin', 'inventory_manager']), supplierController.getAllSuppliers);
+
+// Create new supplier (accept JSON like sales rep system)
 router.post('/', authMiddleware(['admin', 'inventory_manager']), supplierController.createSupplier);
+
+// Get supplier by ID
+router.get('/:id', authMiddleware(['admin', 'inventory_manager']), supplierController.getSupplierById);
+
+// Update supplier (accept JSON like sales rep system)
+router.put('/:id', authMiddleware(['admin', 'inventory_manager']), supplierController.updateSupplier);
+
+// Delete supplier
+router.delete('/:id', authMiddleware(['admin', 'inventory_manager']), supplierController.deleteSupplier);
+
+// Supplier order management routes
+router.post('/orders', authMiddleware(['admin', 'inventory_manager']), supplierController.createSupplierOrder);
+router.get('/orders', authMiddleware(['admin', 'inventory_manager']), supplierController.getSupplierOrders);
+router.get('/orders/:id', authMiddleware(['admin', 'inventory_manager']), supplierController.getSupplierOrderById);
 
 module.exports = router;

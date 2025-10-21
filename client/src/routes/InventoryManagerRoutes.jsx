@@ -21,6 +21,7 @@ import EditRep from "../pages/InventoryManager/sales-rep/EditRep.jsx";
 import AddRep from "../pages/InventoryManager/sales-rep/AddRep.jsx";
 import AddSupplier from "../pages/InventoryManager/supplier/AddSupplier.jsx";
 import SupplierList from "../pages/InventoryManager/supplier/SupplierList.jsx";
+import EditSupplier from "../pages/InventoryManager/supplier/EditSupplier.jsx";
 import SupplierProducts from "../pages/InventoryManager/supplier/SupplierProducts.jsx";
 import AddRM from "../pages/InventoryManager/RManager/AddRM.jsx";
 import RMList from "../pages/InventoryManager/RManager/RMList.jsx";
@@ -122,6 +123,7 @@ function InventoryManagerRoutes() {
                     {/* item: suppliers */}
                     <Route path="/addsupplier" element={<AddSupplier />} />
                     <Route path="/supplier-list" element={<SupplierList />} />
+                    <Route path="/edit-supplier/:supplierId" element={<EditSupplier />} />
                     <Route path="/supplier-products" element={<SupplierProducts />} />
                     <Route path="/supplier-products/:supplierId" element={<SupplierProducts />} />
                     {/* item: resource managers */}
