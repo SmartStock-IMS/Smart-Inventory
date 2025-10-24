@@ -109,59 +109,77 @@ const getDashboardIncomeData = async (
         }
       }
     } else {
+      // For yearly view, use yearly-summary-stats endpoint
       const year = start.getFullYear();
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(
-          `${API_BASE_URL}/monthly-breakdown?year=${year}`,
+          `${API_BASE_URL}/yearly-summary-stats?year=${year}`,
           {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           }
         );
         const result = await response.json();
 
-        // Create a map of existing data by month number
-        const monthDataMap = new Map();
+        if (result.success && result.data) {
+          // Use the yearly summary data directly
+          const yearlyData = result.data;
 
-        if (result.success && result.data && Array.isArray(result.data)) {
-          result.data.forEach((monthData) => {
-            monthDataMap.set(monthData.month_number, monthData);
-          });
-        }
+          // Still need monthly breakdown for the chart
+          const monthlyResponse = await fetch(
+            `${API_BASE_URL}/monthly-breakdown?year=${year}`,
+            {
+              headers: token ? { Authorization: `Bearer ${token}` } : {},
+            }
+          );
+          const monthlyResult = await monthlyResponse.json();
 
-        // Generate all 12 months
-        const monthNames = [
-          "January",
-          "February",
-          "March",
-          "April",
-          "May",
-          "June",
-          "July",
-          "August",
-          "September",
-          "October",
-          "November",
-          "December",
-        ];
+          const monthDataMap = new Map();
+          if (
+            monthlyResult.success &&
+            monthlyResult.data &&
+            Array.isArray(monthlyResult.data)
+          ) {
+            monthlyResult.data.forEach((monthData) => {
+              monthDataMap.set(monthData.month_number, monthData);
+            });
+          }
 
-        for (let monthNum = 1; monthNum <= 12; monthNum++) {
-          const monthDate = new Date(year, monthNum - 1, 1);
-          const existingData = monthDataMap.get(monthNum);
+          const monthNames = [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+          ];
 
-          data.push({
-            date: monthDate.toISOString(),
-            totalIncome: existingData
-              ? parseFloat(existingData.revenue || 0)
-              : 0,
-            totalItems: existingData ? parseInt(existingData.items || 0) : 0,
-            uniqueCustomers: existingData
-              ? parseInt(existingData.quotations || 0)
-              : 0,
-            month: monthNames[monthNum - 1],
-            monthNumber: monthNum,
-            granularity: "month",
-          });
+          for (let monthNum = 1; monthNum <= 12; monthNum++) {
+            const monthDate = new Date(year, monthNum - 1, 1);
+            const existingData = monthDataMap.get(monthNum);
+
+            data.push({
+              date: monthDate.toISOString(),
+              totalIncome: existingData
+                ? parseFloat(existingData.revenue || 0)
+                : 0,
+              totalItems: existingData ? parseInt(existingData.items || 0) : 0,
+              uniqueCustomers: existingData
+                ? parseInt(existingData.quotations || 0)
+                : 0,
+              month: monthNames[monthNum - 1],
+              monthNumber: monthNum,
+              granularity: "month",
+              // Store yearly totals in each month entry for aggregation
+              yearlyUniqueCustomers: parseInt(yearlyData.unique_customers || 0),
+            });
+          }
         }
       } catch (err) {
         console.error(`Error fetching yearly data for ${year}:`, err);
@@ -307,14 +325,18 @@ const ModernDateSelector = ({
         onClick={() => setShowDropdown(!showDropdown)}
         className={`flex items-center gap-3 px-5 py-3 rounded-lg transition-all duration-200 border shadow-sm min-w-[200px] ${
           isDarkMode
-            ? 'bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-600 hover:border-gray-500'
-            : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300 hover:border-gray-400'
+            ? "bg-gray-700 hover:bg-gray-600 text-gray-200 border-gray-600 hover:border-gray-500"
+            : "bg-white hover:bg-gray-50 text-gray-700 border-gray-300 hover:border-gray-400"
         }`}
       >
-        <Calendar className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+        <Calendar
+          className={`w-5 h-5 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
+        />
         <div className="flex-1 text-left">
           <div className="text-sm font-semibold">{selectedOption}</div>
-          <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+          <div
+            className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}
+          >
             {formatFullDate(fromDate)} - {formatFullDate(toDate)}
           </div>
         </div>
@@ -324,15 +346,19 @@ const ModernDateSelector = ({
       </button>
 
       {showDropdown && (
-        <div className={`absolute top-full mt-2 left-0 rounded-lg shadow-xl border z-50 min-w-[250px] overflow-hidden ${
-          isDarkMode 
-            ? 'bg-gray-800 border-gray-700' 
-            : 'bg-white border-gray-200'
-        }`}>
+        <div
+          className={`absolute top-full mt-2 left-0 rounded-lg shadow-xl border z-50 min-w-[250px] overflow-hidden ${
+            isDarkMode
+              ? "bg-gray-800 border-gray-700"
+              : "bg-white border-gray-200"
+          }`}
+        >
           <div className="p-2">
-            <div className={`text-xs font-semibold px-3 py-2 ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-500'
-            }`}>
+            <div
+              className={`text-xs font-semibold px-3 py-2 ${
+                isDarkMode ? "text-gray-400" : "text-gray-500"
+              }`}
+            >
               SELECT TIME PERIOD
             </div>
             {quickSelectOptions.map((option, index) => (
@@ -351,9 +377,11 @@ const ModernDateSelector = ({
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm">{option.label}</span>
-                  <span className={`text-xs ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                  } capitalize`}>
+                  <span
+                    className={`text-xs ${
+                      isDarkMode ? "text-gray-400" : "text-gray-500"
+                    } capitalize`}
+                  >
                     {option.granularity}
                   </span>
                 </div>
@@ -368,57 +396,71 @@ const ModernDateSelector = ({
 
 const StatCard = ({ title, value, change, icon: Icon, color, subtitle }) => {
   const { isDarkMode } = useTheme();
-  
+
   return (
-    <div className={`relative overflow-hidden rounded-lg p-6 shadow-sm border hover:shadow-md transition-shadow ${
-      isDarkMode 
-        ? 'bg-gray-800 border-gray-700' 
-        : 'bg-white border-gray-200'
-    }`}>
-    <div className="flex items-start justify-between mb-3">
-      <div
-        className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}
-      >
-        <Icon className="w-6 h-6 text-white" />
-      </div>
-      {change !== null && change !== undefined && (
+    <div
+      className={`relative overflow-hidden rounded-lg p-6 shadow-sm border hover:shadow-md transition-shadow ${
+        isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+      }`}
+    >
+      <div className="flex items-start justify-between mb-3">
         <div
-          className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold ${
-            change > 0
-              ? "bg-green-50 text-green-700"
-              : change < 0
-                ? "bg-red-50 text-red-700"
-                : "bg-gray-50 text-gray-700"
+          className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}
+        >
+          <Icon className="w-6 h-6 text-white" />
+        </div>
+        {change !== null && change !== undefined && (
+          <div
+            className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold ${
+              change > 0
+                ? "bg-green-50 text-green-700"
+                : change < 0
+                  ? "bg-red-50 text-red-700"
+                  : "bg-gray-50 text-gray-700"
+            }`}
+          >
+            {change > 0 ? (
+              <ArrowUpRight className="w-3 h-3" />
+            ) : change < 0 ? (
+              <ArrowDownRight className="w-3 h-3" />
+            ) : null}
+            <span>
+              {change > 0 ? "+" : ""}
+              {change}%
+            </span>
+          </div>
+        )}
+      </div>
+      <h3
+        className={`text-sm font-medium mb-1 transition-colors duration-300 ${
+          isDarkMode ? "text-gray-300" : "text-gray-600"
+        }`}
+      >
+        {title}
+      </h3>
+      <p
+        className={`text-2xl font-bold mb-1 transition-colors duration-300 ${
+          isDarkMode ? "text-gray-100" : "text-gray-900"
+        }`}
+      >
+        {value}
+      </p>
+      {subtitle && (
+        <p
+          className={`text-xs transition-colors duration-300 ${
+            isDarkMode ? "text-gray-400" : "text-gray-500"
           }`}
         >
-          {change > 0 ? (
-            <ArrowUpRight className="w-3 h-3" />
-          ) : change < 0 ? (
-            <ArrowDownRight className="w-3 h-3" />
-          ) : null}
-          <span>
-            {change > 0 ? "+" : ""}
-            {change}%
-          </span>
-        </div>
+          {subtitle}
+        </p>
       )}
     </div>
-    <h3 className={`text-sm font-medium mb-1 transition-colors duration-300 ${
-      isDarkMode ? 'text-gray-300' : 'text-gray-600'
-    }`}>{title}</h3>
-    <p className={`text-2xl font-bold mb-1 transition-colors duration-300 ${
-      isDarkMode ? 'text-gray-100' : 'text-gray-900'
-    }`}>{value}</p>
-    {subtitle && <p className={`text-xs transition-colors duration-300 ${
-      isDarkMode ? 'text-gray-400' : 'text-gray-500'
-    }`}>{subtitle}</p>}
-  </div>
   );
 };
 
 const LoadingSpinner = () => {
   const { isDarkMode } = useTheme();
-  
+
   return (
     <div className="h-full w-full flex flex-col items-center justify-center gap-6 py-12">
       <div className="relative">
@@ -428,9 +470,13 @@ const LoadingSpinner = () => {
         <div className="absolute inset-0 w-20 h-20 border-4 border-blue-200 rounded-full animate-ping opacity-75"></div>
       </div>
       <div className="flex items-center gap-3">
-        <span className={`text-xl font-medium transition-colors duration-300 ${
-          isDarkMode ? 'text-gray-300' : 'text-gray-600'
-        }`}>Loading overview data</span>
+        <span
+          className={`text-xl font-medium transition-colors duration-300 ${
+            isDarkMode ? "text-gray-300" : "text-gray-600"
+          }`}
+        >
+          Loading overview data
+        </span>
         <div className="flex gap-1">
           <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-0"></div>
           <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce delay-150"></div>
@@ -443,17 +489,23 @@ const LoadingSpinner = () => {
 
 const CustomTooltip = ({ active, payload, label }) => {
   const { isDarkMode } = useTheme();
-  
+
   if (active && payload && payload.length) {
     return (
-      <div className={`p-4 rounded-xl shadow-xl border transition-colors duration-300 ${
-        isDarkMode 
-          ? 'bg-gray-800 border-gray-700' 
-          : 'bg-white border-gray-100'
-      }`}>
-        <p className={`text-sm font-medium mb-2 transition-colors duration-300 ${
-          isDarkMode ? 'text-gray-300' : 'text-gray-600'
-        }`}>{label}</p>
+      <div
+        className={`p-4 rounded-xl shadow-xl border transition-colors duration-300 ${
+          isDarkMode
+            ? "bg-gray-800 border-gray-700"
+            : "bg-white border-gray-100"
+        }`}
+      >
+        <p
+          className={`text-sm font-medium mb-2 transition-colors duration-300 ${
+            isDarkMode ? "text-gray-300" : "text-gray-600"
+          }`}
+        >
+          {label}
+        </p>
         <p className="text-blue-600 text-lg font-bold">
           Rs.{Number(payload[0].value).toLocaleString()}
         </p>
@@ -532,6 +584,7 @@ const DashboardIncome = () => {
         customers: Number(item.uniqueCustomers || 0),
         date: date,
         granularity: item.granularity,
+        yearlyUniqueCustomers: item.yearlyUniqueCustomers,
       };
     });
   }, [data, granularity]);
@@ -549,8 +602,16 @@ const DashboardIncome = () => {
   }, [chartData]);
 
   const uniqueCustomers = useMemo(() => {
-    return chartData.reduce((sum, item) => sum + (item.customers || 0), 0);
-  }, [chartData]);
+  if (chartData.length === 0) return 0;
+  
+  // For yearly view, use the yearly total (not sum of months)
+  if (granularity === "month" && chartData[0]?.yearlyUniqueCustomers !== undefined) {
+    return chartData[0].yearlyUniqueCustomers;
+  }
+  
+  // For daily and weekly, sum up the values
+  return chartData.reduce((sum, item) => sum + (item.customers || 0), 0);
+}, [chartData, granularity]);
 
   const getBarColor = (income, maxIncome) => {
     const intensity = income / maxIncome;
@@ -565,9 +626,11 @@ const DashboardIncome = () => {
 
   if (loading) {
     return (
-      <div className={`w-full h-full rounded-lg transition-colors duration-300 ${
-        isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
-      }`}>
+      <div
+        className={`w-full h-full rounded-lg transition-colors duration-300 ${
+          isDarkMode ? "bg-gray-800" : "bg-gray-50"
+        }`}
+      >
         <LoadingSpinner />
       </div>
     );
@@ -575,9 +638,11 @@ const DashboardIncome = () => {
 
   if (error) {
     return (
-      <div className={`w-full h-full rounded-lg flex items-center justify-center transition-colors duration-300 ${
-        isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
-      }`}>
+      <div
+        className={`w-full h-full rounded-lg flex items-center justify-center transition-colors duration-300 ${
+          isDarkMode ? "bg-gray-800" : "bg-gray-50"
+        }`}
+      >
         <div className="text-center p-8">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CircleDollarSign className="w-8 h-8 text-red-500" />
@@ -592,15 +657,19 @@ const DashboardIncome = () => {
   }
 
   return (
-    <div className={`rounded-3xl border shadow-xl overflow-hidden transition-colors duration-300 ${
-      isDarkMode 
-        ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 border-gray-700' 
-        : 'bg-gradient-to-br from-gray-50 via-white to-gray-50 border-gray-200'
-    }`}>
+    <div
+      className={`rounded-3xl border shadow-xl overflow-hidden transition-colors duration-300 ${
+        isDarkMode
+          ? "bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 border-gray-700"
+          : "bg-gradient-to-br from-gray-50 via-white to-gray-50 border-gray-200"
+      }`}
+    >
       <div className="p-6 space-y-6">
-        <div className={`w-full h-full rounded-lg transition-colors duration-300 ${
-          isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
-        }`}>
+        <div
+          className={`w-full h-full rounded-lg transition-colors duration-300 ${
+            isDarkMode ? "bg-gray-800" : "bg-gray-50"
+          }`}
+        >
           <div className="bg-gradient-to-r from-blue-500 to-blue-400 rounded-2xl p-6 text-white relative">
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
               <div className="flex items-center gap-4">
@@ -670,16 +739,20 @@ const DashboardIncome = () => {
           </div>
 
           <div className="px-6 pb-6">
-            <div className={`rounded-lg border p-6 transition-colors duration-300 ${
-              isDarkMode 
-                ? 'bg-gray-800 border-gray-700' 
-                : 'bg-white border-gray-200'
-            }`}>
+            <div
+              className={`rounded-lg border p-6 transition-colors duration-300 ${
+                isDarkMode
+                  ? "bg-gray-800 border-gray-700"
+                  : "bg-white border-gray-200"
+              }`}
+            >
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className={`text-lg font-semibold transition-colors duration-300 ${
-                    isDarkMode ? 'text-gray-200' : 'text-gray-800'
-                  }`}>
+                  <h3
+                    className={`text-lg font-semibold transition-colors duration-300 ${
+                      isDarkMode ? "text-gray-200" : "text-gray-800"
+                    }`}
+                  >
                     Revenue Trend -{" "}
                     {granularity === "day"
                       ? "Daily"
@@ -688,9 +761,11 @@ const DashboardIncome = () => {
                         : "Monthly"}{" "}
                     View
                   </h3>
-                  <p className={`text-sm mt-1 transition-colors duration-300 ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
+                  <p
+                    className={`text-sm mt-1 transition-colors duration-300 ${
+                      isDarkMode ? "text-gray-400" : "text-gray-600"
+                    }`}
+                  >
                     {chartData.length}{" "}
                     {granularity === "day"
                       ? "days"
@@ -725,16 +800,26 @@ const DashboardIncome = () => {
                         angle={-45}
                         textAnchor="end"
                         height={80}
-                        tick={{ fontSize: 11, fill: isDarkMode ? "#D1D5DB" : "#6B7280" }}
-                        axisLine={{ stroke: isDarkMode ? "#374151" : "#E5E7EB" }}
+                        tick={{
+                          fontSize: 11,
+                          fill: isDarkMode ? "#D1D5DB" : "#6B7280",
+                        }}
+                        axisLine={{
+                          stroke: isDarkMode ? "#374151" : "#E5E7EB",
+                        }}
                         tickLine={false}
                       />
                       <YAxis
                         tickFormatter={(value) =>
                           `Rs.${(value / 1000).toFixed(0)}K`
                         }
-                        tick={{ fontSize: 12, fill: isDarkMode ? "#D1D5DB" : "#6B7280" }}
-                        axisLine={{ stroke: isDarkMode ? "#374151" : "#E5E7EB" }}
+                        tick={{
+                          fontSize: 12,
+                          fill: isDarkMode ? "#D1D5DB" : "#6B7280",
+                        }}
+                        axisLine={{
+                          stroke: isDarkMode ? "#374151" : "#E5E7EB",
+                        }}
                         tickLine={false}
                       />
                       <Tooltip content={<CustomTooltip />} />
@@ -777,16 +862,26 @@ const DashboardIncome = () => {
                         angle={-45}
                         textAnchor="end"
                         height={80}
-                        tick={{ fontSize: 11, fill: isDarkMode ? "#D1D5DB" : "#6B7280" }}
-                        axisLine={{ stroke: isDarkMode ? "#374151" : "#E5E7EB" }}
+                        tick={{
+                          fontSize: 11,
+                          fill: isDarkMode ? "#D1D5DB" : "#6B7280",
+                        }}
+                        axisLine={{
+                          stroke: isDarkMode ? "#374151" : "#E5E7EB",
+                        }}
                         tickLine={false}
                       />
                       <YAxis
                         tickFormatter={(value) =>
                           `Rs.${(value / 1000).toFixed(0)}K`
                         }
-                        tick={{ fontSize: 12, fill: isDarkMode ? "#D1D5DB" : "#6B7280" }}
-                        axisLine={{ stroke: isDarkMode ? "#374151" : "#E5E7EB" }}
+                        tick={{
+                          fontSize: 12,
+                          fill: isDarkMode ? "#D1D5DB" : "#6B7280",
+                        }}
+                        axisLine={{
+                          stroke: isDarkMode ? "#374151" : "#E5E7EB",
+                        }}
                         tickLine={false}
                       />
                       <Tooltip content={<CustomTooltip />} />

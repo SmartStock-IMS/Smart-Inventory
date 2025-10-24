@@ -86,7 +86,7 @@ const getOverviewData = async (period) => {
 };
 
 const Overview = () => {
-  const [timePeriod, setTimePeriod] = useState("This Month");
+  const [timePeriod, setTimePeriod] = useState("This Year");
   const [overviewData, setOverviewData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -262,12 +262,7 @@ const Overview = () => {
                   value={timePeriod}
                   onChange={handleTimePeriodChange}
                 >
-                  <option value="All Time" className="text-gray-800">
-                    All Time
-                  </option>
-                  <option value="This Month" className="text-gray-800">
-                    This Month
-                  </option>
+                
                   <option value="This Year" className="text-gray-800">
                     This Year
                   </option>

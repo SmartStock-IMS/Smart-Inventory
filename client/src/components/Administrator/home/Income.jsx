@@ -108,59 +108,77 @@ const getDashboardIncomeData = async (
         }
       }
     } else {
+      // For yearly view, use yearly-summary-stats endpoint
       const year = start.getFullYear();
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(
-          `${API_BASE_URL}/monthly-breakdown?year=${year}`,
+          `${API_BASE_URL}/yearly-summary-stats?year=${year}`,
           {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           }
         );
         const result = await response.json();
 
-        // Create a map of existing data by month number
-        const monthDataMap = new Map();
+        if (result.success && result.data) {
+          // Use the yearly summary data directly
+          const yearlyData = result.data;
 
-        if (result.success && result.data && Array.isArray(result.data)) {
-          result.data.forEach((monthData) => {
-            monthDataMap.set(monthData.month_number, monthData);
-          });
-        }
+          // Still need monthly breakdown for the chart
+          const monthlyResponse = await fetch(
+            `${API_BASE_URL}/monthly-breakdown?year=${year}`,
+            {
+              headers: token ? { Authorization: `Bearer ${token}` } : {},
+            }
+          );
+          const monthlyResult = await monthlyResponse.json();
 
-        // Generate all 12 months
-        const monthNames = [
-          "January",
-          "February",
-          "March",
-          "April",
-          "May",
-          "June",
-          "July",
-          "August",
-          "September",
-          "October",
-          "November",
-          "December",
-        ];
+          const monthDataMap = new Map();
+          if (
+            monthlyResult.success &&
+            monthlyResult.data &&
+            Array.isArray(monthlyResult.data)
+          ) {
+            monthlyResult.data.forEach((monthData) => {
+              monthDataMap.set(monthData.month_number, monthData);
+            });
+          }
 
-        for (let monthNum = 1; monthNum <= 12; monthNum++) {
-          const monthDate = new Date(year, monthNum - 1, 1);
-          const existingData = monthDataMap.get(monthNum);
+          const monthNames = [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+          ];
 
-          data.push({
-            date: monthDate.toISOString(),
-            totalIncome: existingData
-              ? parseFloat(existingData.revenue || 0)
-              : 0,
-            totalItems: existingData ? parseInt(existingData.items || 0) : 0,
-            uniqueCustomers: existingData
-              ? parseInt(existingData.quotations || 0)
-              : 0,
-            month: monthNames[monthNum - 1],
-            monthNumber: monthNum,
-            granularity: "month",
-          });
+          for (let monthNum = 1; monthNum <= 12; monthNum++) {
+            const monthDate = new Date(year, monthNum - 1, 1);
+            const existingData = monthDataMap.get(monthNum);
+
+            data.push({
+              date: monthDate.toISOString(),
+              totalIncome: existingData
+                ? parseFloat(existingData.revenue || 0)
+                : 0,
+              totalItems: existingData ? parseInt(existingData.items || 0) : 0,
+              uniqueCustomers: existingData
+                ? parseInt(existingData.quotations || 0)
+                : 0,
+              month: monthNames[monthNum - 1],
+              monthNumber: monthNum,
+              granularity: "month",
+              // Store yearly totals in each month entry for aggregation
+              yearlyUniqueCustomers: parseInt(yearlyData.unique_customers || 0),
+            });
+          }
         }
       } catch (err) {
         console.error(`Error fetching yearly data for ${year}:`, err);
@@ -418,10 +436,16 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const DashboardIncome = () => {
-  const [fromDate, setFromDate] = useState(
-    new Date(new Date().setDate(new Date().getDate() - 7))
-  );
-  const [toDate, setToDate] = useState(new Date());
+  // Initial values are now dynamic based on current date
+  const today = new Date();
+  const defaultFromDate = useMemo(() => {
+    // Default: last 7 days
+    const d = new Date();
+    d.setDate(today.getDate() - 7);
+    return d;
+  }, [today]);
+  const [fromDate, setFromDate] = useState(defaultFromDate);
+  const [toDate, setToDate] = useState(today);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -485,6 +509,7 @@ const DashboardIncome = () => {
         customers: Number(item.uniqueCustomers || 0),
         date: date,
         granularity: item.granularity,
+        yearlyUniqueCustomers: item.yearlyUniqueCustomers,
       };
     });
   }, [data, granularity]);
@@ -502,8 +527,16 @@ const DashboardIncome = () => {
   }, [chartData]);
 
   const uniqueCustomers = useMemo(() => {
-    return chartData.reduce((sum, item) => sum + (item.customers || 0), 0);
-  }, [chartData]);
+  if (chartData.length === 0) return 0;
+  
+  // For yearly view, use the yearly total (not sum of months)
+  if (granularity === "month" && chartData[0]?.yearlyUniqueCustomers !== undefined) {
+    return chartData[0].yearlyUniqueCustomers;
+  }
+  
+  // For daily and weekly, sum up the values
+  return chartData.reduce((sum, item) => sum + (item.customers || 0), 0);
+}, [chartData, granularity]);
 
   const getBarColor = (income, maxIncome) => {
     const intensity = income / maxIncome;
@@ -626,13 +659,7 @@ const DashboardIncome = () => {
                     View
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">
-                    {chartData.length}{" "}
-                    {granularity === "day"
-                      ? "days"
-                      : granularity === "week"
-                        ? "weeks"
-                        : "months"}{" "}
-                    • Total: Rs.{totalIncome.toLocaleString()}
+                    {chartData.length} {granularity === "day" ? "days" : granularity === "week" ? "weeks" : "months"} • Total: Rs.{totalIncome.toLocaleString()}
                   </p>
                 </div>
                 <div
@@ -644,8 +671,7 @@ const DashboardIncome = () => {
                         : "bg-purple-50 text-purple-700 border border-purple-200"
                   }`}
                 >
-                  {granularity.charAt(0).toUpperCase() + granularity.slice(1)}{" "}
-                  Data
+                  {granularity.charAt(0).toUpperCase() + granularity.slice(1)} Data
                 </div>
               </div>
               <div className="h-80">
