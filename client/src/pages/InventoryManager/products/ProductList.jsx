@@ -4,7 +4,7 @@ import { Search, ExternalLink, Trash2, List, Sparkles, Package, Scale, Eye, Aler
 import { FaSpinner } from "react-icons/fa";
 import api from "../../../lib/api";
 import axios from "axios";
-import { useTheme } from "../../../context/theme/themeContext";
+import { useTheme } from "../../../context/theme/ThemeContext";
 
 // Fetch categories to get Cloudinary images
 const fetchCategories = async () => {
