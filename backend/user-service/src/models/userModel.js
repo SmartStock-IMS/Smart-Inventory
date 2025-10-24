@@ -422,6 +422,22 @@ class User extends BaseModel {
       throw error;
     }
   }
+
+  /**
+   * Get notifications for a user
+   */
+  async getUserNotifications(userId, status = null, limit = 50, offset = 0) {
+    try {
+      return await this.callFunction('fn_get_user_notifications', [
+        userId,
+        status,
+        limit,
+        offset
+      ]);
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = new User();

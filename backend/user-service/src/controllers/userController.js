@@ -366,6 +366,55 @@ class UserController {
       });
     }
   }
+
+  async getUserNotifications(req, res) {
+    try {
+      const { id } = req.params;
+      const { status, limit = 50, offset = 0 } = req.query;
+      const notifications = await UserModel.getUserNotifications(
+        id,
+        status || null,
+        parseInt(limit),
+        parseInt(offset)
+      );
+      res.status(200).json({
+        success: true,
+        message: 'Notifications retrieved successfully',
+        data: notifications
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  // Mark all notifications as read for a user
+  async markNotificationsAsRead(req, res) {
+    try {
+      const userId = req.params.id;
+      
+      // Update all notifications for this user to mark them as read
+      // Adjust based on your database schema
+      await Notification.updateMany(
+        { userId: userId, isRead: false },
+        { $set: { isRead: true } }
+      );
+      
+      res.json({
+        success: true,
+        message: 'All notifications marked as read'
+      });
+    } catch (error) {
+      console.error('Error marking notifications as read:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to mark notifications as read',
+        error: error.message
+      });
+    }
+  }
 }
 
 module.exports = new UserController();

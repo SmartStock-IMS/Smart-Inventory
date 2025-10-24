@@ -1,10 +1,66 @@
-import { SearchIcon, BellIcon, UserIcon, SunIcon, MoonIcon, Sparkles } from "lucide-react";
+import { SearchIcon, BellIcon, UserIcon, SunIcon, MoonIcon, Sparkles, X, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { useTheme } from "../../../context/theme/ThemeContext";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 const Header = () => {
   const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  function getUserIdFromToken() {
+    const token = localStorage.getItem("token");
+    if (!token) return "AD001";
+    try {
+      const payload = jwtDecode(token);
+      return payload.id || "AD001";
+    } catch {
+      return "AD001";
+    }
+  }
+
+  async function fetchNotifications() {
+    const userId = getUserIdFromToken();
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_URL}/api/users/notifications/${userId}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+      const fetchedNotifications = res.data.data || [];
+      setNotifications(fetchedNotifications);
+      const unread = fetchedNotifications.filter(n => !n.isRead).length;
+      setUnreadCount(unread);
+    } catch {
+      setNotifications([]);
+      setUnreadCount(0);
+    }
+  }
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  async function handleNotificationsClick() {
+    await fetchNotifications();
+    setShowNotifications((prev) => !prev);
+    if (!showNotifications) {
+      setUnreadCount(0);
+      const userId = getUserIdFromToken();
+      try {
+        await axios.put(
+          `${import.meta.env.VITE_URL}/api/users/notifications/${userId}/read`,
+          {},
+          { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+        );
+      } catch (err) {
+        console.error("Failed to mark notifications as read:", err);
+      }
+    }
+  }
 
   return (
     <header className={`h-full w-full transition-colors duration-300 ${
@@ -79,21 +135,137 @@ const Header = () => {
           </button>
 
           {/* Notifications */}
-          <button className={`p-1.5 sm:p-2 rounded-lg transition-colors duration-200 relative group ${
-            isDarkMode 
-              ? 'hover:bg-gray-800' 
-              : 'hover:bg-gray-100'
-          }`}>
-            <BellIcon className={`h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-200 ${
-              isDarkMode 
-                ? 'text-gray-400 group-hover:text-blue-400' 
-                : 'text-gray-600 group-hover:text-blue-500'
-            }`} />
-            {/* Notification badge */}
-            <span className="absolute -top-0.5 sm:-top-1 -right-0.5 sm:-right-1 h-3 w-3 sm:h-4 sm:w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-              3
-            </span>
-          </button>
+          <div className="relative">
+            <button 
+              className={`p-1.5 sm:p-2 rounded-lg transition-colors duration-200 relative group ${
+                isDarkMode 
+                  ? 'hover:bg-gray-800' 
+                  : 'hover:bg-gray-100'
+              }`}
+              onClick={handleNotificationsClick}
+            >
+              <BellIcon className={`h-4 w-4 sm:h-5 sm:w-5 transition-colors duration-200 ${
+                isDarkMode 
+                  ? 'text-gray-400 group-hover:text-blue-400' 
+                  : 'text-gray-600 group-hover:text-blue-500'
+              }`} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 sm:-top-1 -right-0.5 sm:-right-1 h-3 w-3 sm:h-4 sm:w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            {/* Notification dropdown */}
+            {showNotifications && (
+              <div className={`absolute right-0 mt-2 w-80 sm:w-96 rounded-xl shadow-2xl border backdrop-blur-sm overflow-hidden z-50 ${
+                isDarkMode 
+                  ? 'bg-gray-800/95 border-gray-700' 
+                  : 'bg-white/95 border-gray-200'
+              }`}>
+                <div className={`px-4 py-3 border-b flex items-center justify-between ${
+                  isDarkMode ? 'border-gray-700' : 'border-gray-200'
+                }`}>
+                  <h3 className={`font-semibold text-sm ${
+                    isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                  }`}>
+                    Notifications
+                    {notifications.length > 0 && (
+                      <span className="ml-2 text-xs font-normal text-blue-500">
+                        ({notifications.length})
+                      </span>
+                    )}
+                  </h3>
+                  <button 
+                    onClick={() => setShowNotifications(false)}
+                    className={`p-1 rounded-lg transition-colors ${
+                      isDarkMode 
+                        ? 'hover:bg-gray-700 text-gray-400 hover:text-gray-200' 
+                        : 'hover:bg-gray-100 text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="max-h-96 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="p-8 text-center">
+                      <BellIcon className={`h-12 w-12 mx-auto mb-3 ${
+                        isDarkMode ? 'text-gray-600' : 'text-gray-300'
+                      }`} />
+                      <p className={`text-sm ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                      }`}>
+                        No notifications yet
+                      </p>
+                    </div>
+                  ) : (
+                    <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+                      {notifications.map((notif, idx) => (
+                        <li 
+                          key={idx} 
+                          className={`p-4 transition-colors cursor-pointer ${
+                            isDarkMode 
+                              ? 'hover:bg-gray-700/50' 
+                              : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex gap-3">
+                            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                              notif.type === 'success' 
+                                ? 'bg-green-500/10 text-green-500' 
+                                : notif.type === 'warning' 
+                                ? 'bg-yellow-500/10 text-yellow-500'
+                                : 'bg-blue-500/10 text-blue-500'
+                            }`}>
+                              {notif.type === 'success' ? (
+                                <CheckCircle className="h-4 w-4" />
+                              ) : notif.type === 'warning' ? (
+                                <AlertCircle className="h-4 w-4" />
+                              ) : (
+                                <Info className="h-4 w-4" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm font-medium mb-1 ${
+                                isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                              }`}>
+                                {notif.title || 'Notification'}
+                              </p>
+                              <p className={`text-xs mb-2 ${
+                                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                              }`}>
+                                {notif.message || JSON.stringify(notif)}
+                              </p>
+                              {notif.time && (
+                                <p className={`text-xs ${
+                                  isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                                }`}>
+                                  {notif.time}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                {notifications.length > 0 && (
+                  <div className={`px-4 py-3 border-t ${
+                    isDarkMode ? 'border-gray-700' : 'border-gray-200'
+                  }`}>
+                    <button className={`w-full text-center text-xs font-medium transition-colors ${
+                      isDarkMode 
+                        ? 'text-blue-400 hover:text-blue-300' 
+                        : 'text-blue-600 hover:text-blue-700'
+                    }`}>
+                      Mark all as read
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Profile Section */}
           <div 
