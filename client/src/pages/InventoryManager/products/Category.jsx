@@ -61,7 +61,7 @@ const Category = () => {
       if (!token) return;
 
       console.log('Fetching categories from Category page...');
-      const response = await fetch('http://localhost:3000/api/categories', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/categories`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -104,7 +104,7 @@ const Category = () => {
         formData.append('image', file);
 
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:3000/api/categories/upload-image', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/categories/upload-image`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -257,7 +257,7 @@ const Category = () => {
         formData.append('image', file);
 
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:3000/api/categories/upload-image', {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/categories/upload-image`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`

@@ -1,8 +1,88 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ChevronLeft, User, Mail, Phone, MapPin, Edit, Package, Calendar, Hash, DollarSign, FileText } from "lucide-react";
+import { 
+  ChevronLeft, User, Mail, Phone, MapPin, Edit, Package, Calendar, Hash, 
+  DollarSign, FileText, Star, Award, Crown, Gift, TrendingUp, Zap, Target
+} from "lucide-react";
 import axios from "axios";
 import { useTheme } from "../../../context/theme/ThemeContext";
+
+// Loyalty program configuration
+const LOYALTY_CONFIG = {
+  pointsPerRupee: 0.001, // Points = total spent / 1000
+  tiers: {
+    bronze: { min: 0, name: 'Bronze', icon: Star, color: 'amber', description: 'Welcome Member' },
+    silver: { min: 50, name: 'Silver', icon: Award, color: 'gray', description: 'Valued Customer' },
+    gold: { min: 200, name: 'Gold', icon: Crown, color: 'yellow', description: 'Premium Member' },
+    platinum: { min: 500, name: 'Platinum', icon: Gift, color: 'purple', description: 'Elite Member' }
+  }
+};
+
+// Calculate loyalty information from orders
+const calculateLoyalty = (orders) => {
+  const totalSpent = orders.reduce((sum, order) => sum + parseFloat(order.total_amount || 0), 0);
+  const totalPoints = Math.floor(totalSpent * LOYALTY_CONFIG.pointsPerRupee);
+  
+  let currentTier = 'bronze';
+  for (const [tierKey, tierData] of Object.entries(LOYALTY_CONFIG.tiers)) {
+    if (totalPoints >= tierData.min) {
+      currentTier = tierKey;
+    }
+  }
+  
+  // Calculate next tier progress
+  const tierKeys = Object.keys(LOYALTY_CONFIG.tiers);
+  const currentTierIndex = tierKeys.indexOf(currentTier);
+  const nextTierKey = tierKeys[currentTierIndex + 1];
+  
+  let progressToNext = 100;
+  let pointsToNext = 0;
+  
+  if (nextTierKey) {
+    const nextTierMin = LOYALTY_CONFIG.tiers[nextTierKey].min;
+    const currentTierMin = LOYALTY_CONFIG.tiers[currentTier].min;
+    const pointsInCurrentTier = totalPoints - currentTierMin;
+    const pointsNeededForTier = nextTierMin - currentTierMin;
+    progressToNext = (pointsInCurrentTier / pointsNeededForTier) * 100;
+    pointsToNext = nextTierMin - totalPoints;
+  }
+  
+  return {
+    totalPoints,
+    currentTier,
+    nextTier: nextTierKey,
+    progressToNext: Math.min(progressToNext, 100),
+    pointsToNext: Math.max(pointsToNext, 0),
+    totalSpent,
+    tierData: LOYALTY_CONFIG.tiers[currentTier]
+  };
+};
+
+// Loyalty Badge Component
+const LoyaltyBadge = ({ tier, size = 'md' }) => {
+  const tierConfig = LOYALTY_CONFIG.tiers[tier];
+  const Icon = tierConfig.icon;
+  
+  const sizeClasses = {
+    sm: 'px-2 py-1 text-xs',
+    md: 'px-3 py-1 text-sm',
+    lg: 'px-4 py-2 text-base'
+  };
+  
+  const colorClasses = {
+    amber: 'bg-amber-100 text-amber-800 border-amber-200',
+    gray: 'bg-gray-100 text-gray-800 border-gray-200',
+    yellow: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    purple: 'bg-purple-100 text-purple-800 border-purple-200'
+  };
+  
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full border font-medium ${sizeClasses[size]} ${colorClasses[tierConfig.color]}`}>
+      <Icon className="w-3 h-3" />
+      {tierConfig.name}
+    </span>
+  );
+};
 
 const CustomerDetails = () => {
   const { isDarkMode } = useTheme();
@@ -10,6 +90,7 @@ const CustomerDetails = () => {
   const navigate = useNavigate();
   const [customer, setCustomer] = useState(null);
   const [quotations, setQuotations] = useState([]);
+  const [loyaltyData, setLoyaltyData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -55,8 +136,13 @@ const CustomerDetails = () => {
         
         setQuotations(customerQuotations);
         
+        // Calculate loyalty data
+        const loyalty = calculateLoyalty(customerQuotations);
+        setLoyaltyData(loyalty);
+        
         console.log("Customer found:", foundCustomer);
         console.log("Customer quotations:", customerQuotations);
+        console.log("Loyalty data:", loyalty);
         
       } catch (err) {
         setError("Error loading customer data");
@@ -151,7 +237,14 @@ const CustomerDetails = () => {
             <h1 className="text-3xl font-bold mb-2">
               {customer.name}
             </h1>
-            <p className="text-white/80 text-lg">Customer ID: {customer.customer_id}</p>
+            <div className="flex items-center gap-3">
+              <p className="text-white/80 text-lg">Customer ID: {customer.customer_id}</p>
+              {loyaltyData && (
+                <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
+                  <span className="text-white text-sm font-medium">{loyaltyData.tierData.name} Member</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -245,6 +338,89 @@ const CustomerDetails = () => {
 
           {/* Quick Stats */}
           <div className="space-y-4">
+            {/* Loyalty Status Card */}
+            {loyaltyData && (
+              <div className={`rounded-2xl border shadow-sm p-6 transition-colors duration-300 ${isDarkMode ? 'bg-gradient-to-br from-purple-900 to-indigo-900 border-purple-700' : 'bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200'}`}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${loyaltyData.tierData.color === 'purple' ? 'bg-purple-100' : loyaltyData.tierData.color === 'yellow' ? 'bg-yellow-100' : loyaltyData.tierData.color === 'gray' ? 'bg-gray-100' : 'bg-amber-100'}`}>
+                    <loyaltyData.tierData.icon className={`w-5 h-5 ${loyaltyData.tierData.color === 'purple' ? 'text-purple-600' : loyaltyData.tierData.color === 'yellow' ? 'text-yellow-600' : loyaltyData.tierData.color === 'gray' ? 'text-gray-600' : 'text-amber-600'}`} />
+                  </div>
+                  <div>
+                    <p className={`text-lg font-bold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                      Loyalty Status
+                    </p>
+                    <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-purple-200' : 'text-purple-600'}`}>
+                      Customer Rewards Program
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  {/* Points Display */}
+                  <div className="text-center">
+                    <p className={`text-2xl font-bold transition-colors duration-300 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                      {loyaltyData.totalPoints.toLocaleString()} Points
+                    </p>
+                    <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-purple-200' : 'text-purple-600'}`}>
+                      From Rs {loyaltyData.totalSpent.toLocaleString()} spent
+                    </p>
+                  </div>
+
+                  {/* Current Tier Badge */}
+                  <div className="flex justify-center">
+                    <LoyaltyBadge tier={loyaltyData.currentTier} size="lg" />
+                  </div>
+
+                  {/* Tier Description */}
+                  <div className="text-center">
+                    <p className={`text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-purple-200' : 'text-purple-600'}`}>
+                      {loyaltyData.tierData.name} Member
+                    </p>
+                    <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-purple-300' : 'text-purple-500'}`}>
+                      {loyaltyData.tierData.description}
+                    </p>
+                  </div>
+                  
+                  {/* Progress to Next Tier */}
+                  {loyaltyData.nextTier && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className={isDarkMode ? 'text-purple-200' : 'text-purple-600'}>
+                          Progress to {LOYALTY_CONFIG.tiers[loyaltyData.nextTier].name}
+                        </span>
+                        <span className={isDarkMode ? 'text-purple-200' : 'text-purple-600'}>
+                          {loyaltyData.pointsToNext} points to go
+                        </span>
+                      </div>
+                      <div className={`w-full rounded-full h-2 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                        <div 
+                          className="bg-gradient-to-r from-purple-500 to-indigo-500 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${loyaltyData.progressToNext}%` }}
+                        ></div>
+                      </div>
+                      <div className="text-center">
+                        <span className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-purple-300' : 'text-purple-500'}`}>
+                          {Math.round(loyaltyData.progressToNext)}% to {LOYALTY_CONFIG.tiers[loyaltyData.nextTier].name}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Maximum Tier Reached */}
+                  {!loyaltyData.nextTier && (
+                    <div className="text-center space-y-1">
+                      <p className={`text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-yellow-200' : 'text-yellow-600'}`}>
+                        Maximum Tier Reached
+                      </p>
+                      <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-yellow-300' : 'text-yellow-500'}`}>
+                        Congratulations! 🎉
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
             <div className={`rounded-2xl border shadow-sm p-6 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-100'}`}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
@@ -329,6 +505,12 @@ const CustomerDetails = () => {
                         </div>
                       </th>
                       <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <div className="flex items-center gap-2">
+                          <Star className="w-4 h-4" />
+                          Points Earned
+                        </div>
+                      </th>
+                      <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         Delivery Date
                       </th>
                       <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -361,6 +543,12 @@ const CustomerDetails = () => {
                         </td>
                         <td className={`px-6 py-4 text-sm font-semibold transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                           Rs {parseFloat(order.total_amount || 0).toLocaleString()}
+                        </td>
+                        <td className={`px-6 py-4 text-sm transition-colors duration-300 ${isDarkMode ? 'text-purple-300' : 'text-purple-600'}`}>
+                          <div className="flex items-center gap-1">
+                            <Star className="w-3 h-3" />
+                            {Math.floor(parseFloat(order.total_amount || 0) * LOYALTY_CONFIG.pointsPerRupee).toLocaleString()}
+                          </div>
                         </td>
                         <td className={`px-6 py-4 text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-800'}`}>
                           {new Date(order.delivery_date).toLocaleDateString('en-IN', {

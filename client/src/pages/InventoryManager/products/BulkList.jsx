@@ -12,7 +12,7 @@ const fetchCategories = async () => {
     if (!token) return { success: false, data: [] };
 
     console.log('Fetching categories from API...');
-    const response = await axios.get('http://localhost:3000/api/categories', {
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/categories`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'

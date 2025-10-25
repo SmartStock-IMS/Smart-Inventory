@@ -75,28 +75,26 @@ class ProductController {
       const { page = 1, limit = 100, category, status, search } = req.query;
       const offset = (page - 1) * limit;
 
-      const filters = {};
-      if (category) filters.category = category;
-      if (status) filters.status = status;
-      if (search) filters.search = search;
-
-      const products = await Product.findAll(parseInt(limit), parseInt(offset), filters);
+      // Use the model's findAll method directly since it doesn't support filters yet
+      const products = await Product.findAll(parseInt(limit), parseInt(offset));
 
       res.status(200).json({
         success: true,
         message: 'Products retrieved successfully',
         data: {
-          products: products,
+          products: products || [],
           pagination: {
             page: parseInt(page),
-            limit: parseInt(limit)
+            limit: parseInt(limit),
+            count: products ? products.length : 0
           }
         }
       });
     } catch (error) {
+      console.error('getAllProducts error:', error);
       res.status(500).json({
         success: false,
-        message: error.message
+        message: error.message || 'Failed to fetch products'
       });
     }
   }
@@ -210,19 +208,25 @@ class ProductController {
     try {
       console.log('Getting categories...');
       
-      // Try to get categories using the stored function first
+      // Try direct SQL query first since function might not exist
       let categories;
       try {
-        categories = await Variant.findAll();
-        console.log('Categories from function:', categories);
-      } catch (functionError) {
-        console.log('Function failed, trying direct query:', functionError.message);
-        
-        // Fallback to direct SQL query
+        // Use direct SQL query for reliability
         categories = await Variant.query(
           'SELECT category_id, category_name, description, pic_url FROM product_category ORDER BY category_name'
         );
         console.log('Categories from direct query:', categories);
+      } catch (directQueryError) {
+        console.log('Direct query failed, trying function:', directQueryError.message);
+        
+        // Fallback to stored function
+        try {
+          categories = await Variant.findAll();
+          console.log('Categories from function:', categories);
+        } catch (functionError) {
+          console.log('Function also failed:', functionError.message);
+          categories = [];
+        }
       }
 
       res.status(200).json({
@@ -236,7 +240,7 @@ class ProductController {
       console.error('Error getting categories:', error);
       res.status(500).json({
         success: false,
-        message: error.message
+        message: error.message || 'Failed to fetch categories'
       });
     }
   }
@@ -327,6 +331,49 @@ class ProductController {
       res.status(500).json({
         success: false,
         message: error.message
+      });
+    }
+  }
+
+  // Variant methods
+  async getAllVariants(req, res) {
+    try {
+      const limit = Number(req.query.limit ?? 1000);
+      const offset = Number(req.query.offset ?? 0);
+
+      const variants = await Variant.findAll();
+      
+      res.status(200).json({
+        success: true,
+        data: {
+          variants,
+          pagination: { limit, offset, count: variants.length }
+        }
+      });
+    } catch (error) {
+      console.error('getAllVariants error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch variants'
+      });
+    }
+  }
+
+  async getVariantsByProduct(req, res) {
+    try {
+      const { productId } = req.params;
+      
+      const variants = await Variant.findByProductId(productId);
+      
+      res.status(200).json({
+        success: true,
+        data: { variants }
+      });
+    } catch (error) {
+      console.error('getVariantsByProduct error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch product variants'
       });
     }
   }

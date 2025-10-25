@@ -21,7 +21,7 @@ const DailySummary = () => {
   // API call functions
   const fetchDailySummary = async (date, status) => {
     const statusParam = status === "All" ? "" : `&status=${status}`; // Pass empty string for "All"
-    const response = await authenticatedFetch(`/api/reports/daily-summary?date=${date}${statusParam}`, {
+    const response = await authenticatedFetch(`/reports/daily-summary?date=${date}${statusParam}`, {
       method: 'GET'
     });
     const result = await response.json();
@@ -29,7 +29,7 @@ const DailySummary = () => {
   };
 
   const fetchDailySummaryStats = async (date) => {
-    const response = await authenticatedFetch(`/api/reports/daily-summary-stats?date=${date}`, {
+    const response = await authenticatedFetch(`/reports/daily-summary-stats?date=${date}`, {
       method: 'GET'
     });
     const result = await response.json();
@@ -37,7 +37,7 @@ const DailySummary = () => {
   };
 
   const fetchDailyStatusOptions = async (date) => {
-    const response = await authenticatedFetch(`/api/reports/daily-status-options?date=${date}`, {
+    const response = await authenticatedFetch(`/reports/daily-status-options?date=${date}`, {
       method: 'GET'
     });
     const result = await response.json();
