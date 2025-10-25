@@ -34,7 +34,7 @@ const getOverviewData = async (period) => {
       .map((user, i) => ({ ...user, rank: i + 1 }));
 
     const responseIncome = await axios.get(
-      "http://localhost:3000/api/reports/yearly-summary?year=2025",
+      `${import.meta.env.VITE_API_URL}/reports/yearly-summary?year=2025`,
       { headers: token ? { Authorization: `Bearer ${token}` } : {} }
     );
 
