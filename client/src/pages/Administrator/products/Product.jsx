@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  Trash2,
   Edit3,
   Save,
   X,
@@ -17,6 +16,7 @@ import {
 } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
 import axios from "axios";
+import { getCategoryImage } from "../../../assets/product/categoryImages";
 import { useLocation, useNavigate } from "react-router-dom";
 import { set } from "react-hook-form";
 
@@ -154,30 +154,14 @@ const ProductPage = () => {
         
         const noOfVariants = product && Array.isArray(product) ? product.length : 0;
 
-        const categoryImage = (name) => {
-          switch (name) {
-            case "Black Pepper":
-              return "https://images.unsplash.com/photo-1591801058986-9e28e68670f7?q=80&w=1228&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-            case "Herbs":
-              return "https://plus.unsplash.com/premium_photo-1693266635481-37de41003239?q=80&w=688&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-            case "Cinnamon":
-              return "https://images.unsplash.com/photo-1601379758962-cadba22b1e3a?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-            case "Cardamom":
-              return "https://images.unsplash.com/photo-1701190588800-67a7007492ad?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-            case "White Pepper":
-              return "https://media.istockphoto.com/id/2159774748/photo/white-pepper-or-peppercorns-in-wooden-spoon-with-bowl.jpg?s=2048x2048&w=is&k=20&c=8E_80C-Xsj_iCRfzfJSwlTKUqmxrGKy5-puKqfc8glc=";
-            case "Blends":
-              return "https://media.istockphoto.com/id/2195466084/photo/curry-powder.jpg?s=2048x2048&w=is&k=20&c=BMSyanE-Q-2Sja8JrSeATaaEHW_R_V_4icRo0H0ioXs=";
-            case "Spices":
-              return "https://images.unsplash.com/photo-1532336414038-cf19250c5757?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-          }}
+        // Removed local categoryImage, now using getCategoryImage
 
         setUpdatedProduct(prev => ({
           ...prev,
           id: id,
           name: categoryName,
           no_variants: noOfVariants,
-          main_image: categoryImage(categoryName)
+          main_image: getCategoryImage(categoryName)
         }));
         setUpdatedVariants(product);
 
@@ -366,27 +350,7 @@ const ProductPage = () => {
             <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
               <Sparkles className="w-5 h-5 animate-pulse" />
             </div>
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className={cn(
-                "px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-300 flex items-center gap-2",
-                isEditing
-                  ? "bg-red-500 hover:bg-red-600 text-white"
-                  : "bg-white text-orange-600 hover:bg-gray-100"
-              )}
-            >
-              {isEditing ? (
-                <>
-                  <X className="w-4 h-4" />
-                  Cancel
-                </>
-              ) : (
-                <>
-                  <Edit3 className="w-4 h-4" />
-                  Edit
-                </>
-              )}
-            </button>
+            
             {isEditing && (
               <button
                 onClick={handleProductUpdate}
@@ -510,9 +474,7 @@ const ProductPage = () => {
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> 
                       Reorder Point
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
+                    
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -670,14 +632,7 @@ const ProductPage = () => {
                       </td>
                       
                       <td className="px-6 py-4">
-                        <button
-                          onClick={() => openDeleteDialog(index, variant)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                          disabled={isLoading}
-                          title={"Delete Variant: ${variant.product_id}"}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        
                       </td>
                     </tr>
                   ))}
@@ -741,28 +696,7 @@ const ProductPage = () => {
               </p>
 
               <div className="flex gap-3">
-                <button
-                  onClick={() =>
-                    handleVariantDelete(
-                      variantToDelete.index,
-                      variantToDelete.variant
-                    )
-                  }
-                  disabled={isLoading}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {isLoading ? (
-                    <>
-                      <FaSpinner className="w-4 h-4 animate-spin" />
-                      Deleting...
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="w-4 h-4" />
-                      Delete Variant
-                    </>
-                  )}
-                </button>
+                
                 <button
                   onClick={() => {
                     setDeleteDialogOpen(false);

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Search, ExternalLink, Trash2, List, Sparkles, Package, Scale, Eye, AlertCircle, CheckCircle, Filter, Grid3X3, TableProperties } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
 import axios from "axios";
+import { getCategoryImage } from "../../../assets/product/categoryImages";
 
 
 const getProducts = async () => {
@@ -125,30 +126,14 @@ const ProductList = () => {
         return acc;
       }, {});
 
-      const categoryImage = (name) => {
-          switch (name) {
-            case "Black Pepper":
-              return "https://images.unsplash.com/photo-1591801058986-9e28e68670f7?q=80&w=1228&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-            case "Herbs":
-              return "https://plus.unsplash.com/premium_photo-1693266635481-37de41003239?q=80&w=688&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-            case "Cinnamon":
-              return "https://images.unsplash.com/photo-1601379758962-cadba22b1e3a?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-            case "Cardamom":
-              return "https://images.unsplash.com/photo-1701190588800-67a7007492ad?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-            case "White Pepper":
-              return "https://media.istockphoto.com/id/2159774748/photo/white-pepper-or-peppercorns-in-wooden-spoon-with-bowl.jpg?s=2048x2048&w=is&k=20&c=8E_80C-Xsj_iCRfzfJSwlTKUqmxrGKy5-puKqfc8glc=";
-            case "Blends":
-              return "https://media.istockphoto.com/id/2195466084/photo/curry-powder.jpg?s=2048x2048&w=is&k=20&c=BMSyanE-Q-2Sja8JrSeATaaEHW_R_V_4icRo0H0ioXs=";
-            case "Spices":
-              return "https://images.unsplash.com/photo-1532336414038-cf19250c5757?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
-          }}
+      // Removed local categoryImage, now using getCategoryImage
 
       // Use only the least stocked product per category for display
       if (response.success && response.data && response.data.data && Array.isArray(response.data.data.products)) {
         const mapped = Object.values(leastStockedByCategory).map(product => ({
           id: product.product_id,
           name: product.category_name,
-          main_image: categoryImage(product.category_name),
+          main_image: getCategoryImage(product.category_name),
           no_variants: categoryCounts[product.category_name] || 1,
           variants: [],
           description: `${product.category_name} | Cost: ₹${product.cost_price} | Sell: ₹${product.selling_price}`,
@@ -325,7 +310,7 @@ const ProductList = () => {
                 Product
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Stock
+                Status
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Variants
@@ -359,12 +344,9 @@ const ProductList = () => {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex flex-col gap-1">
-                    <span className="font-semibold text-gray-800">{product.current_stock}</span>
-                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStockStatusColor(product.current_stock, product.min_stock_level, product.max_stock_level)}`}>
-                      {getStockStatus(product.current_stock, product.min_stock_level, product.max_stock_level)}
-                    </span>
-                  </div>
+                  <span className="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
+                    Live Data
+                  </span>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
@@ -382,14 +364,7 @@ const ProductList = () => {
                       <ExternalLink className="w-4 h-4" />
                       View
                     </button>
-                    <button
-                      onClick={() => openDeleteDialog(product)}
-                      className="px-4 py-2 text-red-600 border border-red-200 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2"
-                      disabled={isLoading}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Remove
-                    </button>
+                    
                   </div>
                 </td>
               </tr>
@@ -481,7 +456,7 @@ const ProductList = () => {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-800">{filteredProducts.length}</p>
-                    <p className="text-sm text-gray-600">Total Products</p>
+                    <p className="text-sm text-gray-600">Total Categories</p>
                   </div>
                 </div>
               </div>
