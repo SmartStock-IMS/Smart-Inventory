@@ -282,3 +282,147 @@ exports.getSupplierOrderById = async (req, res) => {
 		return res.status(500).json({ success: false, message: 'Failed to fetch supplier order' });
 	}
 };
+
+// Product-Supplier Assignment Management
+exports.saveProductSupplierAssignments = async (req, res) => {
+	try {
+		console.log('=== saveProductSupplierAssignments called ===');
+		console.log('Request body:', JSON.stringify(req.body, null, 2));
+		console.log('Request headers:', req.headers);
+		
+		const { assignments } = req.body || {};
+		
+		console.log('Extracted assignments:', assignments);
+
+		if (!assignments || !Array.isArray(assignments)) {
+			console.log('Invalid assignments data');
+			return res.status(400).json({ 
+				success: false, 
+				message: 'Assignments array is required' 
+			});
+		}
+
+		console.log('Assignments array length:', assignments.length);
+
+		// Simplified validation - just check if data exists
+		for (let i = 0; i < assignments.length; i++) {
+			const assignment = assignments[i];
+			console.log(`Assignment ${i}:`, assignment);
+			
+			if (!assignment.product_id || !assignment.supplier_id) {
+				console.log(`Assignment ${i} missing required fields`);
+				return res.status(400).json({ 
+					success: false, 
+					message: `Assignment ${i} must have product_id and supplier_id` 
+				});
+			}
+		}
+
+		console.log('All assignments validated, calling model...');
+		
+		// Get user ID from headers (set by API Gateway)
+		const userId = req.headers['x-user-id'];
+		console.log('User ID from headers:', userId);
+		
+		const result = await supplierModel.saveProductSupplierAssignments(assignments, userId);
+		console.log('Model returned:', result);
+
+		return res.status(200).json({
+			success: true,
+			message: 'Product-supplier assignments saved successfully',
+			data: result
+		});
+	} catch (error) {
+		console.error('=== Controller Error ===');
+		console.error('Error message:', error.message);
+		console.error('Error stack:', error.stack);
+		console.error('========================');
+		return res.status(500).json({ 
+			success: false, 
+			message: `Failed to save assignments: ${error.message}` 
+		});
+	}
+};
+
+exports.getProductSupplierAssignments = async (req, res) => {
+	try {
+		const assignments = await supplierModel.getProductSupplierAssignments();
+
+		return res.status(200).json({
+			success: true,
+			data: assignments
+		});
+	} catch (error) {
+		console.error('getProductSupplierAssignments error:', error);
+		return res.status(500).json({ 
+			success: false, 
+			message: 'Failed to fetch product-supplier assignments' 
+		});
+	}
+};
+
+// Restock Orders Management
+exports.createRestockOrders = async (req, res) => {
+	try {
+		const { restock_orders } = req.body || {};
+
+		if (!restock_orders || !Array.isArray(restock_orders)) {
+			return res.status(400).json({ 
+				success: false, 
+				message: 'Restock orders array is required' 
+			});
+		}
+
+		// Validate each restock order
+		for (const order of restock_orders) {
+			if (!order.product_id || !order.restock_amount) {
+				return res.status(400).json({ 
+					success: false, 
+					message: 'Each restock order must have product_id and restock_amount' 
+				});
+			}
+
+			if (isNaN(Number(order.restock_amount)) || Number(order.restock_amount) <= 0) {
+				return res.status(400).json({ 
+					success: false, 
+					message: 'Restock amount must be a positive number' 
+				});
+			}
+		}
+
+		const result = await supplierModel.createRestockOrders(restock_orders);
+
+		return res.status(201).json({
+			success: true,
+			message: 'Restock orders created successfully',
+			data: result
+		});
+	} catch (error) {
+		console.error('createRestockOrders error:', error);
+		return res.status(500).json({ 
+			success: false, 
+			message: 'Failed to create restock orders' 
+		});
+	}
+};
+
+exports.getRestockOrders = async (req, res) => {
+	try {
+		const limit = Number(req.query.limit ?? 50);
+		const offset = Number(req.query.offset ?? 0);
+
+		const orders = await supplierModel.getRestockOrders(limit, offset);
+
+		return res.status(200).json({
+			success: true,
+			data: orders,
+			pagination: { limit, offset, count: orders.length }
+		});
+	} catch (error) {
+		console.error('getRestockOrders error:', error);
+		return res.status(500).json({ 
+			success: false, 
+			message: 'Failed to fetch restock orders' 
+		});
+	}
+};

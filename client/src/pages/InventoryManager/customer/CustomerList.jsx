@@ -17,6 +17,12 @@ import {
   Building,
   Grid3X3,
   TableProperties,
+  Star,
+  Award,
+  Crown,
+  Gift,
+  TrendingUp,
+  DollarSign,
 } from "lucide-react";
 import { FaSpinner } from "react-icons/fa";
 import axios from "axios";
@@ -36,6 +42,23 @@ const getAllCustomersNoPage = async () => {
       success: false,
       message: error.response?.data?.message || error.message,
     };
+  }
+};
+
+// Fetch all orders for loyalty calculation (like CustomerDetails)
+const getAllOrders = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(
+      `${import.meta.env.VITE_API_URL}/orders/all-data?limit=10000&offset=0`,
+      {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
+    return response.data.data || [];
+  } catch (error) {
+    console.error("Error fetching all orders:", error);
+    return [];
   }
 };
 
@@ -66,39 +89,83 @@ const toast = {
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
 
+// Loyalty Program Configuration
+const LOYALTY_CONFIG = {
+  pointsPerRupee: 0.001, // Points = total spent / 1000
+  tiers: [
+    { name: "Bronze", minPoints: 0, color: "from-orange-400 to-orange-600", icon: Star, benefits: "5% discount" },
+    { name: "Silver", minPoints: 50, color: "from-gray-400 to-gray-600", icon: Award, benefits: "10% discount + priority support" },
+    { name: "Gold", minPoints: 200, color: "from-yellow-400 to-yellow-600", icon: Crown, benefits: "15% discount + free shipping" },
+    { name: "Platinum", minPoints: 500, color: "from-purple-400 to-purple-600", icon: Gift, benefits: "20% discount + exclusive access" },
+  ]
+};
+
+// Calculate loyalty info from orders (match CustomerDetails)
+const calculateLoyalty = (orders = []) => {
+  const totalSpent = orders.reduce((sum, order) => sum + parseFloat(order.total_amount || 0), 0);
+  const points = Math.floor(totalSpent * LOYALTY_CONFIG.pointsPerRupee);
+  let tier = LOYALTY_CONFIG.tiers[0];
+  for (let i = LOYALTY_CONFIG.tiers.length - 1; i >= 0; i--) {
+    if (points >= LOYALTY_CONFIG.tiers[i].minPoints) {
+      tier = LOYALTY_CONFIG.tiers[i];
+      break;
+    }
+  }
+  const nextTier = LOYALTY_CONFIG.tiers.find(t => t.minPoints > points);
+  const progressToNext = nextTier
+    ? ((points - tier.minPoints) / (nextTier.minPoints - tier.minPoints)) * 100
+    : 100;
+  return { points, tier, nextTier, progressToNext, orderCount: orders.length };
+};
+
 const CustomerList = () => {
   const { isDarkMode } = useTheme();
   const [customers, setCustomers] = useState([]);
+  const [customerLoyalty, setCustomerLoyalty] = useState({});
   const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("table"); // 'table' or 'grid'
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState(null);
+  const [showLoyaltyDetails, setShowLoyaltyDetails] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchCustomers().then((data) => {
-      setCustomers(data || []);
-    });
-  }, []);
-
-  const fetchCustomers = async () => {
-    try {
-      const result = await getAllCustomersNoPage();
-      if (result.success) {
-        console.log("customers: ", result.data);
-        return result.data;
-      } else {
-        console.error(result.message);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [customerResult, allOrders] = await Promise.all([
+          getAllCustomersNoPage(),
+          getAllOrders()
+        ]);
+        if (customerResult.success) {
+          setCustomers(customerResult.data || []);
+          // Group orders by customer_id
+          const ordersByCustomer = {};
+          for (const order of allOrders) {
+            if (!ordersByCustomer[order.customer_id]) ordersByCustomer[order.customer_id] = [];
+            ordersByCustomer[order.customer_id].push(order);
+          }
+          // Calculate loyalty for each customer
+          const loyaltyData = {};
+          for (const customer of customerResult.data) {
+            const orders = ordersByCustomer[customer.customer_id] || [];
+            loyaltyData[customer.customer_id] = calculateLoyalty(orders);
+          }
+          setCustomerLoyalty(loyaltyData);
+        } else {
+          console.error(customerResult.message);
+        }
+      } catch (error) {
+        console.error(error);
+        console.log("Backend error");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error(error);
-      console.log("Backend error");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    fetchData();
+  }, []);
 
   const handleClick = (user_code) => {
     navigate(`/inventorymanager/customer/${user_code}`);
@@ -149,6 +216,31 @@ const CustomerList = () => {
     );
   };
 
+  const LoyaltyBadge = ({ customerId, compact = false }) => {
+    const loyalty = customerLoyalty[customerId];
+    if (!loyalty) return null;
+
+    const { tier, points } = loyalty;
+    const TierIcon = tier.icon;
+
+    if (compact) {
+      return (
+        <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${tier.color} text-white`}>
+          <TierIcon className="w-3 h-3" />
+          <span>{tier.name}</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-gradient-to-r ${tier.color} text-white shadow-sm`}>
+        <TierIcon className="w-4 h-4" />
+        <span>{tier.name}</span>
+        <span className="bg-white/20 px-2 py-0.5 rounded text-xs">{points.toLocaleString()} pts</span>
+      </div>
+    );
+  };
+
   const GridView = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {filteredCustomers.map((customer) => (
@@ -192,6 +284,16 @@ const CustomerList = () => {
                 >
                   {customer.address}
                 </span>
+              </div>
+              
+              {/* Loyalty Information */}
+              <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
+                <LoyaltyBadge customerId={customer.customer_id} />
+                {customerLoyalty[customer.customer_id] && (
+                  <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    {customerLoyalty[customer.customer_id].orderCount} orders • {customerLoyalty[customer.customer_id].points.toLocaleString()} points
+                  </div>
+                )}
               </div>
             </div>
 
@@ -253,6 +355,12 @@ const CustomerList = () => {
                 </div>
               </th>
               <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4" />
+                  Loyalty Status
+                </div>
+              </th>
+              <th className={`px-6 py-4 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 Actions
               </th>
             </tr>
@@ -292,6 +400,16 @@ const CustomerList = () => {
                 </td>
                 <td className="px-6 py-4">
                   <span className={`transition-colors duration-300 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{customer.address}</span>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="space-y-1">
+                    <LoyaltyBadge customerId={customer.customer_id} compact />
+                    {customerLoyalty[customer.customer_id] && (
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {customerLoyalty[customer.customer_id].orderCount} orders • {customerLoyalty[customer.customer_id].points.toLocaleString()} points
+                      </div>
+                    )}
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
@@ -404,7 +522,7 @@ const CustomerList = () => {
         ) : (
           <>
             {/* Stats Bar */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <div className={`rounded-xl p-4 border shadow-sm transition-colors duration-300 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-100'}`}>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -439,6 +557,94 @@ const CustomerList = () => {
                   </div>
                 </div>
               </div>
+
+              <div className={`rounded-xl p-4 border shadow-sm transition-colors duration-300 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-100'}`}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <Crown className="w-5 h-5 text-yellow-600" />
+                  </div>
+                  <div>
+                    <p className={`text-2xl font-bold transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                      {Object.values(customerLoyalty).filter(l => l.tier.name === 'Gold' || l.tier.name === 'Platinum').length}
+                    </p>
+                    <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>VIP Customers</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`rounded-xl p-4 border shadow-sm transition-colors duration-300 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-100'}`}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className={`text-2xl font-bold transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                      {Object.values(customerLoyalty).reduce((sum, l) => sum + l.points, 0).toLocaleString()}
+                    </p>
+                    <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Points Earned</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Loyalty Program Overview */}
+            <div className={`rounded-2xl border shadow-sm p-6 mb-6 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-100'}`}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                    <Gift className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className={`text-lg font-bold transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                      Loyalty Program Overview
+                    </h3>
+                    <p className={`text-sm transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Customer reward tiers and benefits
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowLoyaltyDetails(!showLoyaltyDetails)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                >
+                  {showLoyaltyDetails ? 'Hide Details' : 'View Details'}
+                </button>
+              </div>
+
+              {showLoyaltyDetails && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {LOYALTY_CONFIG.tiers.map((tier) => {
+                    const TierIcon = tier.icon;
+                    const customerCount = Object.values(customerLoyalty).filter(l => l.tier.name === tier.name).length;
+                    
+                    return (
+                      <div
+                        key={tier.name}
+                        className={`p-4 rounded-xl border transition-colors duration-300 ${isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
+                      >
+                        <div className={`w-12 h-12 bg-gradient-to-r ${tier.color} rounded-xl flex items-center justify-center mb-3`}>
+                          <TierIcon className="w-6 h-6 text-white" />
+                        </div>
+                        <h4 className={`font-bold text-lg mb-1 transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                          {tier.name}
+                        </h4>
+                        <p className={`text-sm mb-2 transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {tier.minPoints.toLocaleString()}+ points
+                        </p>
+                        <p className={`text-xs mb-3 transition-colors duration-300 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                          {tier.benefits}
+                        </p>
+                        <div className={`text-2xl font-bold transition-colors duration-300 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                          {customerCount}
+                        </div>
+                        <p className={`text-xs transition-colors duration-300 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          customers
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Customers Display */}
