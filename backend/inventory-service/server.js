@@ -7,6 +7,7 @@ require('dotenv').config();
 const productRoutes = require('./src/routes/productRoutes');
 const categoryRoutes = require('./src/routes/categoryRoutes');
 const inventoryRoutes = require('./src/routes/inventoryRoutes');
+const variantRoutes = require('./src/routes/variantRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -45,6 +46,7 @@ app.use('/products', productRoutes);
 app.use('/categories', categoryRoutes);
 //app.use('/inventory', inventoryRoutes);
 app.use('/resources', inventoryRoutes);
+app.use('/variants', variantRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

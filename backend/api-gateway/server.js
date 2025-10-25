@@ -181,6 +181,7 @@ app.use('/api/products', authenticateToken, createProxy(INVENTORY_SERVICE_URL, {
 app.use('/api/inventory', authenticateToken, createProxy(INVENTORY_SERVICE_URL, { '^/api/inventory': '/inventory' }));
 app.use('/api/categories', authenticateToken, createProxy(INVENTORY_SERVICE_URL, { '^/api/categories': '/categories' }));
 app.use('/api/resources', authenticateToken, createProxy(INVENTORY_SERVICE_URL, { '^/api/resources': '/resources' }));
+app.use('/api/variants', authenticateToken, createProxy(INVENTORY_SERVICE_URL, { '^/api/variants': '/variants' }));
 
 // order service routes
 app.use('/api/orders', authenticateToken, createProxy(ORDER_SERVICE_URL, { '^/api/orders': '/orders' }));
@@ -188,6 +189,8 @@ app.use('/api/customers', authenticateToken, createProxy(ORDER_SERVICE_URL, { '^
 app.use('/api/quotations', authenticateToken, createProxy(ORDER_SERVICE_URL, { '^/api/quotations': '/quotations' }));
 app.use('/api/reports', authenticateToken, createProxy(ORDER_SERVICE_URL, { '^/api/reports': '/reports' }));
 app.use('/api/suppliers', authenticateToken, createProxy(ORDER_SERVICE_URL, { '^/api/suppliers': '/suppliers' })); // + add
+app.use('/api/supplier-orders', authenticateToken, createProxy(ORDER_SERVICE_URL, { '^/api/supplier-orders': '/suppliers/orders' })); // + add
+app.use('/api/restock-orders', authenticateToken, createProxy(ORDER_SERVICE_URL, { '^/api/restock-orders': '/suppliers/restock-orders' })); // + add for restock orders
 
 // Dashboard routes (aggregate data from multiple services)
 app.get('/api/dashboard', authenticateToken, async (req, res) => {
@@ -236,7 +239,9 @@ app.get('/api', (req, res) => {
       quotations: '/api/quotations',
       reports: '/api/reports',
       dashboard: '/api/dashboard',
-      suppliers: '/api/suppliers' // + add
+      suppliers: '/api/suppliers', // + add
+      supplierOrders: '/api/supplier-orders', // + add
+      restockOrders: '/api/restock-orders' // + add for restock orders
     },
     timestamp: new Date().toISOString()
   });
