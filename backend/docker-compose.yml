@@ -89,7 +89,7 @@ services:
 
   # React Client (pulled from Docker Hub)
   client:
-    image: nipungunarathna/smartstock-client:v3.3.2
+    image: nipungunarathna/smartstock-client:v3.3.4
     container_name: smartstock-client
     ports:
       - "${CLIENT_PORT:-80}:80"
