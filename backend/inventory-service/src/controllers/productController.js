@@ -72,7 +72,7 @@ class ProductController {
 
   async getAllProducts(req, res) {
     try {
-      const { page = 1, limit = 10, category, status, search } = req.query;
+      const { page = 1, limit = 100, category, status, search } = req.query;
       const offset = (page - 1) * limit;
 
       const filters = {};
